@@ -1,0 +1,13 @@
+name "app"
+description "test app for kelp"
+authors "RiceShark"
+copyright "Copyright © 2025, RiceShark"
+license "proprietary"
+
+dependency "kelp-core" path="../kelp_core"
+targetType "executable"
+targetName "app"
+libs "kelp_loader"
+
+importPaths "../kelp_loader/include"
+lflags "/LIBPATH:$PACKAGE_DIR/lib_st"
