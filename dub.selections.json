@@ -1,5 +1,11 @@
 {
 	"fileVersion": 1,
 	"versions": {
+		"bindbc-common": "1.0.5",
+		"bindbc-loader": "1.1.5",
+		"bindbc-sdl": "2.2.2",
+		"kelp-api": {"path":"../kelp_api"},
+		"kelp-core": {"path":"../kelp_core"},
+		"kelp-sdl": {"path":"../kelp_sdl"}
 	}
 }
