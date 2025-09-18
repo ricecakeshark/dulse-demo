@@ -1,4 +1,10 @@
 
+lib_st/
+lib_dy/
+include/
+build/
+
+
 # D
 *.exe
 *.dylib

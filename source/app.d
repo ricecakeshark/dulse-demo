@@ -1,6 +1,7 @@
 module myapp;
 
-import kelp_core, kelp_api;
+import kelp_core;
+import kelp_api;
 import kelp_loader;
 import kelp_sdl;
 import bindbc.sdl;
@@ -15,5 +16,12 @@ void main()
 	sdl.initialize();
 	sdl.getVersion().writeln();
 	sdl.finalize();
+
+	PluginLoader loader;
+	loader = new PluginLoader();
+	loader.load("kelp_render");
+	//kelp_loader.f().writeln();
+	//loader_debug_string.writeln();
+
 	return;
 }
