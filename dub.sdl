@@ -4,18 +4,29 @@ authors "RiceShark"
 copyright "Copyright © 2025, RiceShark"
 license "proprietary"
 
-dependency "kelp-core" path="..\\kelp_core"
-dependency "kelp-api" path="..\\kelp_api"
-dependency "kelp-loader" path="..\\kelp_loader"
-dependency "kelp-sdl"  path="..\\kelp_sdl"
-dependency "bindbc-sdl" version="~>2.2.2"
 targetType "executable"
 targetName "app"
 targetPath "build"
 
-libs "kelp_loader" "kelp_sdl" "SDL3"
-subConfiguration "bindbc-sdl" "static"
-versions "SDL_3_2_18"
-
-importPaths "..\\kelp_loader\\include"
 lflags "/LIBPATH:$PACKAGE_DIR\\lib_st" "/LIBPATH:$PACKAGE_DIR\\lib_dy"
+
+dependency "kelp-core" path="..\\kelp_core"
+dependency "kelp-api" path="..\\kelp_api"
+dependency "kelp-loader" path="..\\kelp_loader"
+dependency "kelp-sdl"  path="..\\kelp_sdl"
+dependency "kelp-render" path="..\\kelp_render"
+dependency "bindbc-sdl" version="~>2.2.2"
+
+
+libs "kelp_loader" "kelp_sdl"  "kelp_render"
+
+// SDL3
+versions "SDL_3_2_18"
+libs "SDL3"
+subConfiguration "bindbc-sdl" "static"
+
+// kelp_render
+libs "kelp_render"
+lflags "/LIBPATH:$PACKAGE_DIR\\..\\kelp_render\\build"
+
+
