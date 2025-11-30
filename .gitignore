@@ -3,7 +3,7 @@ lib_st/
 lib_dy/
 include/
 build/
-
+shader/
 
 # D
 *.exe

@@ -20,9 +20,10 @@ dependency "bindbc-sdl" version="~>2.2.2"
 
 libs "kelp_loader" "kelp_sdl"  "kelp_render"
 
-// SDL3
-versions "SDL_3_2_18"
-libs "SDL3"
+// SDL3 with kelp-sdl
+libs "SDL3" "SDL3_image"
+lflags "/LIBPATH:$PACKAGE_DIR\\..\\kelp_sdl\\build"
+versions "SDL_3_2_18" "SDL_Image_3_2"
 subConfiguration "bindbc-sdl" "static"
 
 // kelp_render

@@ -6,6 +6,8 @@
 		"bindbc-sdl": "2.2.2",
 		"kelp-api": {"path":"../kelp_api"},
 		"kelp-core": {"path":"../kelp_core"},
+		"kelp-loader": {"path":"../kelp_loader"},
+		"kelp-render": {"path":"../kelp_render"},
 		"kelp-sdl": {"path":"../kelp_sdl"}
 	}
 }
