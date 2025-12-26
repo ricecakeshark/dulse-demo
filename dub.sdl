@@ -11,14 +11,11 @@ targetPath "build"
 lflags "/LIBPATH:$PACKAGE_DIR\\lib_st" "/LIBPATH:$PACKAGE_DIR\\lib_dy"
 
 dependency "kelp-core" path="..\\kelp_core"
-dependency "kelp-api" path="..\\kelp_api"
-dependency "kelp-loader" path="..\\kelp_loader"
 dependency "kelp-sdl"  path="..\\kelp_sdl"
 dependency "kelp-render" path="..\\kelp_render"
 dependency "bindbc-sdl" version="~>2.2.2"
 
-
-libs "kelp_loader" "kelp_sdl"  "kelp_render"
+//libs "kelp_sdl" "kelp_render"
 
 // SDL3 with kelp-sdl
 libs "SDL3" "SDL3_image"
@@ -27,7 +24,7 @@ versions "SDL_3_2_18" "SDL_Image_3_2"
 subConfiguration "bindbc-sdl" "static"
 
 // kelp_render
-libs "kelp_render"
+//libs "kelp_render"
 lflags "/LIBPATH:$PACKAGE_DIR\\..\\kelp_render\\build"
 
 

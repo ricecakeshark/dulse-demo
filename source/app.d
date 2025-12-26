@@ -8,11 +8,18 @@ import bindbc.sdl;
 import std.stdio;
 import core.memory;
 
+GPUGraphicsContext graphics_context;
+
+float aspect = 960.0f / 540.0f;
+
 void main()
 {
-	auto core = new Kelp();
-	core.initialize();
-	core.subsystem.query!(EventSubsystem)[0].register_poller(delegate Event[]() {
+	Kelp core;
+	SDLDeviceSubsystem device;
+
+	core = new Kelp();
+
+	core.subsystem.pool.query!(EventSubsystem).register_poller(delegate Event[]() {
 		return pollEvent();
 	});
 
@@ -21,14 +28,24 @@ void main()
 		new SDLDeviceSubsystem(),
 		new SDLGraphicsSubsystem()
 	);
+	core.initialize();
+	device = core.subsystem.pool.query!(SDLDeviceSubsystem)();
 
-	auto app = new TestApp(core);
+	graphics_context = new GPUGraphicsContext();
+	graphics_context.initialize();
+	auto app = new TestApp(core, graphics_context);
 	app.initialize();
 
 	while (core.continuable)
 	{
 		core.process();
+		if (device.keyboard.pressed_just(Scancode.escape))
+		{
+			writeln("pressed ESC");
+			break;
+		}
 		app.process();
+		app.draw();
 	}
 	app.finalize();
 	core.finalize();
@@ -39,178 +56,240 @@ void main()
 class TestApp
 {
 	SDLDeviceSubsystem device;
-
-	GPUWindow gpu_window;
-	GPUDevice gpu_device;
+	GPUGraphicsContext graphics_context;
 
 	GPURenderContext render_context;
-	GPUUploadContext upload_context;
-
 	GPUGraphicsPipeline graphics_pipeline;
-	GPUVertexBuffer cube_vertex_buffer;
+	GPUVertexBuffer vertex_buffer;
+	GPUIndexBuffer index_buffer;
+	GPUTexture texture;
+	GPUSampler sampler;
+	Surface image;
 
-	this(Kelp core)
+	this(Kelp core, GPUGraphicsContext graphics_context)
 	{
-		device = core.subsystem.query!(SDLDeviceSubsystem)()[0];
+		this.graphics_context = graphics_context;
 		return;
 	}
 
 	void initialize()
 	{
-		GPUVertexShader vertex_shader;
-		GPUFragmentShader fragment_shader;
-
-		gpu_window = new GPUWindow();
-		gpu_window.create(960, 540, "like a sdl_gpu_example");
-		gpu_device = new GPUDevice();
-		gpu_device.create();
-		gpu_device.claim(gpu_window);
-
 		// Shader
-		vertex_shader = new GPUVertexShader(gpu_device);
-		fragment_shader = new GPUFragmentShader(gpu_device);
-		vertex_shader.create("PositionColor.vert", GPUShaderArguments(0, 0, 0, 0));
-		fragment_shader.create("SolidColor.frag", GPUShaderArguments(0, 0, 0, 0));
-
+		scope GPUVertexShader vertex_shader;
+		scope GPUFragmentShader fragment_shader;
+		vertex_shader = graphics_context.create_vertex_shader();
+		fragment_shader = graphics_context.create_fragment_shader();
+		vertex_shader.create("TexturedQuadWithMatrix.vert", GPUShaderArguments(0, 1, 0, 0));
+		fragment_shader.create("TexturedQuadWithMultiplyColor.frag", GPUShaderArguments(1, 1, 0, 0));
 		// Pipeline
-		GPUGraphicsPipelineCreateInfo pipeline_create_info = {
-			vertex_shader: vertex_shader.handle,
-			fragment_shader: fragment_shader.handle,
-			vertex_input_state: GPUVertexInputState(
+		scope GPUGraphicsPipelineCreateInfo pipeline_create_info;
+		pipeline_create_info.vertex_shader = vertex_shader.handle;
+		pipeline_create_info.fragment_shader = fragment_shader.handle;
+		with (pipeline_create_info)
+		{
+			vertex_input_state = GPUVertexInputState(
 				[
 				GPUVertexBufferDescription(
 					0,
-					PositionColorVertex.sizeof,
-					SDL_GPU_VERTEXINPUTRATE_VERTEX,
-					0,
+					PositionTextureVertex.sizeof,
+					GPUVertexInputRate.vertex,
+					0
 				)
-			].ptr, 1,
+			],
 			[
 				GPUVertexAttribute(
-					0, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3, 0,
+					0, 0, GPUVertexElementFormat.float3, 0
 				),
 				GPUVertexAttribute(
-					1, 0, SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM, float.sizeof * 3
-				),
-			].ptr,
-			2,
-			),
-			primitive_type: SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-			target_info: GPUGraphicsPipelineTargetInfo(
-				[
-				GPUColorTargetDescription(
-					getSwapchainTextureFormat(gpu_device, gpu_window)
+					1, 0, GPUVertexElementFormat.float2, float.sizeof * 3
 				)
-			].ptr, 1,
-			)};
-
-			/+pipeline_create_info = GPUGraphicsPipelineCreateInfo(
-				vertex_shader.handle,
-				fragment_shader.handle,
-				GPUVertexInputState(
-					[
-					GPUVertexBufferDescription(
-						0,
-						PositionColorVertex.sizeof,
-						SDL_GPU_VERTEXINPUTRATE_VERTEX,
-						0,
-					)
-				].ptr, 1,
-				[
-					GPUVertexAttribute(
-						0, 0, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3, 0,
-					),
-					GPUVertexAttribute(
-						1, 0, SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM, float.sizeof * 3
-					),
-				].ptr,
-				2,
-			),
-			SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-			target_info : GPUGraphicsPipelineTargetInfo(
-				[
-				GPUColorTargetDescription(
-					getSwapchainTextureFormat(gpu_device, gpu_window)
-				)
-			].ptr, 1,
-			)
+			]
 			);
-			+/
-			graphics_pipeline = new GPUGraphicsPipeline(gpu_device);
-			graphics_pipeline.create(pipeline_create_info);
-			destroy(vertex_shader);
-			destroy(fragment_shader);
+			primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+			target_info = GPUGraphicsPipelineTargetInfo(
+				[
+				GPUColorTargetDescription(
+					graphics_context.get_swapchain_texture_format(),
+					GPUColorTargetBlendState(
+						GPUBlendFactor.src_alpha,
+						GPUBlendFactor.one_minus_src_alpha,
+						GPUBlendOp.add,
+						GPUBlendFactor.src_alpha,
+						GPUBlendFactor.one_minus_src_alpha,
+						GPUBlendOp.add,
+						cast(GPUColorComponentFlags) SDL_GPUColorComponentFlags.init,
+						true,
+				)
+				)
+			]
+			);
+		}
+		graphics_pipeline = graphics_context.create_graphics_pipeline();
+		graphics_pipeline.create(pipeline_create_info);
 
-			// Vertex Buffer
-			PositionColorVertex[] vertex_data = [
-				{-1.0, -1.0, 0.0, 255, 0, 0, 255
-		},
-		{+1.0, -1.0, 0.0, 0, 255, 0, 255},
-		{+0.0, +1.0, 0.0, 0, 0, 255, 255},];
+		// Vertex Buffer
+		PositionTextureVertex[] vertex_data = [
+			{-0.5f, -0.5f, 0.0f, 0.0f, 0.0f,},
+			{+0.5f, -0.5f, 0.0f, 1.0f, 0.0f,},
+			{+0.5f, +0.5f, 0.0f, 1.0f, 1.0f,},
+			{-0.5f, +0.5f, 0.0f, 0.0f, 1.0f,},
+		];
 
-		cube_vertex_buffer = new GPUVertexBuffer(gpu_device);
-		cube_vertex_buffer
-			.create(PositionColorVertex.sizeof * 3);
-		cube_vertex_buffer.set(vertex_data);
+		vertex_buffer = graphics_context.create_vertex_buffer();
+		vertex_buffer.create(PositionTextureVertex.sizeof * 4);
+
+		// index buffer
+		index_buffer = graphics_context.create_index_buffer();
+		ushort[] index_data = [0, 1, 2, 0, 2, 3];
+		index_buffer.create(index_data);
+
+		// texture
+		image = new Surface();
+		image.load("./image/dot4.png");
+		texture = graphics_context.create_texture();
+		texture.create(GPUTextureCreateInfo(
+				GPUTextureType._2d, GPUTextureFormat.r8g8b8a8_unorm,
+				GPUTextureUsageFlags.sampler,
+				image.width, image.height,
+				1, 1,
+		));
+
+		// sampler
+		sampler = graphics_context.create_sampler();
+		sampler.create(GPUSamplerCreateInfo(
+				GPUFilter.nearest,
+				GPUFilter.nearest,
+				GPUSamplerMipmapMode.nearest,
+				GPUSamplerAddressMode.clamp_to_edge,
+				GPUSamplerAddressMode.clamp_to_edge,
+				GPUSamplerAddressMode.clamp_to_edge,
+		));
 
 		// upload
-		auto buffer_transfer_buffer = new GPUBufferTransferBuffer(gpu_device);
-		buffer_transfer_buffer.create(PositionColorVertex.sizeof * 3)
+		scope GPUBufferTransferBuffer buffer_transfer_buffer;
+		buffer_transfer_buffer = new GPUBufferTransferBuffer(graphics_context.device);
+		buffer_transfer_buffer.create(vertex_buffer.size + index_buffer.size)
 			.map()
-			.set(vertex_data)
+			.set(vertex_data, index_data)
 			.unmap();
 
-		upload_context = new GPUUploadContext(gpu_device);
+		scope GPUTextureTransferBuffer texture_transfer_buffer;
+		texture_transfer_buffer = new GPUTextureTransferBuffer(graphics_context.device);
+		texture_transfer_buffer.create(image.size)
+			.map()
+			.set(image)
+			.unmap();
+
+		scope GPUUploadContext upload_context;
+		upload_context = graphics_context.create_upload_context();
 		upload_context.begin()
 			.upload(
 				GPUTransferBufferLocation(buffer_transfer_buffer, 0),
-				GPUBufferRegion(cube_vertex_buffer.handle, 0, PositionColorVertex.sizeof * 3)
+				GPUBufferRegion(vertex_buffer, 0u)
+			)
+			.upload(
+				GPUTransferBufferLocation(buffer_transfer_buffer, vertex_buffer.size),
+				GPUBufferRegion(index_buffer, 0u)
+			)
+			.upload(
+				GPUTextureTransferInfo(texture_transfer_buffer, 0),
+				GPUTextureRegion(texture.handle, 0, 0, 0, 0, 0, image.width, image.height, 1)
 			)
 			.end()
 			.submit();
-		destroy(buffer_transfer_buffer);
-		destroy(upload_context);
 
-		render_context = new GPURenderContext(gpu_device, gpu_window);
+		destroy(buffer_transfer_buffer);
+		destroy(texture_transfer_buffer);
+
+		render_context = graphics_context.create_render_context();
 		return;
 	}
 
 	void finalize()
 	{
-		destroy(graphics_pipeline);
-		destroy(cube_vertex_buffer);
-		GC.collect();
-
-		destroy(gpu_device);
-		destroy(gpu_window);
-		GC.collect();
+		graphics_context.release_all();
 		return;
 	}
+
+	float x = 0.0f;
+	float y = 0.0f;
+	float z = 0.0f;
 
 	void process()
 	{
-		if (device.keyboard.pressed_just(Scancode.escape))
-		{
-			writeln("pressed ESC");
-		}
 
-		GPUColorTargetInfo color_target_info;
-		render_context.acquire();
-		with (color_target_info)
-		{
-			texture = render_context.swapchain_texture.handle;
-			clear_color = SDL_FColor(0.0, 0.1, 0.2, 1.0);
-			load_op = SDL_GPU_LOADOP_CLEAR;
-			store_op = SDL_GPU_STOREOP_STORE;
-		}
-		render_context.begin([color_target_info])
-			.render(delegate void() {
-				render_context.render_pass.bind(graphics_pipeline)
-					.bind([cube_vertex_buffer]);
-				render_context.render_pass.draw(3, 1, 0, 0);
-				return;
-			})
-			.end().submit();
 		return;
 	}
+
+	void draw()
+	{
+		GPUColorTargetInfo color_target_info;
+		Matrix!(4, 4) pos_mat;
+
+		pos_mat = matrix_scale([1.0f / aspect, 1.0f, 1.0f]) * matrix_translate([
+			x, y, z
+		]);
+
+		render_context.acquire_buffer()
+			.acquire_texture()
+			.if_acquired(() {
+				color_target_info = GPUColorTargetInfo(
+					render_context.swapchain_texture,
+					GPULoadOp.clear, GPUStoreOp.store,
+				);
+				render_context.begin([color_target_info])
+					.bind(graphics_pipeline)
+					.bind([GPUTextureSamplerBinding(texture, sampler)])
+					.bind([vertex_buffer])
+					.bind(index_buffer)
+					.push_vertex(pos_mat.toSDL(), 0)
+					.push_fragment(Vector!(4)(1.0f, 1.0f, 1.0f, 1.0f).toSDL(), 0)
+					.draw_indexed(ParamIndexedPrimitive(6, 1, 0, 0, 0))
+					.push_vertex(matrix_translate([x - 0.5f, y, z]).toSDL(), 0)
+					.draw_indexed(ParamIndexedPrimitive(6, 1, 0, 0, 0))
+					.end();
+				return;
+			}).submit();
+		return;
+	}
+}
+
+struct FlagMultiplyUniform
+{
+	float r, g, b, a;
+}
+
+FlagMultiplyUniform toSDL(in Vector!(4) vector) pure nothrow @nogc @safe
+{
+	return FlagMultiplyUniform(vector[0], vector[1], vector[2], vector[3]);
+}
+
+struct SDL_Matrix
+{
+	float m11, m12, m13, m14;
+	float m21, m22, m23, m24;
+	float m31, m32, m33, m34;
+	float m41, m42, m43, m44;
+}
+
+SDL_Matrix toSDL(in Matrix!(4, 4) matrix)
+{
+	SDL_Matrix temp;
+	temp.m11 = matrix[0, 0];
+	temp.m12 = matrix[0, 1];
+	temp.m13 = matrix[0, 2];
+	temp.m14 = matrix[0, 3];
+	temp.m21 = matrix[1, 0];
+	temp.m22 = matrix[1, 1];
+	temp.m23 = matrix[1, 2];
+	temp.m24 = matrix[1, 3];
+	temp.m31 = matrix[2, 0];
+	temp.m32 = matrix[2, 1];
+	temp.m33 = matrix[2, 2];
+	temp.m34 = matrix[2, 3];
+	temp.m41 = matrix[3, 0];
+	temp.m42 = matrix[3, 1];
+	temp.m43 = matrix[3, 2];
+	temp.m44 = matrix[3, 3];
+	return temp;
 }
