@@ -13,7 +13,7 @@ lflags "/LIBPATH:$PACKAGE_DIR\\lib_st" "/LIBPATH:$PACKAGE_DIR\\lib_dy"
 dependency "kelp-core" path="..\\kelp_core"
 dependency "kelp-sdl"  path="..\\kelp_sdl"
 dependency "kelp-render" path="..\\kelp_render"
-dependency "bindbc-sdl" version="~>2.2.2"
+dependency "bindbc-sdl" version="~>2.3.1"
 
 //libs "kelp_sdl" "kelp_render"
 
