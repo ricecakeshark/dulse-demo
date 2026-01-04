@@ -14,10 +14,10 @@ float aspect = 960.0f / 540.0f;
 
 void main()
 {
-	Kelp core;
+	Core core;
 	SDLDeviceSubsystem device;
 
-	core = new Kelp();
+	core = new Core();
 
 	core.subsystem.pool.query!(EventSubsystem).register_poller(delegate Event[]() {
 		return pollEvent();
@@ -55,7 +55,9 @@ void main()
 
 class TestApp
 {
+	Core core;
 	SDLDeviceSubsystem device;
+	TimerSubsystem timer;
 	GPUGraphicsContext graphics_context;
 
 	GPURenderContext render_context;
@@ -66,14 +68,25 @@ class TestApp
 	GPUSampler sampler;
 	Surface image;
 
-	this(Kelp core, GPUGraphicsContext graphics_context)
+	float[3][100] entity_list;
+
+	this(Core core, GPUGraphicsContext graphics_context)
 	{
+		this.core = core;
 		this.graphics_context = graphics_context;
 		return;
 	}
 
 	void initialize()
 	{
+		foreach (ref entity; entity_list)
+		{
+			import std.random;
+
+			entity[0] = uniform(0.5f, 1.3f);
+			entity[1] = uniform(0.5f, 1.3f);
+			entity[2] = uniform(0.5f, 1.3f);
+		}
 		// Shader
 		scope GPUVertexShader vertex_shader;
 		scope GPUFragmentShader fragment_shader;
@@ -202,6 +215,7 @@ class TestApp
 		destroy(texture_transfer_buffer);
 
 		render_context = graphics_context.create_render_context();
+		timer = core.subsystem.pool.query!(TimerSubsystem)();
 		return;
 	}
 
@@ -223,12 +237,10 @@ class TestApp
 
 	void draw()
 	{
+		import std.math;
+
 		GPUColorTargetInfo color_target_info;
 		Matrix!(4, 4) pos_mat;
-
-		pos_mat = matrix_scale([1.0f / aspect, 1.0f, 1.0f]) * matrix_translate([
-			x, y, z
-		]);
 
 		render_context.acquire_buffer()
 			.acquire_texture()
@@ -241,13 +253,28 @@ class TestApp
 					.bind(graphics_pipeline)
 					.bind([GPUTextureSamplerBinding(texture, sampler)])
 					.bind([vertex_buffer])
-					.bind(index_buffer)
-					.push_vertex(pos_mat.toSDL(), 0)
-					.push_fragment(Vector!(4)(1.0f, 1.0f, 1.0f, 1.0f).toSDL(), 0)
-					.draw_indexed(ParamIndexedPrimitive(6, 1, 0, 0, 0))
-					.push_vertex(matrix_translate([x - 0.5f, y, z]).toSDL(), 0)
-					.draw_indexed(ParamIndexedPrimitive(6, 1, 0, 0, 0))
-					.end();
+					.bind(index_buffer);
+				foreach (entity; entity_list)
+				{
+					pos_mat = matrix_scale([0.1f, 0.1f, 0.1f]) * matrix_scale([1.0f / aspect, 1.0f, 1.0f]) * matrix_translate(
+						[
+						cos((0.001f * timer.past) * entity[0])*0.9f,
+						sin((0.001f * timer.past) * entity[1])*0.9f,
+						sin((0.001f * timer.past) * entity[2])*0.9f
+					]);
+					/+pos_mat = matrix_scale([0.1f, 0.1f, 0.1f]) * matrix_scale([1.0f / aspect, 1.0f, 1.0f]) * matrix_translate([
+						cos(entity[0]),
+						sin(entity[1]),
+						0.0f
+					]);+/
+					render_context.push_vertex(pos_mat.toSDL(), 0)
+						.push_fragment(
+							Vector!(4)(1.0f, 1.0f, 1.0f, 1.0f)
+							.toSDL(), 0
+						)
+						.draw_indexed(ParamIndexedPrimitive(6, 1, 0, 0, 0));
+				}
+				render_context.end();
 				return;
 			}).submit();
 		return;
