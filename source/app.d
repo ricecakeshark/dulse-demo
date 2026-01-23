@@ -5,33 +5,32 @@ import kelp_sdl;
 import kelp_render;
 import bindbc.sdl;
 
+import std.math;
 import std.stdio;
 import core.memory;
 
-GPUGraphicsContext graphics_context;
+GfxGraphicsContext graphics_context;
 
 float aspect = 960.0f / 540.0f;
 
 void main()
 {
 	Core core;
-	SDLDeviceSubsystem device;
+	DeviceSubsystem device;
 
 	core = new Core();
-
-	core.subsystem.pool.query!(EventSubsystem).register_poller(delegate Event[]() {
-		return pollEvent();
-	});
-
 	core.subsystem.append(
-		new SDLSubsystem(),
-		new SDLDeviceSubsystem(),
-		new SDLGraphicsSubsystem()
+		new SDLSubsystem(core),
+		new SDLDeviceSubsystem(core),
+		new SDLEventSubsystem(core), //new SDLGraphicsSubsystem()
+
+		
+
 	);
 	core.initialize();
-	device = core.subsystem.pool.query!(SDLDeviceSubsystem)();
+	device = core.subsystem.pool.query!(DeviceSubsystem)();
 
-	graphics_context = new GPUGraphicsContext();
+	graphics_context = new GfxGraphicsContext();
 	graphics_context.initialize();
 	auto app = new TestApp(core, graphics_context);
 	app.initialize();
@@ -58,19 +57,21 @@ class TestApp
 	Core core;
 	SDLDeviceSubsystem device;
 	TimerSubsystem timer;
-	GPUGraphicsContext graphics_context;
+	GfxGraphicsContext graphics_context;
 
-	GPURenderContext render_context;
-	GPUGraphicsPipeline graphics_pipeline;
-	GPUVertexBuffer vertex_buffer;
-	GPUIndexBuffer index_buffer;
-	GPUTexture texture;
-	GPUSampler sampler;
+	GfxRenderContext render_context;
+	GfxGeometry!(VertexPT, ushort) geometry;
+	GpuGraphicsPipeline graphics_pipeline;
+	GpuVertexBuffer vertex_buffer;
+	GpuIndexBuffer index_buffer;
+	GpuTexture texture;
+	GpuSampler sampler;
+
 	Surface image;
 
 	float[3][100] entity_list;
 
-	this(Core core, GPUGraphicsContext graphics_context)
+	this(Core core, GfxGraphicsContext graphics_context)
 	{
 		this.core = core;
 		this.graphics_context = graphics_context;
@@ -88,49 +89,55 @@ class TestApp
 			entity[2] = uniform(0.5f, 1.3f);
 		}
 		// Shader
-		scope GPUVertexShader vertex_shader;
-		scope GPUFragmentShader fragment_shader;
+		scope GpuVertexShader vertex_shader;
+		scope GpuFragmentShader fragment_shader;
 		vertex_shader = graphics_context.create_vertex_shader();
 		fragment_shader = graphics_context.create_fragment_shader();
-		vertex_shader.create("TexturedQuadWithMatrix.vert", GPUShaderArguments(0, 1, 0, 0));
-		fragment_shader.create("TexturedQuadWithMultiplyColor.frag", GPUShaderArguments(1, 1, 0, 0));
+		vertex_shader.create(
+			ShaderFile("TexturedQuadWithMatrix.vert", graphics_context.get_shader_format()),
+			GpuShaderArguments(0, 1, 0, 0),
+		);
+		fragment_shader.create(
+			ShaderFile("TexturedQuadWithMultiplyColor.frag", graphics_context.get_shader_format()),
+			GpuShaderArguments(1, 1, 0, 0),
+		);
 		// Pipeline
-		scope GPUGraphicsPipelineCreateInfo pipeline_create_info;
+		scope GpuGraphicsPipelineCreateInfo pipeline_create_info;
 		pipeline_create_info.vertex_shader = vertex_shader.handle;
 		pipeline_create_info.fragment_shader = fragment_shader.handle;
 		with (pipeline_create_info)
 		{
-			vertex_input_state = GPUVertexInputState(
+			vertex_input_state = GpuVertexInputState(
 				[
-				GPUVertexBufferDescription(
+				GpuVertexBufferDescription(
 					0,
-					PositionTextureVertex.sizeof,
-					GPUVertexInputRate.vertex,
+					VertexPT.sizeof,
+					GpuVertexInputRate.vertex,
 					0
 				)
 			],
 			[
-				GPUVertexAttribute(
-					0, 0, GPUVertexElementFormat.float3, 0
+				GpuVertexAttribute(
+					0, 0, GpuVertexElementFormat.float3, 0
 				),
-				GPUVertexAttribute(
-					1, 0, GPUVertexElementFormat.float2, float.sizeof * 3
+				GpuVertexAttribute(
+					1, 0, GpuVertexElementFormat.float2, float.sizeof * 3
 				)
 			]
 			);
 			primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
-			target_info = GPUGraphicsPipelineTargetInfo(
+			target_info = GpuGraphicsPipelineTargetInfo(
 				[
-				GPUColorTargetDescription(
+				GpuColorTargetDescription(
 					graphics_context.get_swapchain_texture_format(),
-					GPUColorTargetBlendState(
-						GPUBlendFactor.src_alpha,
-						GPUBlendFactor.one_minus_src_alpha,
-						GPUBlendOp.add,
-						GPUBlendFactor.src_alpha,
-						GPUBlendFactor.one_minus_src_alpha,
-						GPUBlendOp.add,
-						cast(GPUColorComponentFlags) SDL_GPUColorComponentFlags.init,
+					GpuColorTargetBlendState(
+						GpuBlendFactor.src_alpha,
+						GpuBlendFactor.one_minus_src_alpha,
+						GpuBlendOp.add,
+						GpuBlendFactor.src_alpha,
+						GpuBlendFactor.one_minus_src_alpha,
+						GpuBlendOp.add,
+						cast(GpuColorComponentFlags) SDL_GPUColorComponentFlags.init,
 						true,
 				)
 				)
@@ -140,73 +147,72 @@ class TestApp
 		graphics_pipeline = graphics_context.create_graphics_pipeline();
 		graphics_pipeline.create(pipeline_create_info);
 
-		// Vertex Buffer
-		PositionTextureVertex[] vertex_data = [
-			{-0.5f, -0.5f, 0.0f, 0.0f, 0.0f,},
-			{+0.5f, -0.5f, 0.0f, 1.0f, 0.0f,},
-			{+0.5f, +0.5f, 0.0f, 1.0f, 1.0f,},
-			{-0.5f, +0.5f, 0.0f, 0.0f, 1.0f,},
+		// Geometry
+		geometry.vertex = [
+			VertexPT(Vec3(-0.5f, -0.5f, 0.0f), Vec2(0.0f, 0.0f,)),
+			VertexPT(Vec3(+0.5f, -0.5f, 0.0f,), Vec2(1.0f, 0.0f,)),
+			VertexPT(Vec3(0.5f, +0.5f, 0.0f,), Vec2(1.0f, 1.0f,)),
+			VertexPT(Vec3(-0.5f, +0.5f, 0.0f,), Vec2(0.0f, 1.0f,)),
 		];
-
+		geometry.index = [0, 1, 2, 0, 2, 3];
+		// Buffer
 		vertex_buffer = graphics_context.create_vertex_buffer();
-		vertex_buffer.create(PositionTextureVertex.sizeof * 4);
-
-		// index buffer
+		vertex_buffer.create(geometry.size_vertex);
 		index_buffer = graphics_context.create_index_buffer();
-		ushort[] index_data = [0, 1, 2, 0, 2, 3];
-		index_buffer.create(index_data);
+		index_buffer.create(geometry.size_index);
 
 		// texture
 		image = new Surface();
 		image.load("./image/dot4.png");
 		texture = graphics_context.create_texture();
-		texture.create(GPUTextureCreateInfo(
-				GPUTextureType._2d, GPUTextureFormat.r8g8b8a8_unorm,
-				GPUTextureUsageFlags.sampler,
+		texture.create(GpuTextureCreateInfo(
+				GpuTextureType._2d, GpuTextureFormat.r8g8b8a8_unorm,
+				GpuTextureUsageFlags.sampler,
 				image.width, image.height,
 				1, 1,
 		));
 
 		// sampler
 		sampler = graphics_context.create_sampler();
-		sampler.create(GPUSamplerCreateInfo(
-				GPUFilter.nearest,
-				GPUFilter.nearest,
-				GPUSamplerMipmapMode.nearest,
-				GPUSamplerAddressMode.clamp_to_edge,
-				GPUSamplerAddressMode.clamp_to_edge,
-				GPUSamplerAddressMode.clamp_to_edge,
+		sampler.create(GpuSamplerCreateInfo(
+				GpuFilter.nearest,
+				GpuFilter.nearest,
+				GpuSamplerMipmapMode.nearest,
+				GpuSamplerAddressMode.clamp_to_edge,
+				GpuSamplerAddressMode.clamp_to_edge,
+				GpuSamplerAddressMode.clamp_to_edge,
 		));
 
 		// upload
-		scope GPUBufferTransferBuffer buffer_transfer_buffer;
-		buffer_transfer_buffer = new GPUBufferTransferBuffer(graphics_context.device);
-		buffer_transfer_buffer.create(vertex_buffer.size + index_buffer.size)
+		scope GpuBufferTransferBuffer buffer_transfer_buffer;
+		buffer_transfer_buffer = new GpuBufferTransferBuffer(graphics_context.device);
+		buffer_transfer_buffer.create(geometry.size)
 			.map()
-			.set(vertex_data, index_data)
+			.set(geometry.vertex, geometry.offset_vertex)
+			.set(geometry.index, geometry.offset_index)
 			.unmap();
 
-		scope GPUTextureTransferBuffer texture_transfer_buffer;
-		texture_transfer_buffer = new GPUTextureTransferBuffer(graphics_context.device);
+		scope GpuTextureTransferBuffer texture_transfer_buffer;
+		texture_transfer_buffer = new GpuTextureTransferBuffer(graphics_context.device);
 		texture_transfer_buffer.create(image.size)
 			.map()
 			.set(image)
 			.unmap();
 
-		scope GPUUploadContext upload_context;
+		scope GfxUploadContext upload_context;
 		upload_context = graphics_context.create_upload_context();
 		upload_context.begin()
 			.upload(
-				GPUTransferBufferLocation(buffer_transfer_buffer, 0),
-				GPUBufferRegion(vertex_buffer, 0u)
+				GpuTransferBufferLocation(buffer_transfer_buffer, geometry.offset_vertex),
+				GpuBufferRegion(vertex_buffer, 0u)
 			)
 			.upload(
-				GPUTransferBufferLocation(buffer_transfer_buffer, vertex_buffer.size),
-				GPUBufferRegion(index_buffer, 0u)
+				GpuTransferBufferLocation(buffer_transfer_buffer, geometry.offset_index),
+				GpuBufferRegion(index_buffer, 0u)
 			)
 			.upload(
-				GPUTextureTransferInfo(texture_transfer_buffer, 0),
-				GPUTextureRegion(texture.handle, 0, 0, 0, 0, 0, image.width, image.height, 1)
+				GpuTextureTransferInfo(texture_transfer_buffer, 0),
+				GpuTextureRegion(texture.handle, 0, 0, 0, 0, 0, image.width, image.height, 1)
 			)
 			.end()
 			.submit();
@@ -239,38 +245,43 @@ class TestApp
 	{
 		import std.math;
 
-		GPUColorTargetInfo color_target_info;
+		GpuColorTargetInfo color_target_info;
 		Matrix!(4, 4) pos_mat;
 
 		render_context.acquire_buffer()
 			.acquire_texture()
 			.if_acquired(() {
-				color_target_info = GPUColorTargetInfo(
+				color_target_info = GpuColorTargetInfo(
 					render_context.swapchain_texture,
-					GPULoadOp.clear, GPUStoreOp.store,
+					GpuLoadOp.clear, GpuStoreOp.store,
 				);
 				render_context.begin([color_target_info])
 					.bind(graphics_pipeline)
-					.bind([GPUTextureSamplerBinding(texture, sampler)])
+					.bind([GpuTextureSamplerBinding(texture, sampler)])
 					.bind([vertex_buffer])
 					.bind(index_buffer);
 				foreach (entity; entity_list)
 				{
-					pos_mat = matrix_scale([0.1f, 0.1f, 0.1f]) * matrix_scale([1.0f / aspect, 1.0f, 1.0f]) * matrix_translate(
+					pos_mat = multiply_ltor(
+						transformer_translate([0.0f, 0.0f, -80.0f]),
+						transformer_translate(
 						[
-						cos((0.001f * timer.past) * entity[0])*0.9f,
-						sin((0.001f * timer.past) * entity[1])*0.9f,
-						sin((0.001f * timer.past) * entity[2])*0.9f
-					]);
-					/+pos_mat = matrix_scale([0.1f, 0.1f, 0.1f]) * matrix_scale([1.0f / aspect, 1.0f, 1.0f]) * matrix_translate([
-						cos(entity[0]),
-						sin(entity[1]),
-						0.0f
-					]);+/
-					render_context.push_vertex(pos_mat.toSDL(), 0)
+							cos((0.001f * timer.past) * entity[0]) * 0.9f,
+							sin((0.001f * timer.past) * entity[1]) * 0.9f,
+							0.0f
+						]
+					),
+					transformer_scale([0.3f, 0.3f, 0.3f]),
+					transformer_rotate_z(cast(float)(timer.past * 0.001f * entity[0])),
+					);
+					render_context.push_vertex(pos_mat.transpose(), 0)
 						.push_fragment(
-							Vector!(4)(1.0f, 1.0f, 1.0f, 1.0f)
-							.toSDL(), 0
+							Vector!(4)(
+							cos((0.001f * timer.past) * entity[1])
+							.fabs() * 0.9f,
+							cos((0.001f * timer.past) * entity[2])
+							.fabs() * 0.9f,
+							1.0f, 1.0f), 0
 						)
 						.draw_indexed(ParamIndexedPrimitive(6, 1, 0, 0, 0));
 				}
@@ -280,7 +291,7 @@ class TestApp
 		return;
 	}
 }
-
+/+
 struct FlagMultiplyUniform
 {
 	float r, g, b, a;
@@ -320,3 +331,4 @@ SDL_Matrix toSDL(in Matrix!(4, 4) matrix)
 	temp.m44 = matrix[3, 3];
 	return temp;
 }
++/

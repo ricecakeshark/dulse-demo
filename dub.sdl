@@ -12,7 +12,7 @@ lflags "/LIBPATH:$PACKAGE_DIR\\lib_st" "/LIBPATH:$PACKAGE_DIR\\lib_dy"
 
 dependency "kelp-core" path="..\\kelp_core"
 dependency "kelp-sdl"  path="..\\kelp_sdl"
-dependency "kelp-render" path="..\\kelp_render"
+dependency "kelp-gfx" path="..\\kelp_gfx"
 dependency "bindbc-sdl" version="~>2.3.3"
 
 //libs "kelp_sdl" "kelp_render"
@@ -25,6 +25,6 @@ subConfiguration "bindbc-sdl" "static"
 
 // kelp_render
 //libs "kelp_render"
-lflags "/LIBPATH:$PACKAGE_DIR\\..\\kelp_render\\build"
+lflags "/LIBPATH:$PACKAGE_DIR\\..\\kelp_gfx\\build"
 
 
