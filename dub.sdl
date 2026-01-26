@@ -8,13 +8,12 @@ targetType "executable"
 targetName "app"
 targetPath "build"
 
-lflags "/LIBPATH:$PACKAGE_DIR\\lib_st" "/LIBPATH:$PACKAGE_DIR\\lib_dy"
-
 dependency "kelp-core" path="..\\kelp_core"
 dependency "kelp-sdl"  path="..\\kelp_sdl"
 dependency "kelp-gfx" path="..\\kelp_gfx"
 dependency "bindbc-sdl" version="~>2.3.3"
 
+lflags "/LIBPATH:$PACKAGE_DIR\\lib_st" "/LIBPATH:$PACKAGE_DIR\\lib_dy"
 //libs "kelp_sdl" "kelp_render"
 
 // SDL3 with kelp-sdl
