@@ -3,7 +3,7 @@ lib_st/
 lib_dy/
 include/
 build/
-shader/
+shader/*
 
 # D
 *.exe
@@ -17,6 +17,10 @@ shader/
 *.so
 *.a
 .dub/
+
+# shader
+!*.hlsl
+!*.glsl
 
 # VSCode
 .vscode/*

@@ -35,7 +35,7 @@ void main()
 
 	app_list = cast(AppInterface[])[
 		new TestApp(core, graphics_context),
-		new ShaderTest(core,graphics_context),
+		new ShaderTest(core, graphics_context),
 	];
 
 	app_list[app_index].initialize();
@@ -58,7 +58,10 @@ void main()
 		}
 		if (app_index_next != app_index)
 		{
+			writefln("finalize : %s", app_index);
 			app_list[app_index].finalize();
+			core.subsystem.pool.query!(TimerSubsystem)().sleep(100);
+			writefln("initialize : %s", app_index_next);
 			app_list[app_index_next].initialize();
 			app_index = app_index_next;
 		}

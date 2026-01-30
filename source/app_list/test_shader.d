@@ -16,14 +16,10 @@ class ShaderTest : AppInterface
 	GfxGraphicsContext graphics_context;
 
 	GfxRenderContext render_context;
-	GfxGeometry!(VertexPCS, ushort) geometry;
+	GfxGeometry!(VertexPC, ushort) geometry;
 	GpuGraphicsPipeline graphics_pipeline;
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
-	GpuTexture texture;
-	GpuSampler sampler;
-
-	Surface image;
 
 	this(Core core, GfxGraphicsContext graphics_context)
 	{
@@ -40,7 +36,7 @@ class ShaderTest : AppInterface
 		vertex_shader = graphics_context.create_vertex_shader();
 		fragment_shader = graphics_context.create_fragment_shader();
 		vertex_shader.create(
-			ShaderFile("PositionColor.vert", graphics_context.get_shader_format()),
+			ShaderFile("pos_color.vert", graphics_context.get_shader_format()),
 			GpuShaderArguments(0, 2, 0, 0),
 		);
 		fragment_shader.create(
@@ -48,6 +44,7 @@ class ShaderTest : AppInterface
 			GpuShaderArguments(0, 0, 0, 0),
 		);
 		// Pipeline
+		//assert(VertexPC.sizeof == float.sizeof * 4);
 		scope GpuGraphicsPipelineCreateInfo pipeline_create_info;
 		pipeline_create_info.vertex_shader = vertex_shader.handle;
 		pipeline_create_info.fragment_shader = fragment_shader.handle;
@@ -57,7 +54,7 @@ class ShaderTest : AppInterface
 				[
 				GpuVertexBufferDescription(
 					0,
-					float.sizeof * (3+4+1),
+					float.sizeof * 7,
 					GpuVertexInputRate.vertex,
 					0
 				)
@@ -69,9 +66,6 @@ class ShaderTest : AppInterface
 				GpuVertexAttribute(
 					1, 0, GpuVertexElementFormat.float4, float.sizeof * 3
 				),
-				GpuVertexAttribute(
-					2, 0, GpuVertexElementFormat.float1, float.sizeof * 7
-				)
 			]
 			);
 			primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
@@ -88,10 +82,10 @@ class ShaderTest : AppInterface
 
 		// Geometry
 		geometry.vertex = [
-			VertexPCS(Vec3(-0.5f, -0.5f, 0.0f), ColorF(1.0f, 0.0f, 0.0f), 1.0f),
-			VertexPCS(Vec3(+0.5f, -0.5f, 0.0f,), ColorF(0.0f, 1.0f, 0.0f), 1.0f),
-			VertexPCS(Vec3(0.5f, +0.5f, 0.0f,), ColorF(0.0f, 0.0f, 1.0f), 1.0f),
-			VertexPCS(Vec3(-0.5f, +0.5f, 0.0f,), ColorF(1.0f, 0.0f, 1.0f), 1.0f),
+			VertexPC(Vec3(-0.5f, -0.5f, 0.0f), ColorF(1.0f, 0.0f, 0.0f)),
+			VertexPC(Vec3(+0.5f, -0.5f, 0.0f,), ColorF(0.0f, 1.0f, 0.0f)),
+			VertexPC(Vec3(+0.5f, +0.5f, 0.0f,), ColorF(0.0f, 0.0f, 1.0f)),
+			VertexPC(Vec3(-0.5f, +0.5f, 0.0f,), ColorF(1.0f, 0.0f, 1.0f)),
 		];
 		geometry.index = [0, 1, 2, 0, 2, 3];
 		// Buffer
@@ -134,10 +128,6 @@ class ShaderTest : AppInterface
 		return;
 	}
 
-	float x = 0.0f;
-	float y = 0.0f;
-	float z = 0.0f;
-
 	void process()
 	{
 
@@ -149,7 +139,12 @@ class ShaderTest : AppInterface
 		import std.math;
 
 		GpuColorTargetInfo color_target_info;
-		Matrix!(4, 4) pos_mat;
+		Matrix!(4, 4) view_mat, object_mat;
+
+		view_mat = multiply_ltor(
+			transformer_look_at(Vec3(0f, 0f, -20f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
+			transformer_perspective(PI_2),
+		);
 
 		render_context.acquire_buffer()
 			.acquire_texture()
@@ -163,23 +158,18 @@ class ShaderTest : AppInterface
 					.bind([vertex_buffer])
 					.bind(index_buffer);
 
-				pos_mat = multiply_ltor(
-					transformer_translate([0.0f, 0.0f, -80.0f]),
-					transformer_scale([0.3f, 0.3f, 0.3f]),
-					//transformer_rotate_z(cast(float)(timer.past * 0.001f * entity[0])),
+				object_mat = multiply_rtol(
+					//transformer_translate([0.0f, 0.0f, -10.0f]),
+					//transformer_translate([0.0f, 0.0f, -30.0f]),
+					transformer_rotate_x(0.0015 * timer.past),
+					transformer_scale([10.0f, 10.0f, 10.0f]),
 				);
-				render_context.push_vertex(pos_mat.transpose(), 0)
+				render_context.push_vertex(view_mat, 0)
+					.push_vertex(object_mat, 1)
 					.draw_indexed(ParamIndexedPrimitive(6, 1, 0, 0, 0));
 				render_context.end();
 				return;
 			}).submit();
 		return;
 	}
-}
-
-struct VertexPCS
-{
-	Vec3 pos;
-	ColorF color;
-	float size;
 }
