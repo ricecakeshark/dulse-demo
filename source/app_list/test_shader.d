@@ -40,7 +40,7 @@ class ShaderTest : AppInterface
 			GpuShaderArguments(0, 2, 0, 0),
 		);
 		fragment_shader.create(
-			ShaderFile("SolidColor.frag", graphics_context.get_shader_format()),
+			ShaderFile("solid_color.frag", graphics_context.get_shader_format()),
 			GpuShaderArguments(0, 0, 0, 0),
 		);
 		// Pipeline

@@ -14,7 +14,7 @@ class TestApp : AppInterface
 	GfxGraphicsContext graphics_context;
 
 	GfxRenderContext render_context;
-	GfxGeometry!(VertexPT, ushort) geometry;
+	GfxGeometry!(VertexPTC, ushort) geometry;
 	GpuGraphicsPipeline graphics_pipeline;
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
@@ -48,11 +48,11 @@ class TestApp : AppInterface
 		vertex_shader = graphics_context.create_vertex_shader();
 		fragment_shader = graphics_context.create_fragment_shader();
 		vertex_shader.create(
-			ShaderFile("TexturedQuadWithMatrix.vert", graphics_context.get_shader_format()),
-			GpuShaderArguments(0, 1, 0, 0),
+			ShaderFile("pos_uv.vert", graphics_context.get_shader_format()),
+			GpuShaderArguments(0, 2, 0, 0),
 		);
 		fragment_shader.create(
-			ShaderFile("TexturedQuadWithMultiplyColor.frag", graphics_context.get_shader_format()),
+			ShaderFile("uv.frag", graphics_context.get_shader_format()),
 			GpuShaderArguments(1, 1, 0, 0),
 		);
 		// Pipeline
@@ -65,7 +65,7 @@ class TestApp : AppInterface
 				[
 				GpuVertexBufferDescription(
 					0,
-					VertexPT.sizeof,
+					VertexPTC.sizeof,
 					GpuVertexInputRate.vertex,
 					0
 				)
@@ -75,8 +75,11 @@ class TestApp : AppInterface
 					0, 0, GpuVertexElementFormat.float3, 0
 				),
 				GpuVertexAttribute(
-					1, 0, GpuVertexElementFormat.float2, float.sizeof * 3
-				)
+					1, 0, GpuVertexElementFormat.float2, float.sizeof * 3,
+				),
+				GpuVertexAttribute(
+					2, 0, GpuVertexElementFormat.float4, float.sizeof * 5,
+				),
 			]
 			);
 			primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
@@ -103,10 +106,10 @@ class TestApp : AppInterface
 
 		// Geometry
 		geometry.vertex = [
-			VertexPT(Vec3(-0.5f, -0.5f, 0.0f), Vec2(0.0f, 0.0f,)),
-			VertexPT(Vec3(+0.5f, -0.5f, 0.0f,), Vec2(1.0f, 0.0f,)),
-			VertexPT(Vec3(0.5f, +0.5f, 0.0f,), Vec2(1.0f, 1.0f,)),
-			VertexPT(Vec3(-0.5f, +0.5f, 0.0f,), Vec2(0.0f, 1.0f,)),
+			VertexPTC(Vec3(-0.5f, -0.5f, 0.0f), Vec2(0.0f, 0.0f,), ColorF(0.5f, 0.5f, 0.5f, 0.5f,),),
+			VertexPTC(Vec3(+0.5f, -0.5f, 0.0f,), Vec2(1.0f, 0.0f,), ColorF(0.5f, 0.5f, 0.5f, 0.5f,),),
+			VertexPTC(Vec3(0.5f, +0.5f, 0.0f,), Vec2(1.0f, 1.0f,), ColorF(0.5f, 0.5f, 0.5f, 0.5f,),),
+			VertexPTC(Vec3(-0.5f, +0.5f, 0.0f,), Vec2(0.0f, 1.0f,), ColorF(0.5f, 0.5f, 0.5f, 0.5f,),),
 		];
 		geometry.index = [0, 1, 2, 0, 2, 3];
 		// Buffer
@@ -200,7 +203,12 @@ class TestApp : AppInterface
 		import std.math;
 
 		GpuColorTargetInfo color_target_info;
-		Matrix!(4, 4) pos_mat;
+		Matrix!(4, 4) view_mat, pos_mat;
+
+		view_mat = multiply_ltor(
+			transformer_look_at(Vec3(0f, 0f, -20f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
+			transformer_perspective(PI_2),
+		);
 
 		render_context.acquire_buffer()
 			.acquire_texture()
@@ -217,7 +225,6 @@ class TestApp : AppInterface
 				foreach (entity; entity_list)
 				{
 					pos_mat = multiply_ltor(
-						transformer_translate([0.0f, 0.0f, -80.0f]),
 						transformer_translate(
 						[
 							cos((0.001f * timer.past) * entity[0]) * 0.9f,
@@ -225,10 +232,11 @@ class TestApp : AppInterface
 							0.0f
 						]
 					),
-					transformer_scale([0.3f, 0.3f, 0.3f]),
+					transformer_scale([10.0f, 10.0f, 10.0f]),
 					transformer_rotate_z(cast(float)(timer.past * 0.001f * entity[0])),
 					);
-					render_context.push_vertex(pos_mat.transpose(), 0)
+					render_context.push_vertex(view_mat, 0)
+						.push_vertex(pos_mat, 1)
 						.push_fragment(
 							Vector!(4)(
 							cos((0.001f * timer.past) * entity[1])
