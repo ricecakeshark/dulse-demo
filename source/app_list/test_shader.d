@@ -28,7 +28,7 @@ class ShaderTest : AppInterface
 		return;
 	}
 
-	void initialize()
+	override void initialize()
 	{
 		// Shader
 		scope GpuVertexShader vertex_shader;
@@ -122,19 +122,19 @@ class ShaderTest : AppInterface
 		return;
 	}
 
-	void finalize()
+	override void finalize()
 	{
 		graphics_context.release_all();
 		return;
 	}
 
-	void process()
+	override void process()
 	{
 
 		return;
 	}
 
-	void draw()
+	override void draw()
 	{
 		import std.math;
 
@@ -171,5 +171,10 @@ class ShaderTest : AppInterface
 				return;
 			}).submit();
 		return;
+	}
+
+	override int opCmp(Object other) const
+	{
+		return 0;
 	}
 }

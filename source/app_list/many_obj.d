@@ -14,7 +14,7 @@ class TestApp : AppInterface
 	GfxGraphicsContext graphics_context;
 
 	GfxRenderContext render_context;
-	GfxGeometry!(VertexPTC, ushort) geometry;
+	GfxGeometry!(VertexPT, uint) geometry;
 	GpuGraphicsPipeline graphics_pipeline;
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
@@ -32,7 +32,7 @@ class TestApp : AppInterface
 		return;
 	}
 
-	void initialize()
+	override void initialize()
 	{
 		foreach (ref entity; entity_list)
 		{
@@ -48,11 +48,11 @@ class TestApp : AppInterface
 		vertex_shader = graphics_context.create_vertex_shader();
 		fragment_shader = graphics_context.create_fragment_shader();
 		vertex_shader.create(
-			ShaderFile("pos_uv.vert", graphics_context.get_shader_format()),
+			ShaderFile("pos_uv.vert", graphics_context.get_shader_format()), //ShaderFile("TexturedQuad.vert", graphics_context.get_shader_format()),
 			GpuShaderArguments(0, 2, 0, 0),
 		);
 		fragment_shader.create(
-			ShaderFile("uv.frag", graphics_context.get_shader_format()),
+			ShaderFile("uv.frag", graphics_context.get_shader_format()), //ShaderFile("TexturedQuad.frag", graphics_context.get_shader_format()),
 			GpuShaderArguments(1, 1, 0, 0),
 		);
 		// Pipeline
@@ -65,7 +65,7 @@ class TestApp : AppInterface
 				[
 				GpuVertexBufferDescription(
 					0,
-					VertexPTC.sizeof,
+					VertexPT.sizeof,
 					GpuVertexInputRate.vertex,
 					0
 				)
@@ -76,9 +76,6 @@ class TestApp : AppInterface
 				),
 				GpuVertexAttribute(
 					1, 0, GpuVertexElementFormat.float2, float.sizeof * 3,
-				),
-				GpuVertexAttribute(
-					2, 0, GpuVertexElementFormat.float4, float.sizeof * 5,
 				),
 			]
 			);
@@ -106,17 +103,17 @@ class TestApp : AppInterface
 
 		// Geometry
 		geometry.vertex = [
-			VertexPTC(Vec3(-0.5f, -0.5f, 0.0f), Vec2(0.0f, 0.0f,), ColorF(0.5f, 0.5f, 0.5f, 0.5f,),),
-			VertexPTC(Vec3(+0.5f, -0.5f, 0.0f,), Vec2(1.0f, 0.0f,), ColorF(0.5f, 0.5f, 0.5f, 0.5f,),),
-			VertexPTC(Vec3(0.5f, +0.5f, 0.0f,), Vec2(1.0f, 1.0f,), ColorF(0.5f, 0.5f, 0.5f, 0.5f,),),
-			VertexPTC(Vec3(-0.5f, +0.5f, 0.0f,), Vec2(0.0f, 1.0f,), ColorF(0.5f, 0.5f, 0.5f, 0.5f,),),
+			VertexPT(Vec3(-0.5f, -0.5f, 0.0f), Vec2(0.0f, 0.0f,),),
+			VertexPT(Vec3(+0.5f, -0.5f, 0.0f,), Vec2(1.0f, 0.0f,),),
+			VertexPT(Vec3(0.5f, +0.5f, 0.0f,), Vec2(1.0f, 1.0f,),),
+			VertexPT(Vec3(-0.5f, +0.5f, 0.0f,), Vec2(0.0f, 1.0f,),),
 		];
 		geometry.index = [0, 1, 2, 0, 2, 3];
 		// Buffer
 		vertex_buffer = graphics_context.create_vertex_buffer();
 		vertex_buffer.create(geometry.size_vertex);
 		index_buffer = graphics_context.create_index_buffer();
-		index_buffer.create(geometry.size_index);
+		index_buffer.create(geometry.size_index, GpuIndexElementSize._32bit);
 
 		// texture
 		image = new Surface();
@@ -182,7 +179,7 @@ class TestApp : AppInterface
 		return;
 	}
 
-	void finalize()
+	override void finalize()
 	{
 		graphics_context.release_all();
 		return;
@@ -192,13 +189,12 @@ class TestApp : AppInterface
 	float y = 0.0f;
 	float z = 0.0f;
 
-	void process()
+	override void process()
 	{
-
 		return;
 	}
 
-	void draw()
+	override void draw()
 	{
 		import std.math;
 
@@ -206,7 +202,7 @@ class TestApp : AppInterface
 		Matrix!(4, 4) view_mat, pos_mat;
 
 		view_mat = multiply_ltor(
-			transformer_look_at(Vec3(0f, 0f, -20f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
+			transformer_look_at(Vec3(0f, 0f, -20f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)), //transformer_ortho_wh(960f,540f),
 			transformer_perspective(PI_2),
 		);
 
@@ -225,15 +221,13 @@ class TestApp : AppInterface
 				foreach (entity; entity_list)
 				{
 					pos_mat = multiply_ltor(
-						transformer_translate(
-						[
-							cos((0.001f * timer.past) * entity[0]) * 0.9f,
-							sin((0.001f * timer.past) * entity[1]) * 0.9f,
-							0.0f
-						]
-					),
-					transformer_scale([10.0f, 10.0f, 10.0f]),
-					transformer_rotate_z(cast(float)(timer.past * 0.001f * entity[0])),
+						transformer_scale([10.0f, 10.0f, 10.0f]),
+						transformer_rotate_z(timer.past * 0.002f * entity[0]),
+						transformer_translate([
+							cos((0.0012f * timer.past) * entity[0]) * 10.0f,
+							sin((0.0013f * timer.past) * entity[1]) * 10.0f,
+							cos((0.0015f * timer.past) * entity[0]) * 10.0f
+						]),
 					);
 					render_context.push_vertex(view_mat, 0)
 						.push_vertex(pos_mat, 1)
@@ -243,7 +237,8 @@ class TestApp : AppInterface
 							.fabs() * 0.9f,
 							cos((0.001f * timer.past) * entity[2])
 							.fabs() * 0.9f,
-							1.0f, 1.0f), 0
+							1.0f, 1.0f),
+							0,
 						)
 						.draw_indexed(ParamIndexedPrimitive(6, 1, 0, 0, 0));
 				}
@@ -251,5 +246,10 @@ class TestApp : AppInterface
 				return;
 			}).submit();
 		return;
+	}
+
+	override int opCmp(Object other) const
+	{
+		return 0;
 	}
 }

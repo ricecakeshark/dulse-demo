@@ -9,6 +9,7 @@ import bindbc.sdl;
 import std.math;
 import std.stdio;
 import core.memory;
+import std.sumtype;
 
 GfxGraphicsContext graphics_context;
 
@@ -31,11 +32,15 @@ void main()
 	device = core.subsystem.pool.query!(DeviceSubsystem)();
 
 	graphics_context = new GfxGraphicsContext();
-	graphics_context.initialize();
+	graphics_context.initialize(GpuBackend.vulkan);
 
-	app_list = cast(AppInterface[])[
-		new TestApp(core, graphics_context),
-		new ShaderTest(core, graphics_context),
+
+	//alias App = SumType!(TestApp,ShaderTest);
+	//VariantPool!(App) app_list;
+
+	app_list = [
+		cast(AppInterface)new TestApp(core, graphics_context),
+		cast(AppInterface)new ShaderTest(core, graphics_context),
 	];
 
 	app_list[app_index].initialize();
