@@ -44,7 +44,6 @@ class ShaderTest : AppInterface
 			GpuShaderArguments(0, 0, 0, 0),
 		);
 		// Pipeline
-		//assert(VertexPC.sizeof == float.sizeof * 4);
 		scope GpuGraphicsPipelineCreateInfo pipeline_create_info;
 		pipeline_create_info.vertex_shader = vertex_shader.handle;
 		pipeline_create_info.fragment_shader = fragment_shader.handle;
@@ -159,8 +158,6 @@ class ShaderTest : AppInterface
 					.bind(index_buffer);
 
 				object_mat = multiply_rtol(
-					//transformer_translate([0.0f, 0.0f, -10.0f]),
-					//transformer_translate([0.0f, 0.0f, -30.0f]),
 					transformer_rotate_x(0.0015 * timer.past),
 					transformer_scale([10.0f, 10.0f, 10.0f]),
 				);

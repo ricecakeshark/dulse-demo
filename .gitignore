@@ -3,7 +3,10 @@ lib_st/
 lib_dy/
 include/
 build/
-shader/*
+
+shader/
+image/
+se/
 
 # D
 *.exe
