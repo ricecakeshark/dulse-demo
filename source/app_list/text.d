@@ -59,7 +59,7 @@ class TextApp : AppInterface
 			GpuShaderArguments(0, 2, 0, 0),
 		);
 		fragment_shader.create(
-			ShaderFile("uv.frag", graphics.device.get_shader_format()),
+			ShaderFile("text.frag", graphics.device.get_shader_format()),
 			GpuShaderArguments(1, 1, 0, 0),
 		);
 
@@ -114,7 +114,7 @@ class TextApp : AppInterface
 
 		// vertex buffer
 		vertex_buffer = graphics.create_vertex_buffer();
-		vertex_buffer.create(VertexPCT.sizeof * max_vertex_count);
+		vertex_buffer.create(VertexPT.sizeof * max_vertex_count);
 		index_buffer = graphics.create_index_buffer();
 		index_buffer.create(int.sizeof * max_index_count, GpuIndexElementSize._32bit);
 
@@ -133,13 +133,14 @@ class TextApp : AppInterface
 
 		// text 
 		text_context.load_font("HackGen-Regular.ttf", 50.0f)
+			.set_SDF(true)
 			.create_engine()
 			.create_text("TEXT");
 
 		// upload
 		buffer_transfer_buffer = new GpuBufferTransferBuffer(graphics.device);
 		buffer_transfer_buffer.create_by_size(
-			VertexPCT.sizeof * max_vertex_count + int.sizeof * max_index_count
+			VertexPT.sizeof * max_vertex_count + int.sizeof * max_index_count
 		);
 
 		return;
@@ -165,7 +166,7 @@ class TextApp : AppInterface
 		int tw, th;
 
 		// text
-		string test_str = format("Test Text\n%s", timer.past);
+		string test_str = format("Outlined-String\n縁取り文字\n%s ms", timer.past);
 		text_context.set(test_str)
 			.get_text_size(tw, th)
 			.get_draw_data(text_geometry);
@@ -177,14 +178,14 @@ class TextApp : AppInterface
 		);
 		transformer_model = multiply_ltor(
 			transformer_translate([-tw / 2.0f, th / 2.0f, 0.0f]),
-			transformer_scale([0.3f, 0.3f, 0.3f]),
+			transformer_scale([0.5f, 0.5f, 0.5f]),
 			transformer_rotate_y(cast(float)(timer.past * 0.001f)),
 		);
 
 		// transfer
 		buffer_transfer_buffer.map()
 			.set(text_geometry.vertex, 0, text_geometry.size_vertex)
-			.set(text_geometry.index, VertexPCT.sizeof * max_vertex_count, text_geometry.size_index)
+			.set(text_geometry.index, VertexPT.sizeof * max_vertex_count, text_geometry.size_index)
 			.unmap();
 
 		// upload
@@ -194,7 +195,7 @@ class TextApp : AppInterface
 				GpuBufferRegion(vertex_buffer, 0, text_geometry.size_vertex),
 			)
 			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, VertexPCT.sizeof * max_vertex_count),
+				GpuTransferBufferLocation(buffer_transfer_buffer, VertexPT.sizeof * max_vertex_count),
 				GpuBufferRegion(index_buffer, 0, text_geometry.size_index),
 			)
 			.end()
@@ -208,14 +209,15 @@ class TextApp : AppInterface
 					render_context.swapchain_texture,
 					GpuLoadOp.clear, GpuStoreOp.store,
 				);
-				color_target_info.clear_color = ColorF(0.3f, 0.4f, 0.5f, 1.0f);
+				color_target_info.clear_color = ColorF(0.4f, 0.6f, 0.8f, 1.0f);
 				render_context.begin([color_target_info])
 					.bind(pipeline)
 					.bind([vertex_buffer])
 					.bind(index_buffer);
 				render_context.push_vertex(transformer_projection, 0)
 					.push_vertex(transformer_model, 1)
-					.push_fragment(Vec4(1.0f, 1.0f, 1.0f, 1.0f), 0);
+					.push_fragment(
+						Vector!(8)(1.0f, 1.0f, 1.0f, 1.0f, 0.2f, 0.2f, 0.2f, 1.0f), 0);
 				text_context.process_draw_data(
 					(TTF_GPUAtlasDrawSequence* seq_ptr) {
 					render_context.bind([
