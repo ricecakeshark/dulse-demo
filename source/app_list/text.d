@@ -112,6 +112,12 @@ class TextApp : AppInterface
 		pipeline = graphics.create_graphics_pipeline();
 		pipeline.create(pipeline_create_info);
 
+		// geometry
+		text_geometry.initialize(
+			VertexPT.sizeof * max_vertex_count,
+			int.sizeof * max_index_count,
+		);
+
 		// vertex buffer
 		vertex_buffer = graphics.create_vertex_buffer();
 		vertex_buffer.create(VertexPT.sizeof * max_vertex_count);
@@ -182,7 +188,6 @@ class TextApp : AppInterface
 			transformer_scale([0.5f, 0.5f, 0.5f]),
 			transformer_rotate_y(cast(float)(timer.past * 0.001f)),
 		);
-
 		// transfer
 		buffer_transfer_buffer.map()
 			.set(text_geometry.vertex, 0, text_geometry.size_vertex)
