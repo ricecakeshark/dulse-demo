@@ -25,6 +25,10 @@ se/
 !*.hlsl
 !*.glsl
 
+# font
+*.ttf
+*.otf
+
 # VSCode
 .vscode/*
 !.vscode/tasks.json
