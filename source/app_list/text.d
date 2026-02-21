@@ -55,7 +55,7 @@ class TextApp : AppInterface
 		fragment_shader = graphics.create_fragment_shader();
 
 		vertex_shader.create(
-			ShaderFile("pos_uv.vert", graphics.device.get_shader_format()), //ShaderFile("const_position.vert", graphics.device.get_shader_format()),
+			ShaderFile("texture.vert", graphics.device.get_shader_format()), //ShaderFile("const_position.vert", graphics.device.get_shader_format()),
 			GpuShaderArguments(0, 2, 0, 0),
 		);
 		fragment_shader.create(
@@ -134,6 +134,7 @@ class TextApp : AppInterface
 		// text 
 		text_context.load_font("HackGen-Regular.ttf", 50.0f)
 			.set_SDF(true)
+			.set(TextAlign.center)
 			.create_engine()
 			.create_text("TEXT");
 

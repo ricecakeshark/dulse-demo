@@ -48,11 +48,11 @@ class TestApp : AppInterface
 		vertex_shader = graphics_context.create_vertex_shader();
 		fragment_shader = graphics_context.create_fragment_shader();
 		vertex_shader.create(
-			ShaderFile("pos_uv.vert", graphics_context.get_shader_format()), //ShaderFile("TexturedQuad.vert", graphics_context.get_shader_format()),
+			ShaderFile("texture.vert", graphics_context.get_shader_format()), //ShaderFile("TexturedQuad.vert", graphics_context.get_shader_format()),
 			GpuShaderArguments(0, 2, 0, 0),
 		);
 		fragment_shader.create(
-			ShaderFile("uv.frag", graphics_context.get_shader_format()), //ShaderFile("TexturedQuad.frag", graphics_context.get_shader_format()),
+			ShaderFile("texture.frag", graphics_context.get_shader_format()), //ShaderFile("TexturedQuad.frag", graphics_context.get_shader_format()),
 			GpuShaderArguments(1, 1, 0, 0),
 		);
 		// Pipeline

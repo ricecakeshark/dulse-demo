@@ -36,11 +36,11 @@ class ShaderTest : AppInterface
 		vertex_shader = graphics_context.create_vertex_shader();
 		fragment_shader = graphics_context.create_fragment_shader();
 		vertex_shader.create(
-			ShaderFile("pos_color.vert", graphics_context.get_shader_format()),
+			ShaderFile("vertex_color.vert", graphics_context.get_shader_format()),
 			GpuShaderArguments(0, 2, 0, 0),
 		);
 		fragment_shader.create(
-			ShaderFile("solid_color.frag", graphics_context.get_shader_format()),
+			ShaderFile("vertex_color.frag", graphics_context.get_shader_format()),
 			GpuShaderArguments(0, 0, 0, 0),
 		);
 		// Pipeline
