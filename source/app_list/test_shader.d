@@ -16,7 +16,7 @@ class ShaderTest : AppInterface
 	GfxGraphicsContext graphics_context;
 
 	GfxRenderContext render_context;
-	GfxGeometry!(VertexPC, ushort) geometry;
+	GfxGeometry!(VertexPC, uint) geometry;
 	GpuGraphicsPipeline graphics_pipeline;
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
@@ -89,14 +89,14 @@ class ShaderTest : AppInterface
 		geometry.index = [0, 1, 2, 0, 2, 3];
 		// Buffer
 		vertex_buffer = graphics_context.create_vertex_buffer();
-		vertex_buffer.create(geometry.size_vertex);
+		vertex_buffer.create(geometry.count_vertex, geometry.stride_vertex);
 		index_buffer = graphics_context.create_index_buffer();
-		index_buffer.create(geometry.size_index);
+		index_buffer.create(geometry.count_index, GpuIndexElementSize._32bit);
 
 		// upload
 		scope GpuBufferTransferBuffer buffer_transfer_buffer;
 		buffer_transfer_buffer = new GpuBufferTransferBuffer(graphics_context.device);
-		buffer_transfer_buffer.create(geometry.size)
+		buffer_transfer_buffer.create(geometry.bytes)
 			.map()
 			.set(geometry.vertex, geometry.offset_vertex)
 			.set(geometry.index, geometry.offset_index)

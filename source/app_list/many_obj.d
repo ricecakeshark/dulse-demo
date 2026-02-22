@@ -111,9 +111,9 @@ class TestApp : AppInterface
 		geometry.index = [0, 1, 2, 0, 2, 3];
 		// Buffer
 		vertex_buffer = graphics_context.create_vertex_buffer();
-		vertex_buffer.create(geometry.size_vertex);
+		vertex_buffer.create(geometry.count_vertex, geometry.stride_vertex);
 		index_buffer = graphics_context.create_index_buffer();
-		index_buffer.create(geometry.size_index, GpuIndexElementSize._32bit);
+		index_buffer.create(geometry.count_index, GpuIndexElementSize._32bit);
 
 		// texture
 		image = new Surface();
@@ -140,7 +140,7 @@ class TestApp : AppInterface
 		// upload
 		scope GpuBufferTransferBuffer buffer_transfer_buffer;
 		buffer_transfer_buffer = new GpuBufferTransferBuffer(graphics_context.device);
-		buffer_transfer_buffer.create(geometry.size)
+		buffer_transfer_buffer.create(geometry.bytes)
 			.map()
 			.set(geometry.vertex, geometry.offset_vertex)
 			.set(geometry.index, geometry.offset_index)

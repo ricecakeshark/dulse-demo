@@ -114,15 +114,14 @@ class TextApp : AppInterface
 
 		// geometry
 		text_geometry.initialize(
-			VertexPT.sizeof * max_vertex_count,
-			int.sizeof * max_index_count,
+			max_vertex_count,
+			max_index_count,
 		);
-
 		// vertex buffer
 		vertex_buffer = graphics.create_vertex_buffer();
-		vertex_buffer.create(VertexPT.sizeof * max_vertex_count);
+		vertex_buffer.create(max_vertex_count, VertexPT.sizeof);
 		index_buffer = graphics.create_index_buffer();
-		index_buffer.create(int.sizeof * max_index_count, GpuIndexElementSize._32bit);
+		index_buffer.create(max_index_count, GpuIndexElementSize._32bit);
 
 		// sampler
 		sampler = graphics.create_sampler();
@@ -147,7 +146,7 @@ class TextApp : AppInterface
 		// upload
 		buffer_transfer_buffer = new GpuBufferTransferBuffer(graphics.device);
 		buffer_transfer_buffer.create_by_size(
-			VertexPT.sizeof * max_vertex_count + int.sizeof * max_index_count
+			VertexPT.sizeof * max_vertex_count + uint.sizeof * max_index_count
 		);
 
 		return;
@@ -190,19 +189,19 @@ class TextApp : AppInterface
 		);
 		// transfer
 		buffer_transfer_buffer.map()
-			.set(text_geometry.vertex, 0, text_geometry.size_vertex)
-			.set(text_geometry.index, VertexPT.sizeof * max_vertex_count, text_geometry.size_index)
+			.set(text_geometry.vertex, text_geometry.offset_vertex)
+			.set(text_geometry.index, text_geometry.offset_index)
 			.unmap();
 
 		// upload
 		upload_context.begin()
 			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, 0),
-				GpuBufferRegion(vertex_buffer, 0, text_geometry.size_vertex),
+				GpuTransferBufferLocation(buffer_transfer_buffer, text_geometry.offset_vertex),
+				GpuBufferRegion(vertex_buffer, 0),
 			)
 			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, VertexPT.sizeof * max_vertex_count),
-				GpuBufferRegion(index_buffer, 0, text_geometry.size_index),
+				GpuTransferBufferLocation(buffer_transfer_buffer, text_geometry.offset_index),
+				GpuBufferRegion(index_buffer, 0),
 			)
 			.end()
 			.submit();
