@@ -7,7 +7,7 @@ import kelp_core;
 import kelp_sdl;
 import kelp_gfx;
 import bindbc.sdl;
-
+/+
 class ShaderTest : AppInterface
 {
 	Core core;
@@ -16,7 +16,7 @@ class ShaderTest : AppInterface
 	GfxGraphicsContext graphics_context;
 
 	GfxRenderContext render_context;
-	GfxGeometry!(VertexPC, uint) geometry;
+	GfxGeometry geometry_list;
 	GpuGraphicsPipeline graphics_pipeline;
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
@@ -80,13 +80,13 @@ class ShaderTest : AppInterface
 		graphics_pipeline.create(pipeline_create_info);
 
 		// Geometry
-		geometry.vertex = [
+		geometry_list.vertex = [
 			VertexPC(Vec3(-0.5f, -0.5f, 0.0f), ColorF(1.0f, 0.0f, 0.0f)),
 			VertexPC(Vec3(+0.5f, -0.5f, 0.0f,), ColorF(0.0f, 1.0f, 0.0f)),
 			VertexPC(Vec3(+0.5f, +0.5f, 0.0f,), ColorF(0.0f, 0.0f, 1.0f)),
 			VertexPC(Vec3(-0.5f, +0.5f, 0.0f,), ColorF(1.0f, 0.0f, 1.0f)),
 		];
-		geometry.index = [0, 1, 2, 0, 2, 3];
+		geometry_list.index = [0, 1, 2, 0, 2, 3];
 		// Buffer
 		vertex_buffer = graphics_context.create_vertex_buffer();
 		vertex_buffer.create(geometry.count_vertex, geometry.stride_vertex);
@@ -175,3 +175,4 @@ class ShaderTest : AppInterface
 		return 0;
 	}
 }
++/

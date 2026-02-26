@@ -7,8 +7,8 @@ import kelp_gfx;
 import bindbc.sdl;
 
 import std.stdio;
-
-class KeyboardApp : AppInterface
+/+
+ class KeyboardApp : AppInterface
 {
 	Core core;
 	DeviceSubsystem device;
@@ -16,7 +16,7 @@ class KeyboardApp : AppInterface
 	GfxGraphicsContext graphics_context;
 
 	GfxRenderContext render_context;
-	GfxGeometry!(VertexPT, uint) geometry;
+	GfxGeometry[] geometry_list;
 	GpuGraphicsPipeline graphics_pipeline;
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
@@ -111,10 +111,10 @@ class KeyboardApp : AppInterface
 
 		// Geometry
 		geometry.vertex = [
-			VertexPT(Vec3(-0.5f, -0.5f, 0.0f), Vec2(0.0f, 0.0f,),),
+			/+VertexPT(Vec3(-0.5f, -0.5f, 0.0f), Vec2(0.0f, 0.0f,),),
 			VertexPT(Vec3(+0.5f, -0.5f, 0.0f,), Vec2(1.0f, 0.0f,),),
 			VertexPT(Vec3(0.5f, +0.5f, 0.0f,), Vec2(1.0f, 1.0f,),),
-			VertexPT(Vec3(-0.5f, +0.5f, 0.0f,), Vec2(0.0f, 1.0f,),),
+			VertexPT(Vec3(-0.5f, +0.5f, 0.0f,), Vec2(0.0f, 1.0f,),),+/
 		];
 		geometry.index = [0, 1, 2, 0, 2, 3];
 		// Buffer
@@ -320,3 +320,4 @@ class KeyboardApp : AppInterface
 		return 0;
 	}
 }
++/

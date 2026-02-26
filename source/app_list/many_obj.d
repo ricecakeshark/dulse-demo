@@ -5,7 +5,7 @@ import kelp_core;
 import kelp_sdl;
 import kelp_gfx;
 import bindbc.sdl;
-
+/+
 class TestApp : AppInterface
 {
 	Core core;
@@ -14,7 +14,7 @@ class TestApp : AppInterface
 	GfxGraphicsContext graphics_context;
 
 	GfxRenderContext render_context;
-	GfxGeometry!(VertexPT, uint) geometry;
+	GfxGeometry geometry_list;
 	GpuGraphicsPipeline graphics_pipeline;
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
@@ -103,10 +103,10 @@ class TestApp : AppInterface
 
 		// Geometry
 		geometry.vertex = [
-			VertexPT(Vec3(-0.5f, -0.5f, 0.0f), Vec2(0.0f, 0.0f,),),
+			/+VertexPT(Vec3(-0.5f, -0.5f, 0.0f), Vec2(0.0f, 0.0f,),),
 			VertexPT(Vec3(+0.5f, -0.5f, 0.0f,), Vec2(1.0f, 0.0f,),),
 			VertexPT(Vec3(0.5f, +0.5f, 0.0f,), Vec2(1.0f, 1.0f,),),
-			VertexPT(Vec3(-0.5f, +0.5f, 0.0f,), Vec2(0.0f, 1.0f,),),
+			VertexPT(Vec3(-0.5f, +0.5f, 0.0f,), Vec2(0.0f, 1.0f,),),+/
 		];
 		geometry.index = [0, 1, 2, 0, 2, 3];
 		// Buffer
@@ -140,10 +140,10 @@ class TestApp : AppInterface
 		// upload
 		scope GpuBufferTransferBuffer buffer_transfer_buffer;
 		buffer_transfer_buffer = new GpuBufferTransferBuffer(graphics_context.device);
-		buffer_transfer_buffer.create(geometry.bytes)
+		buffer_transfer_buffer.create(geometry_list.bytes)
 			.map()
-			.set(geometry.vertex, geometry.offset_vertex)
-			.set(geometry.index, geometry.offset_index)
+			.set(geometry_list.vertex, geometry_list.offset_vertex)
+			.set(geometry_list.index, geometry_list.offset_index)
 			.unmap();
 
 		scope GpuTextureTransferBuffer texture_transfer_buffer;
@@ -157,11 +157,11 @@ class TestApp : AppInterface
 		upload_context = graphics_context.create_upload_context();
 		upload_context.begin()
 			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, geometry.offset_vertex),
+				GpuTransferBufferLocation(buffer_transfer_buffer, geometry_list.offset_vertex),
 				GpuBufferRegion(vertex_buffer, 0u)
 			)
 			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, geometry.offset_index),
+				GpuTransferBufferLocation(buffer_transfer_buffer, geometry_list.offset_index),
 				GpuBufferRegion(index_buffer, 0u)
 			)
 			.upload(
@@ -253,3 +253,4 @@ class TestApp : AppInterface
 		return 0;
 	}
 }
++/

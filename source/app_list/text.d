@@ -29,7 +29,8 @@ class TextApp : AppInterface
 
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
-	GfxGeometry!(VertexPT, uint) text_geometry;
+	GfxMesh text_mesh;
+	alias TextureGeometry = GfxGeometry!(VertexPT, uint);
 	GpuSampler sampler;
 
 	Matrix!(4, 4) transformer_projection, transformer_model;
@@ -113,9 +114,9 @@ class TextApp : AppInterface
 		pipeline.create(pipeline_create_info);
 
 		// geometry
-		text_geometry.initialize(
-			max_vertex_count,
-			max_index_count,
+		text_mesh.initialize(
+			VertexPT.sizeof * max_vertex_count,
+			uint.sizeof * max_index_count,
 		);
 		// vertex buffer
 		vertex_buffer = graphics.create_vertex_buffer();
@@ -172,10 +173,15 @@ class TextApp : AppInterface
 		int tw, th;
 
 		// text
-		string test_str = format("Outlined-String\n縁取り文字\n%s ms", timer.past);
+		string test_str = format("ABCDE 12345\n縁取り文字\n%s ms", timer.past);
 		text_context.set(test_str)
 			.get_text_size(tw, th)
-			.get_draw_data(text_geometry);
+			.get_draw_data!(TextureGeometry)(text_mesh);
+		/+writefln(
+				"%s %s",
+				text_mesh.count_vertex!(TextureGeometry),
+				text_mesh.count_index!(TextureGeometry)
+			);+/
 
 		// matrix
 		transformer_projection = multiply_ltor(
@@ -189,18 +195,18 @@ class TextApp : AppInterface
 		);
 		// transfer
 		buffer_transfer_buffer.map()
-			.set(text_geometry.vertex, text_geometry.offset_vertex)
-			.set(text_geometry.index, text_geometry.offset_index)
+			.set(text_mesh.data_vertex!(TextureGeometry), text_mesh.offset_vertex,text_mesh.bytes_vertex!(TextureGeometry))
+			.set(text_mesh.data_index!(TextureGeometry), text_mesh.offset_index,text_mesh.bytes_index!(TextureGeometry))
 			.unmap();
 
 		// upload
 		upload_context.begin()
 			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, text_geometry.offset_vertex),
+				GpuTransferBufferLocation(buffer_transfer_buffer, text_mesh.offset_vertex),
 				GpuBufferRegion(vertex_buffer, 0),
 			)
 			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, text_geometry.offset_index),
+				GpuTransferBufferLocation(buffer_transfer_buffer, text_mesh.offset_index),
 				GpuBufferRegion(index_buffer, 0),
 			)
 			.end()
@@ -223,6 +229,16 @@ class TextApp : AppInterface
 					.push_vertex(transformer_model, 1)
 					.push_fragment(
 						Vector!(8)(1.0f, 1.0f, 1.0f, 1.0f, 0.2f, 0.2f, 0.2f, 1.0f), 0);
+
+				/+foreach (geometry; cast(TextureGeometry[]) text_mesh.geometry_list)
+				{
+					render_context.draw_indexed(ParamIndexedPrimitive(
+						cast(uint) geometry.count_index, 1u, index_offset, vertex_offset, 0u
+					));
+					vertex_offset += geometry.count_vertex;
+					index_offset += geometry.count_index;
+				}+/
+
 				text_context.process_draw_data(
 					(TTF_GPUAtlasDrawSequence* seq_ptr) {
 					render_context.bind([

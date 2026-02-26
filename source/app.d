@@ -36,10 +36,10 @@ void main()
 	graphics_context.initialize(GpuBackend.vulkan);
 
 	app_list = [
-		cast(AppInterface) new TestApp(core, graphics_context),
-		new ShaderTest(core, graphics_context),
-		new TextApp(core, graphics_context),
-		new KeyboardApp(core, graphics_context),
+		//cast(AppInterface) new TestApp(core, graphics_context),
+		//new ShaderTest(core, graphics_context),
+		cast(AppInterface) new TextApp(core, graphics_context),
+		//new KeyboardApp(core, graphics_context),
 	];
 	app_list[app_index].initialize();
 
