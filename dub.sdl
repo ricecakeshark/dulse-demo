@@ -19,7 +19,7 @@ lflags "/LIBPATH:$PACKAGE_DIR\\lib_st" "/LIBPATH:$PACKAGE_DIR\\lib_dy"
 // SDL3 with kelp-sdl
 libs "SDL3" "SDL3_image" "SDL3_ttf"
 lflags "/LIBPATH:$PACKAGE_DIR\\..\\kelp_sdl\\build"
-versions "SDL_3_4_0" "SDL_Image_3_2" "SDL_TTF_3_2_2"
+versions "SDL_3_4_2" "SDL_Image_3_2" "SDL_TTF_3_2_2"
 subConfiguration "bindbc-sdl" "static"
 
 // kelp_render

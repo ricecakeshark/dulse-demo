@@ -27,10 +27,11 @@ class TextApp : AppInterface
 
 	GpuGraphicsPipeline pipeline;
 
+	alias TextureGeometry = GfxGeometry!(VertexPT, uint);
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
 	GfxMesh text_mesh;
-	alias TextureGeometry = GfxGeometry!(VertexPT, uint);
+	GpuRefTexture[] text_texture;
 	GpuSampler sampler;
 
 	Matrix!(4, 4) transformer_projection, transformer_model;
@@ -176,12 +177,7 @@ class TextApp : AppInterface
 		string test_str = format("ABCDE 12345\n縁取り文字\n%s ms", timer.past);
 		text_context.set(test_str)
 			.get_text_size(tw, th)
-			.get_draw_data!(TextureGeometry)(text_mesh);
-		/+writefln(
-				"%s %s",
-				text_mesh.count_vertex!(TextureGeometry),
-				text_mesh.count_index!(TextureGeometry)
-			);+/
+			.get_draw_data!(TextureGeometry)(text_mesh, text_texture);
 
 		// matrix
 		transformer_projection = multiply_ltor(
@@ -195,8 +191,8 @@ class TextApp : AppInterface
 		);
 		// transfer
 		buffer_transfer_buffer.map()
-			.set(text_mesh.data_vertex!(TextureGeometry), text_mesh.offset_vertex,text_mesh.bytes_vertex!(TextureGeometry))
-			.set(text_mesh.data_index!(TextureGeometry), text_mesh.offset_index,text_mesh.bytes_index!(TextureGeometry))
+			.set(text_mesh.data_vertex!(TextureGeometry), text_mesh.offset_vertex,)
+			.set(text_mesh.data_index!(TextureGeometry), text_mesh.offset_index,)
 			.unmap();
 
 		// upload
@@ -228,29 +224,22 @@ class TextApp : AppInterface
 				render_context.push_vertex(transformer_projection, 0)
 					.push_vertex(transformer_model, 1)
 					.push_fragment(
-						Vector!(8)(1.0f, 1.0f, 1.0f, 1.0f, 0.2f, 0.2f, 0.2f, 1.0f), 0);
+						Vector!(8)(1.0f, 1.0f, 1.0f, 1.0f, 0.2f, 0.2f, 0.2f, 1.0f), 0
+					);
 
-				/+foreach (geometry; cast(TextureGeometry[]) text_mesh.geometry_list)
+				foreach (count; 0 .. text_mesh.count!(TextureGeometry))
 				{
-					render_context.draw_indexed(ParamIndexedPrimitive(
-						cast(uint) geometry.count_index, 1u, index_offset, vertex_offset, 0u
-					));
-					vertex_offset += geometry.count_vertex;
-					index_offset += geometry.count_index;
-				}+/
-
-				text_context.process_draw_data(
-					(TTF_GPUAtlasDrawSequence* seq_ptr) {
+					TextureGeometry temp_geometry = text_mesh.geometry!(TextureGeometry)[count];
 					render_context.bind([
-						GpuTextureSamplerBinding(seq_ptr.atlas_texture, sampler.handle)
+						GpuTextureSamplerBinding(text_texture[count].handle, sampler.handle)
 					])
-					.draw_indexed(ParamIndexedPrimitive(
-					cast(uint) seq_ptr.num_indices, 1u, index_offset, vertex_offset, 0u
-					));
-
-					index_offset += seq_ptr.num_indices;
-					vertex_offset += seq_ptr.num_vertices;
-				});
+						.draw_indexed(ParamIndexedPrimitive(
+							cast(uint) temp_geometry.count_index,
+							1u, index_offset, vertex_offset, 0u
+						));
+					vertex_offset += temp_geometry.count_vertex;
+					index_offset += temp_geometry.count_index;
+				}
 				render_context.end();
 				return;
 			}).submit();
