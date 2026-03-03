@@ -5,8 +5,8 @@ import kelp_core;
 import kelp_sdl;
 import kelp_gfx;
 import bindbc.sdl;
-/+
-class TestApp : AppInterface
+
+class ManyObject : AppInterface
 {
 	Core core;
 	SDLDeviceSubsystem device;
@@ -14,7 +14,8 @@ class TestApp : AppInterface
 	GfxGraphicsContext graphics_context;
 
 	GfxRenderContext render_context;
-	GfxGeometry geometry_list;
+	GfxMesh object_mesh;
+	alias ObjectGeometry = GfxGeometry!(VertexPT, uint);
 	GpuGraphicsPipeline graphics_pipeline;
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
@@ -101,19 +102,29 @@ class TestApp : AppInterface
 		graphics_pipeline = graphics_context.create_graphics_pipeline();
 		graphics_pipeline.create(pipeline_create_info);
 
-		// Geometry
-		geometry.vertex = [
-			/+VertexPT(Vec3(-0.5f, -0.5f, 0.0f), Vec2(0.0f, 0.0f,),),
+		// Mesh, Geometry
+		ObjectGeometry object_geometry;
+		object_mesh.initialize(VertexPT.sizeof * 4, uint.sizeof * 6);
+		object_geometry = ObjectGeometry([
+			VertexPT(Vec3(-0.5f, -0.5f, 0.0f), Vec2(0.0f, 0.0f,),),
 			VertexPT(Vec3(+0.5f, -0.5f, 0.0f,), Vec2(1.0f, 0.0f,),),
 			VertexPT(Vec3(0.5f, +0.5f, 0.0f,), Vec2(1.0f, 1.0f,),),
-			VertexPT(Vec3(-0.5f, +0.5f, 0.0f,), Vec2(0.0f, 1.0f,),),+/
-		];
-		geometry.index = [0, 1, 2, 0, 2, 3];
+			VertexPT(Vec3(-0.5f, +0.5f, 0.0f,), Vec2(0.0f, 1.0f,),),
+		],
+		[0, 1, 2, 0, 2, 3],
+		);
+		object_mesh.set([object_geometry,]);
 		// Buffer
 		vertex_buffer = graphics_context.create_vertex_buffer();
-		vertex_buffer.create(geometry.count_vertex, geometry.stride_vertex);
+		vertex_buffer.create(
+			object_geometry.count_vertex,
+			object_geometry.stride_vertex
+		);
 		index_buffer = graphics_context.create_index_buffer();
-		index_buffer.create(geometry.count_index, GpuIndexElementSize._32bit);
+		index_buffer.create(
+			object_geometry.count_index,
+			GpuIndexElementSize._32bit
+		);
 
 		// texture
 		image = new Surface();
@@ -140,10 +151,10 @@ class TestApp : AppInterface
 		// upload
 		scope GpuBufferTransferBuffer buffer_transfer_buffer;
 		buffer_transfer_buffer = new GpuBufferTransferBuffer(graphics_context.device);
-		buffer_transfer_buffer.create(geometry_list.bytes)
+		buffer_transfer_buffer.create(object_geometry.bytes)
 			.map()
-			.set(geometry_list.vertex, geometry_list.offset_vertex)
-			.set(geometry_list.index, geometry_list.offset_index)
+			.set(object_geometry.vertices, object_geometry.offset_vertex)
+			.set(object_geometry.indices, object_geometry.offset_index)
 			.unmap();
 
 		scope GpuTextureTransferBuffer texture_transfer_buffer;
@@ -157,11 +168,11 @@ class TestApp : AppInterface
 		upload_context = graphics_context.create_upload_context();
 		upload_context.begin()
 			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, geometry_list.offset_vertex),
+				GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),
 				GpuBufferRegion(vertex_buffer, 0u)
 			)
 			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, geometry_list.offset_index),
+				GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_index),
 				GpuBufferRegion(index_buffer, 0u)
 			)
 			.upload(
@@ -253,4 +264,3 @@ class TestApp : AppInterface
 		return 0;
 	}
 }
-+/

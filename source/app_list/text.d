@@ -191,8 +191,8 @@ class TextApp : AppInterface
 		);
 		// transfer
 		buffer_transfer_buffer.map()
-			.set(text_mesh.data_vertex!(TextureGeometry), text_mesh.offset_vertex,)
-			.set(text_mesh.data_index!(TextureGeometry), text_mesh.offset_index,)
+			.set(text_mesh.vertices!(TextureGeometry), text_mesh.offset_vertex,)
+			.set(text_mesh.indices!(TextureGeometry), text_mesh.offset_index,)
 			.unmap();
 
 		// upload
@@ -229,7 +229,7 @@ class TextApp : AppInterface
 
 				foreach (count; 0 .. text_mesh.count!(TextureGeometry))
 				{
-					TextureGeometry temp_geometry = text_mesh.geometry!(TextureGeometry)[count];
+					TextureGeometry temp_geometry = text_mesh.geometries!(TextureGeometry)[count];
 					render_context.bind([
 						GpuTextureSamplerBinding(text_texture[count].handle, sampler.handle)
 					])
