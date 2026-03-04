@@ -9,7 +9,6 @@ import bindbc.sdl;
 class ManyObject : AppInterface
 {
 	Core core;
-	SDLDeviceSubsystem device;
 	TimerSubsystem timer;
 	GfxGraphicsContext graphics_context;
 
@@ -19,10 +18,9 @@ class ManyObject : AppInterface
 	GpuGraphicsPipeline graphics_pipeline;
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
-	GpuTexture texture;
-	GpuSampler sampler;
-
-	Surface image;
+	GpuTexture object_texture;
+	GpuSampler object_sampler;
+	Surface object_image;
 
 	float[3][100] entity_list;
 
@@ -127,19 +125,19 @@ class ManyObject : AppInterface
 		);
 
 		// texture
-		image = new Surface();
-		image.load("./image/dot4.png");
-		texture = graphics_context.create_texture();
-		texture.create(GpuTextureCreateInfo(
+		object_image = new Surface();
+		object_image.load("./image/dot4.png");
+		object_texture = graphics_context.create_texture();
+		object_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d, GpuTextureFormat.r8g8b8a8_unorm,
 				GpuTextureUsageFlags.sampler,
-				image.width, image.height,
+				object_image.width, object_image.height,
 				1, 1,
 		));
 
 		// sampler
-		sampler = graphics_context.create_sampler();
-		sampler.create(GpuSamplerCreateInfo(
+		object_sampler = graphics_context.create_sampler();
+		object_sampler.create(GpuSamplerCreateInfo(
 				GpuFilter.nearest,
 				GpuFilter.nearest,
 				GpuSamplerMipmapMode.nearest,
@@ -159,9 +157,9 @@ class ManyObject : AppInterface
 
 		scope GpuTextureTransferBuffer texture_transfer_buffer;
 		texture_transfer_buffer = new GpuTextureTransferBuffer(graphics_context.device);
-		texture_transfer_buffer.create(image.size)
+		texture_transfer_buffer.create(object_image.size)
 			.map()
-			.set(image)
+			.set(object_image)
 			.unmap();
 
 		scope GfxUploadContext upload_context;
@@ -177,7 +175,7 @@ class ManyObject : AppInterface
 			)
 			.upload(
 				GpuTextureTransferInfo(texture_transfer_buffer, 0),
-				GpuTextureRegion(texture.handle, 0, 0, 0, 0, 0, image.width, image.height, 1)
+				GpuTextureRegion(object_texture.handle, 0, 0, 0, 0, 0, object_image.width, object_image.height, 1)
 			)
 			.end()
 			.submit();
@@ -226,7 +224,7 @@ class ManyObject : AppInterface
 				);
 				render_context.begin([color_target_info])
 					.bind(graphics_pipeline)
-					.bind([GpuTextureSamplerBinding(texture, sampler)])
+					.bind([GpuTextureSamplerBinding(object_texture, object_sampler)])
 					.bind([vertex_buffer])
 					.bind(index_buffer);
 				foreach (entity; entity_list)
