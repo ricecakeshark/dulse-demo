@@ -37,7 +37,7 @@ void main()
 
 	app_list = [
 		cast(AppInterface) new ManyObject(core, graphics_context),
-		//new ShaderTest(core, graphics_context),
+		new ShaderTest(core, graphics_context),
 		cast(AppInterface) new TextApp(core, graphics_context),
 		//new KeyboardApp(core, graphics_context),
 	];

@@ -7,16 +7,16 @@ import kelp_core;
 import kelp_sdl;
 import kelp_gfx;
 import bindbc.sdl;
-/+
+
 class ShaderTest : AppInterface
 {
 	Core core;
-	SDLDeviceSubsystem device;
 	TimerSubsystem timer;
 	GfxGraphicsContext graphics_context;
 
 	GfxRenderContext render_context;
-	GfxGeometry geometry_list;
+	GfxMesh object_mesh;
+	GfxGeometry!(VertexPC, uint) object_geometry;
 	GpuGraphicsPipeline graphics_pipeline;
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
@@ -79,38 +79,44 @@ class ShaderTest : AppInterface
 		graphics_pipeline = graphics_context.create_graphics_pipeline();
 		graphics_pipeline.create(pipeline_create_info);
 
-		// Geometry
-		geometry_list.vertex = [
+		// Mesh
+		object_mesh.initialize(VertexPC.sizeof * 4, uint.sizeof * 6);
+		object_geometry.set(
+			[
 			VertexPC(Vec3(-0.5f, -0.5f, 0.0f), ColorF(1.0f, 0.0f, 0.0f)),
 			VertexPC(Vec3(+0.5f, -0.5f, 0.0f,), ColorF(0.0f, 1.0f, 0.0f)),
 			VertexPC(Vec3(+0.5f, +0.5f, 0.0f,), ColorF(0.0f, 0.0f, 1.0f)),
 			VertexPC(Vec3(-0.5f, +0.5f, 0.0f,), ColorF(1.0f, 0.0f, 1.0f)),
-		];
-		geometry_list.index = [0, 1, 2, 0, 2, 3];
+		],
+		[
+			0u, 1, 2, 0, 2, 3
+		],
+		);
+		object_mesh.set([object_geometry]);
 		// Buffer
 		vertex_buffer = graphics_context.create_vertex_buffer();
-		vertex_buffer.create(geometry.count_vertex, geometry.stride_vertex);
+		vertex_buffer.create(4, VertexPC.sizeof);
 		index_buffer = graphics_context.create_index_buffer();
-		index_buffer.create(geometry.count_index, GpuIndexElementSize._32bit);
+		index_buffer.create(6, GpuIndexElementSize._32bit);
 
 		// upload
 		scope GpuBufferTransferBuffer buffer_transfer_buffer;
 		buffer_transfer_buffer = new GpuBufferTransferBuffer(graphics_context.device);
-		buffer_transfer_buffer.create(geometry.bytes)
+		buffer_transfer_buffer.create(object_geometry.size)
 			.map()
-			.set(geometry.vertex, geometry.offset_vertex)
-			.set(geometry.index, geometry.offset_index)
+			.set(object_geometry.vertices, object_geometry.offset_vertex)
+			.set(object_geometry.indices, object_geometry.offset_index)
 			.unmap();
 
 		scope GfxUploadContext upload_context;
 		upload_context = graphics_context.create_upload_context();
 		upload_context.begin()
 			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, geometry.offset_vertex),
+				GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),
 				GpuBufferRegion(vertex_buffer, 0u)
 			)
 			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, geometry.offset_index),
+				GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_index),
 				GpuBufferRegion(index_buffer, 0u)
 			)
 			.end()
@@ -175,4 +181,3 @@ class ShaderTest : AppInterface
 		return 0;
 	}
 }
-+/

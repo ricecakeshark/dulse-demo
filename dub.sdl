@@ -1,11 +1,11 @@
-name "app"
+name "kelp-dev"
 description "test app for kelp"
 authors "RiceShark"
 copyright "Copyright © 2025, RiceShark"
 license "proprietary"
 
 targetType "executable"
-targetName "app"
+targetName "kelp-dev"
 targetPath "build"
 
 dependency "kelp-core" path="..\\kelp_core"
