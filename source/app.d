@@ -20,7 +20,7 @@ void main()
 	Core core;
 	DeviceSubsystem device;
 	AppInterface[] app_list;
-	LoopedInt!(3) app_index, app_index_next;
+	LoopedInt!(4) app_index, app_index_next;
 
 	core = new Core();
 	core.subsystem.append(
@@ -39,6 +39,7 @@ void main()
 		cast(AppInterface) new ManyObject(core, graphics_context),
 		new ShaderTest(core, graphics_context),
 		cast(AppInterface) new TextApp(core, graphics_context),
+		new ComputeDemo(core,graphics_context),
 		//new KeyboardApp(core, graphics_context),
 	];
 	app_list[app_index].initialize();
