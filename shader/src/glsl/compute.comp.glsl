@@ -31,15 +31,15 @@ void main()
 	//float param_x = mod(pos.x, 16.0*8);
 	//float param_y = mod(pos.y, 9.0*8);
 
-	if( pos.x%6 >= 0 && pos.x%6 <= 1 )
+	if( pos.x%12 >= 0 && pos.x%12 < 4 )
 	{
 		out_color = vec4(color.r, 0.2, 0.2, 1.0);
 	}
-	if( pos.x%6 >= 2 && pos.x%6 <= 3 )
+	if( pos.x%12 >= 4 && pos.x%12 < 8 )
 	{
 		out_color = vec4(0.2, color.g, 0.2, 1.0);
 	}
-	if( pos.x%6 >= 4 && pos.x%6 <= 5 )
+	if( pos.x%12 >= 8 && pos.x%12 < 12 )
 	{
 		out_color = vec4(0.2, 0.2, color.b, 1.0);
 	}

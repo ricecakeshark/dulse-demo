@@ -62,21 +62,9 @@ class ManyObject : AppInterface
 		{
 			vertex_input_state = GpuVertexInputState(
 				[
-				GpuVertexBufferDescription(
-					0,
-					VertexPT.sizeof,
-					GpuVertexInputRate.vertex,
-					0
-				)
-			],
-			[
-				GpuVertexAttribute(
-					0, 0, GpuVertexElementFormat.float3, 0
-				),
-				GpuVertexAttribute(
-					1, 0, GpuVertexElementFormat.float2, float.sizeof * 3,
-				),
-			]
+					vertex_buffer_description!(float[3], float[2])
+				],
+				vertex_attributes!(float[3], float[2])(0),
 			);
 			primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
 			target_info = GpuGraphicsPipelineTargetInfo(
@@ -184,7 +172,7 @@ class ManyObject : AppInterface
 		destroy(texture_transfer_buffer);
 
 		render_context = graphics_context.create_render_context();
-		timer = core.subsystem.pool.query!(TimerSubsystem)();
+		core.subsystem.pool.query(timer);
 		return;
 	}
 
@@ -224,7 +212,9 @@ class ManyObject : AppInterface
 				);
 				render_context.begin([color_target_info])
 					.bind(graphics_pipeline)
-					.bind([GpuTextureSamplerBinding(object_texture, object_sampler)])
+					.bind([
+						GpuTextureSamplerBinding(object_texture, object_sampler)
+					])
 					.bind([vertex_buffer])
 					.bind(index_buffer);
 				foreach (entity; entity_list)

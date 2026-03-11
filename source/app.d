@@ -3,7 +3,7 @@ module myapp;
 import app_list;
 import kelp_core;
 import kelp_sdl;
-import kelp_render;
+import kelp_gfx;
 import bindbc.sdl;
 
 import std.math;
@@ -23,14 +23,9 @@ void main()
 	LoopedInt!(4) app_index, app_index_next;
 
 	core = new Core();
-	core.subsystem.append(
-		new SDLSubsystem(core),
-		new SDLDeviceSubsystem(core),
-		new SDLEventSubsystem(core),
-		new AudioSubsystem(),
-	);
-	core.initialize();
-	device = core.subsystem.pool.query!(DeviceSubsystem)();
+	core.append_sdl_subsystem()
+		.initialize();
+	core.subsystem.query(device);
 
 	graphics_context = new GfxGraphicsContext();
 	graphics_context.initialize(GpuBackend.vulkan);
@@ -39,7 +34,7 @@ void main()
 		cast(AppInterface) new ManyObject(core, graphics_context),
 		new ShaderTest(core, graphics_context),
 		cast(AppInterface) new TextApp(core, graphics_context),
-		new ComputeDemo(core,graphics_context),
+		new ComputeDemo(core, graphics_context),
 		//new KeyboardApp(core, graphics_context),
 	];
 	app_list[app_index].initialize();

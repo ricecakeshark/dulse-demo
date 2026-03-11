@@ -74,21 +74,9 @@ class TextApp : AppInterface
 			//vertex_input_state = GpuVertexInputState().position_color_texture();
 			vertex_input_state = GpuVertexInputState(
 				[
-				GpuVertexBufferDescription(
-					0,
-					VertexPT.sizeof,
-					GpuVertexInputRate.vertex,
-					0
-				)
-			],
-			[
-				GpuVertexAttribute(
-					0, 0, GpuVertexElementFormat.float3, 0
-				),
-				GpuVertexAttribute(
-					1, 0, GpuVertexElementFormat.float2, float.sizeof * 3
-				)
-			]
+					vertex_buffer_description!(float[3], float[2])
+				],
+				vertex_attributes!(float[3], float[2])(0),
 			);
 			primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
 			target_info = GpuGraphicsPipelineTargetInfo(
