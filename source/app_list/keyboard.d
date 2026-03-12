@@ -191,8 +191,8 @@ import std.stdio;
 		writeln("gain:", audio_stream.gain, ",", audio_device.gain);
 
 		render_context = graphics_context.create_render_context();
-		timer = core.subsystem.pool.query!(TimerSubsystem)();
-		device = core.subsystem.pool.query!(DeviceSubsystem)();
+		core.subsystem.query(timer);
+		core.subsystem.query(device);
 		return;
 	}
 

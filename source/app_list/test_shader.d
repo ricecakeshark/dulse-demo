@@ -111,7 +111,7 @@ class ShaderTest : AppInterface
 			.submit();
 
 		render_context = graphics_context.create_render_context();
-		timer = core.subsystem.pool.query!(TimerSubsystem)();
+		core.subsystem.query(timer);
 		return;
 	}
 

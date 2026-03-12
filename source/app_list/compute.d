@@ -160,7 +160,8 @@ class ComputeDemo : AppInterface
 			.submit();
 
 		compute_context = graphics_context.create_compute_context();
-		timer = core.subsystem.pool.query!(TimerSubsystem)();
+		core.subsystem.query(timer);
+		
 		command_buffer = new GpuCommandBuffer(graphics_context.device, graphics_context.window);
 		swapchain_texture = new GpuSwapchainTexture(
 			graphics_context.device,

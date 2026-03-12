@@ -45,7 +45,7 @@ class TextApp : AppInterface
 
 	void initialize()
 	{
-		timer = core.subsystem.query!(TimerSubsystem);
+		core.subsystem.query(timer);
 		upload_context = graphics.create_upload_context();
 		render_context = graphics.create_render_context();
 		text_context = new GfxTextContext(graphics.device);

@@ -47,11 +47,11 @@ class ManyObject : AppInterface
 		vertex_shader = graphics_context.create_vertex_shader();
 		fragment_shader = graphics_context.create_fragment_shader();
 		vertex_shader.create(
-			ShaderFile("texture.vert", graphics_context.get_shader_format()), //ShaderFile("TexturedQuad.vert", graphics_context.get_shader_format()),
+			ShaderFile("texture.vert", graphics_context.get_shader_format()),
 			GpuShaderArguments(0, 2, 0, 0),
 		);
 		fragment_shader.create(
-			ShaderFile("texture.frag", graphics_context.get_shader_format()), //ShaderFile("TexturedQuad.frag", graphics_context.get_shader_format()),
+			ShaderFile("texture.frag", graphics_context.get_shader_format()),
 			GpuShaderArguments(1, 1, 0, 0),
 		);
 		// Pipeline
@@ -172,7 +172,7 @@ class ManyObject : AppInterface
 		destroy(texture_transfer_buffer);
 
 		render_context = graphics_context.create_render_context();
-		core.subsystem.pool.query(timer);
+		core.subsystem.query(timer);
 		return;
 	}
 
@@ -199,7 +199,7 @@ class ManyObject : AppInterface
 		Matrix!(4, 4) view_mat, pos_mat;
 
 		view_mat = multiply_ltor(
-			transformer_look_at(Vec3(0f, 0f, -20f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)), //transformer_ortho_wh(960f,540f),
+			transformer_look_at(Vec3(0f, 0f, -20f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
 			transformer_perspective(PI_2),
 		);
 
