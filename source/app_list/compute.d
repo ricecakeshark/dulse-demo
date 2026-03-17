@@ -161,14 +161,15 @@ class ComputeDemo : AppInterface
 
 		compute_context = graphics_context.create_compute_context();
 		core.subsystem.query(timer);
-		
-		command_buffer = new GpuCommandBuffer(graphics_context.device, graphics_context.window);
+
+		//command_buffer = new GpuCommandBuffer(graphics_context.device, graphics_context.window);
+		graphics_context.create(command_buffer);
 		swapchain_texture = new GpuSwapchainTexture(
 			graphics_context.device,
 			graphics_context.window,
 		);
-		render_pass = new GpuRenderPass();
-		compute_pass = new GpuComputePass();
+		//render_pass = new GpuRenderPass();
+		//compute_pass = new GpuComputePass();
 		return;
 	}
 
@@ -186,8 +187,6 @@ class ComputeDemo : AppInterface
 
 	GpuCommandBuffer command_buffer;
 	GpuSwapchainTexture swapchain_texture;
-	GpuRenderPass render_pass;
-	GpuComputePass compute_pass;
 
 	override void draw()
 	{
@@ -204,8 +203,8 @@ class ComputeDemo : AppInterface
 			transformer_perspective(PI_2),
 		);
 
-		command_buffer.acquire_buffer();
-		command_buffer.acquire_texture(swapchain_texture);
+		command_buffer.acquire_buffer()
+			.acquire_texture(swapchain_texture);
 		if (swapchain_texture.handle !is null)
 		{
 			object_mat = multiply_rtol(
@@ -219,26 +218,29 @@ class ComputeDemo : AppInterface
 				GpuStoreOp.store
 			);
 			// render
-			render_pass.begin(command_buffer, [color_target_info])
-				.bind(render_pipeline)
-				.bind([compute_in_texture], 0)
-				.bind([vertex_buffer])
-				.bind(index_buffer);
-			command_buffer.push_vertex(view_mat, 0)
-				.push_vertex(object_mat, 1);
-			render_pass.draw_indexed(ParamIndexedPrimitive(6, 1, 0, 0, 0))
-				.end();
-
+			command_buffer.with_render_pass(
+				[color_target_info],
+				(ref GpuRenderPass pass) {
+				pass.bind(render_pipeline)
+					.bind([compute_in_texture], 0)
+					.bind([vertex_buffer])
+					.bind(index_buffer)
+					.push_vertex(view_mat, 0)
+					.push_vertex(object_mat, 1)
+					.draw_indexed(ParamIndexedPrimitive(6, 1, 0, 0, 0));
+			},);
 			// compute
-			compute_pass.begin(command_buffer, [
-					GpuStorageTextureReadWriteBinding(compute_out_texture)
-				])
-				.bind(compute_pipeline)
-				.bind([GpuTextureSamplerBinding(compute_in_texture, sampler)], 0);
-			command_buffer.push_uniform(Vec3([delta, 960f, 540f]));
-			compute_pass.dispatch(cast(uint) ceil(960.0 / 8), cast(uint) ceil(540.0 / 8), 1)
-				.end();
-
+			command_buffer.with_compute_pass(
+				[GpuStorageTextureReadWriteBinding(compute_out_texture)],
+				null,
+				(ref GpuComputePass pass) {
+				pass.bind(compute_pipeline)
+					.bind([
+						GpuTextureSamplerBinding(compute_in_texture, sampler)
+					], 0)
+					.push_uniform(Vec3([delta, 960f, 540f]))
+					.dispatch(cast(uint) ceil(960.0 / 8), cast(uint) ceil(540.0 / 8), 1);
+			},);
 			// blit
 			command_buffer.blit_texture(
 				GpuBlitInfo(
@@ -250,7 +252,6 @@ class ComputeDemo : AppInterface
 
 		}
 		command_buffer.submit();
-
 		return;
 	}
 

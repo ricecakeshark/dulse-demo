@@ -14,7 +14,9 @@ class ShaderTest : AppInterface
 	TimerSubsystem timer;
 	GfxGraphicsContext graphics_context;
 
-	GfxRenderContext render_context;
+	//GfxRenderContext render_context;
+	GpuCommandBuffer command_buffer;
+	GpuSwapchainTexture swapchain_texture;
 	GfxMesh object_mesh;
 	GfxGeometry!(VertexPC, uint) object_geometry;
 	GpuGraphicsPipeline graphics_pipeline;
@@ -110,7 +112,9 @@ class ShaderTest : AppInterface
 			.end()
 			.submit();
 
-		render_context = graphics_context.create_render_context();
+		//render_context = graphics_context.create_render_context();
+		graphics_context.create(command_buffer)
+			.create(swapchain_texture);
 		core.subsystem.query(timer);
 		return;
 	}
@@ -139,28 +143,30 @@ class ShaderTest : AppInterface
 			transformer_perspective(PI_2),
 		);
 
-		render_context.acquire_buffer()
-			.acquire_texture()
-			.if_acquired(() {
-				color_target_info = GpuColorTargetInfo(
-					render_context.swapchain_texture,
-					GpuLoadOp.clear, GpuStoreOp.store,
-				);
-				render_context.begin([color_target_info])
-					.bind(graphics_pipeline)
-					.bind([vertex_buffer])
-					.bind(index_buffer);
-
+		command_buffer.acquire_buffer()
+			.acquire_texture(swapchain_texture);
+		if (swapchain_texture !is null)
+		{
+			color_target_info = GpuColorTargetInfo(
+				swapchain_texture,
+				GpuLoadOp.clear, GpuStoreOp.store,
+			);
+			command_buffer.with_render_pass(
+				[color_target_info],
+				(ref GpuRenderPass pass) {
 				object_mat = multiply_rtol(
 					transformer_rotate_x(0.0015 * timer.past),
 					transformer_scale([10.0f, 10.0f, 10.0f]),
 				);
-				render_context.push_vertex(view_mat, 0)
+				pass.bind(graphics_pipeline)
+					.bind([vertex_buffer])
+					.bind(index_buffer)
+					.push_vertex(view_mat, 0)
 					.push_vertex(object_mat, 1)
 					.draw_indexed(ParamIndexedPrimitive(6, 1, 0, 0, 0));
-				render_context.end();
-				return;
-			}).submit();
+			},);
+		}
+		command_buffer.submit();
 		return;
 	}
 

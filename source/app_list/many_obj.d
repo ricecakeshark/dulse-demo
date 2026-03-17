@@ -12,7 +12,9 @@ class ManyObject : AppInterface
 	TimerSubsystem timer;
 	GfxGraphicsContext graphics_context;
 
-	GfxRenderContext render_context;
+	GpuSwapchainTexture swapchain_texture;
+	GpuCommandBuffer command_buffer;
+
 	GfxMesh object_mesh;
 	alias ObjectGeometry = GfxGeometry!(VertexPT, uint);
 	GpuGraphicsPipeline graphics_pipeline;
@@ -171,7 +173,9 @@ class ManyObject : AppInterface
 		destroy(buffer_transfer_buffer);
 		destroy(texture_transfer_buffer);
 
-		render_context = graphics_context.create_render_context();
+		//render_context = graphics_context.create_render_context();
+		graphics_context.create(swapchain_texture);
+		graphics_context.create(command_buffer);
 		core.subsystem.query(timer);
 		return;
 	}
@@ -181,10 +185,6 @@ class ManyObject : AppInterface
 		graphics_context.release_all();
 		return;
 	}
-
-	float x = 0.0f;
-	float y = 0.0f;
-	float z = 0.0f;
 
 	override void process()
 	{
@@ -203,18 +203,21 @@ class ManyObject : AppInterface
 			transformer_perspective(PI_2),
 		);
 
-		render_context.acquire_buffer()
-			.acquire_texture()
-			.if_acquired(() {
-				color_target_info = GpuColorTargetInfo(
-					render_context.swapchain_texture,
-					GpuLoadOp.clear, GpuStoreOp.store,
-				);
-				render_context.begin([color_target_info])
-					.bind(graphics_pipeline)
+		command_buffer.acquire_buffer()
+			.acquire_texture(swapchain_texture);
+		if (swapchain_texture !is null)
+		{
+			color_target_info = GpuColorTargetInfo(
+				swapchain_texture,
+				GpuLoadOp.clear, GpuStoreOp.store,
+			);
+			command_buffer.with_render_pass(
+				[color_target_info],
+				(ref GpuRenderPass pass) {
+				pass.bind(graphics_pipeline)
 					.bind([
 						GpuTextureSamplerBinding(object_texture, object_sampler)
-					])
+					], 0)
 					.bind([vertex_buffer])
 					.bind(index_buffer);
 				foreach (entity; entity_list)
@@ -228,7 +231,7 @@ class ManyObject : AppInterface
 							cos((0.0015f * timer.past) * entity[0]) * 10.0f
 						]),
 					);
-					render_context.push_vertex(view_mat, 0)
+					pass.push_vertex(view_mat, 0)
 						.push_vertex(pos_mat, 1)
 						.push_fragment(
 							Vector!(4)(
@@ -241,9 +244,9 @@ class ManyObject : AppInterface
 						)
 						.draw_indexed(ParamIndexedPrimitive(6, 1, 0, 0, 0));
 				}
-				render_context.end();
-				return;
-			}).submit();
+			},);
+		}
+		command_buffer.submit();
 		return;
 	}
 
