@@ -19,13 +19,14 @@ void main()
 {
 	Core core;
 	DeviceSubsystem device;
+	TimerSubsystem timer;
 	AppInterface[] app_list;
 	LoopedInt!(4) app_index, app_index_next;
 
 	core = new Core();
 	core.append_sdl_subsystem()
 		.initialize();
-	core.subsystem.query(device);
+	core.subsystem.query(device, timer);
 
 	graphics_context = new GfxGraphicsContext();
 	graphics_context.initialize(GpuBackend.vulkan);
@@ -60,7 +61,7 @@ void main()
 		{
 			writefln("finalize : %s", app_index);
 			app_list[app_index].finalize();
-			core.subsystem.pool.query!(TimerSubsystem)().sleep(100);
+			timer.sleep(100);
 			writefln("initialize : %s", app_index_next);
 			app_list[app_index_next].initialize();
 			app_index = app_index_next;
