@@ -130,15 +130,13 @@ import std.stdio;
 
 		// upload
 		scope GpuBufferTransferBuffer buffer_transfer_buffer;
-		buffer_transfer_buffer = new GpuBufferTransferBuffer(graphics_context.device);
+		scope GpuTextureTransferBuffer texture_transfer_buffer;
+		graphics_context.create(buffer_transfer_buffer, texture_transfer_buffer);
 		buffer_transfer_buffer.create(geometry.bytes)
 			.map()
 			.set(geometry.vertex, geometry.offset_vertex)
 			.set(geometry.index, geometry.offset_index)
 			.unmap();
-
-		scope GpuTextureTransferBuffer texture_transfer_buffer;
-		texture_transfer_buffer = new GpuTextureTransferBuffer(graphics_context.device);
 		texture_transfer_buffer.create(image.size)
 			.map()
 			.set(image)

@@ -131,7 +131,7 @@ class ComputeDemo : AppInterface
 
 		// upload
 		scope GpuBufferTransferBuffer buffer_transfer_buffer;
-		buffer_transfer_buffer = new GpuBufferTransferBuffer(graphics_context.device);
+		graphics_context.create(buffer_transfer_buffer);
 		buffer_transfer_buffer.create(object_geometry.size)
 			.map()
 			.set(object_geometry.vertices, object_geometry.offset_vertex)

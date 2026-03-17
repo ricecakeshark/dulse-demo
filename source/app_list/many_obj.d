@@ -134,15 +134,13 @@ class ManyObject : AppInterface
 
 		// upload
 		scope GpuBufferTransferBuffer buffer_transfer_buffer;
-		buffer_transfer_buffer = new GpuBufferTransferBuffer(graphics_context.device);
+		scope GpuTextureTransferBuffer texture_transfer_buffer;
+		graphics_context.create(buffer_transfer_buffer, texture_transfer_buffer);
 		buffer_transfer_buffer.create(object_geometry.size)
 			.map()
 			.set(object_geometry.vertices, object_geometry.offset_vertex)
 			.set(object_geometry.indices, object_geometry.offset_index)
 			.unmap();
-
-		scope GpuTextureTransferBuffer texture_transfer_buffer;
-		texture_transfer_buffer = new GpuTextureTransferBuffer(graphics_context.device);
 		texture_transfer_buffer.create(object_image.size)
 			.map()
 			.set(object_image)

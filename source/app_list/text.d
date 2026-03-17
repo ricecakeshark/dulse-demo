@@ -128,7 +128,7 @@ class TextApp : AppInterface
 			.create_text("TEXT");
 
 		// upload
-		buffer_transfer_buffer = new GpuBufferTransferBuffer(graphics.device);
+		graphics.create(buffer_transfer_buffer);
 		buffer_transfer_buffer.create_by_size(
 			VertexPT.sizeof * max_vertex_count + uint.sizeof * max_index_count
 		);
