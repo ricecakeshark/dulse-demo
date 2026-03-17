@@ -133,9 +133,10 @@ class ManyObject : AppInterface
 		));
 
 		// upload
+		scope GfxUploadContext upload_context;
 		scope GpuBufferTransferBuffer buffer_transfer_buffer;
 		scope GpuTextureTransferBuffer texture_transfer_buffer;
-		graphics_context.create(buffer_transfer_buffer, texture_transfer_buffer);
+		graphics_context.create(upload_context, buffer_transfer_buffer, texture_transfer_buffer);
 		buffer_transfer_buffer.create(object_geometry.size)
 			.map()
 			.set(object_geometry.vertices, object_geometry.offset_vertex)
@@ -145,9 +146,6 @@ class ManyObject : AppInterface
 			.map()
 			.set(object_image)
 			.unmap();
-
-		scope GfxUploadContext upload_context;
-		graphics_context.create(upload_context);
 		upload_context.begin()
 			.upload(
 				GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),

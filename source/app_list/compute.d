@@ -130,16 +130,14 @@ class ComputeDemo : AppInterface
 		index_buffer.create(6, GpuIndexElementSize._32bit);
 
 		// upload
+		scope GfxUploadContext upload_context;
 		scope GpuBufferTransferBuffer buffer_transfer_buffer;
-		graphics_context.create(buffer_transfer_buffer);
+		graphics_context.create(upload_context, buffer_transfer_buffer);
 		buffer_transfer_buffer.create(object_geometry.size)
 			.map()
 			.set(object_geometry.vertices, object_geometry.offset_vertex)
 			.set(object_geometry.indices, object_geometry.offset_index)
 			.unmap();
-
-		scope GfxUploadContext upload_context;
-		graphics_context.create(upload_context);
 		upload_context.begin()
 			.upload(
 				GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),

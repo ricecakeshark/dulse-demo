@@ -7,6 +7,7 @@ import kelp_gfx;
 import bindbc.sdl;
 
 import std.stdio;
+
 /+
  class KeyboardApp : AppInterface
 {
@@ -129,9 +130,10 @@ import std.stdio;
 		));
 
 		// upload
+		scope GfxUploadContext upload_context;
 		scope GpuBufferTransferBuffer buffer_transfer_buffer;
 		scope GpuTextureTransferBuffer texture_transfer_buffer;
-		graphics_context.create(buffer_transfer_buffer, texture_transfer_buffer);
+		graphics_context.create(upload_context, buffer_transfer_buffer, texture_transfer_buffer);
 		buffer_transfer_buffer.create(geometry.bytes)
 			.map()
 			.set(geometry.vertex, geometry.offset_vertex)
@@ -141,9 +143,6 @@ import std.stdio;
 			.map()
 			.set(image)
 			.unmap();
-
-		scope GfxUploadContext upload_context;
-		graphics_context.create(upload_context);
 		upload_context.begin()
 			.upload(
 				GpuTransferBufferLocation(buffer_transfer_buffer, geometry.offset_vertex),
@@ -181,8 +180,7 @@ import std.stdio;
 		writeln("gain:", audio_stream.gain, ",", audio_device.gain);
 
 		graphics_context.create(render_context);
-		core.subsystem.query(timer);
-		core.subsystem.query(device);
+		core.subsystem.query(timer, device);
 		return;
 	}
 
