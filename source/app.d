@@ -4,14 +4,7 @@ import app_list;
 import kelp_core;
 import kelp_sdl;
 import kelp_gfx;
-import bindbc.sdl;
-
-import std.math;
 import std.stdio;
-import core.memory;
-import std.sumtype;
-
-GfxGraphicsContext graphics_context;
 
 float aspect = 960.0f / 540.0f;
 
@@ -20,6 +13,7 @@ void main()
 	Core core;
 	DeviceSubsystem device;
 	TimerSubsystem timer;
+	GfxGraphicsContext graphics_context;
 	AppInterface[] app_list;
 	LoopedInt!(4) app_index, app_index_next;
 

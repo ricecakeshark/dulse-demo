@@ -5,9 +5,8 @@ import app_list.app_interface;
 import kelp_core, kelp_sdl, kelp_gfx;
 import bindbc.sdl;
 
-import std.conv : to;
 import std.math;
-import std;
+import std.format;
 
 immutable max_vertex_count = 4000;
 immutable max_index_count = 6000;
@@ -46,7 +45,6 @@ class TextApp : AppInterface
 	void initialize()
 	{
 		// pipeline, vertex shader, fragment shader
-
 		scope GpuVertexShader vertex_shader;
 		scope GpuFragmentShader fragment_shader;
 		graphics.create(pipeline, vertex_shader, fragment_shader);
