@@ -44,10 +44,10 @@ class ManyObject : AppInterface
 			entity[2] = uniform(0.5f, 1.3f);
 		}
 		// Shader
+
 		scope GpuVertexShader vertex_shader;
 		scope GpuFragmentShader fragment_shader;
-		vertex_shader = graphics_context.create_vertex_shader();
-		fragment_shader = graphics_context.create_fragment_shader();
+		graphics_context.create(graphics_pipeline, vertex_shader, fragment_shader);
 		vertex_shader.create(
 			ShaderFile("texture.vert", graphics_context.get_shader_format()),
 			GpuShaderArguments(0, 2, 0, 0),
@@ -87,7 +87,6 @@ class ManyObject : AppInterface
 			]
 			);
 		}
-		graphics_pipeline = graphics_context.create_graphics_pipeline();
 		graphics_pipeline.create(pipeline_create_info);
 
 		// Mesh, Geometry
@@ -102,31 +101,28 @@ class ManyObject : AppInterface
 		[0, 1, 2, 0, 2, 3],
 		);
 		object_mesh.set([object_geometry,]);
+
 		// Buffer
-		vertex_buffer = graphics_context.create_vertex_buffer();
+		graphics_context.create(vertex_buffer, index_buffer);
 		vertex_buffer.create(
 			object_geometry.count_vertex,
 			object_geometry.stride_vertex
 		);
-		index_buffer = graphics_context.create_index_buffer();
 		index_buffer.create(
 			object_geometry.count_index,
 			GpuIndexElementSize._32bit
 		);
 
-		// texture
+		// texture, sampler
 		object_image = new Surface();
 		object_image.load("./image/dot4.png");
-		object_texture = graphics_context.create_texture();
+		graphics_context.create(object_texture, object_sampler);
 		object_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d, GpuTextureFormat.r8g8b8a8_unorm,
 				GpuTextureUsageFlags.sampler,
 				object_image.width, object_image.height,
 				1, 1,
 		));
-
-		// sampler
-		object_sampler = graphics_context.create_sampler();
 		object_sampler.create(GpuSamplerCreateInfo(
 				GpuFilter.nearest,
 				GpuFilter.nearest,
@@ -153,7 +149,7 @@ class ManyObject : AppInterface
 			.unmap();
 
 		scope GfxUploadContext upload_context;
-		upload_context = graphics_context.create_upload_context();
+		graphics_context.create(upload_context);
 		upload_context.begin()
 			.upload(
 				GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),
@@ -170,12 +166,7 @@ class ManyObject : AppInterface
 			.end()
 			.submit();
 
-		destroy(buffer_transfer_buffer);
-		destroy(texture_transfer_buffer);
-
-		//render_context = graphics_context.create_render_context();
-		graphics_context.create(swapchain_texture);
-		graphics_context.create(command_buffer);
+		graphics_context.create(command_buffer, swapchain_texture);
 		core.subsystem.query(timer);
 		return;
 	}

@@ -46,16 +46,14 @@ class TextApp : AppInterface
 	void initialize()
 	{
 		core.subsystem.query(timer);
-		upload_context = graphics.create_upload_context();
-		render_context = graphics.create_render_context();
-		text_context = new GfxTextContext(graphics.device);
+		graphics.create(upload_context, render_context, text_context);
 		texture_transfer_buffer = new GpuTextureTransferBuffer(graphics.device);
 
 		scope GpuVertexShader vertex_shader;
 		scope GpuFragmentShader fragment_shader;
-		vertex_shader = graphics.create_vertex_shader();
-		fragment_shader = graphics.create_fragment_shader();
 
+		// pipeline, vertex shader, fragment shader
+		graphics.create(pipeline, vertex_shader, fragment_shader);
 		vertex_shader.create(
 			ShaderFile("texture.vert", graphics.device.get_shader_format()), //ShaderFile("const_position.vert", graphics.device.get_shader_format()),
 			GpuShaderArguments(0, 2, 0, 0),
@@ -98,8 +96,6 @@ class TextApp : AppInterface
 			);
 			rasterizer_state.cull_mode = GpuCullMode.none;
 		}
-
-		pipeline = graphics.create_graphics_pipeline();
 		pipeline.create(pipeline_create_info);
 
 		// geometry
@@ -108,13 +104,12 @@ class TextApp : AppInterface
 			uint.sizeof * max_index_count,
 		);
 		// vertex buffer
-		vertex_buffer = graphics.create_vertex_buffer();
+		graphics.create(vertex_buffer, index_buffer);
 		vertex_buffer.create(max_vertex_count, VertexPT.sizeof);
-		index_buffer = graphics.create_index_buffer();
 		index_buffer.create(max_index_count, GpuIndexElementSize._32bit);
 
 		// sampler
-		sampler = graphics.create_sampler();
+		graphics.create(sampler);
 		sampler.create(
 			GpuSamplerCreateInfo(
 				GpuFilter.linear,
@@ -125,7 +120,6 @@ class TextApp : AppInterface
 				GpuSamplerAddressMode.clamp_to_edge,
 		)
 		);
-
 		// text 
 		text_context.load_font("HackGen-Regular.ttf", 50.0f)
 			.set_SDF(true)

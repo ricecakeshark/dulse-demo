@@ -53,8 +53,7 @@ import std.stdio;
 		// Shader
 		scope GpuVertexShader vertex_shader;
 		scope GpuFragmentShader fragment_shader;
-		vertex_shader = graphics_context.create_vertex_shader();
-		fragment_shader = graphics_context.create_fragment_shader();
+		graphics_context.create(graphics_pipeline, vertex_shader, fragment_shader);
 		vertex_shader.create(
 			ShaderFile("texture.vert", graphics_context.get_shader_format()), //ShaderFile("TexturedQuad.vert", graphics_context.get_shader_format()),
 			GpuShaderArguments(0, 2, 0, 0),
@@ -94,7 +93,6 @@ import std.stdio;
 			]
 			);
 		}
-		graphics_pipeline = graphics_context.create_graphics_pipeline();
 		graphics_pipeline.create(pipeline_create_info);
 
 		// Geometry
@@ -106,24 +104,21 @@ import std.stdio;
 		];
 		geometry.index = [0, 1, 2, 0, 2, 3];
 		// Buffer
-		vertex_buffer = graphics_context.create_vertex_buffer();
+		graphics_context.create(vertex_buffer,index_buffer)
 		vertex_buffer.create(geometry.count_vertex,geometry.stride_vertex);
-		index_buffer = graphics_context.create_index_buffer();
 		index_buffer.create(geometry.count_index, GpuIndexElementSize._32bit);
 
-		// texture
+		// texture, sampler
+		graphics_context.create(texture, sampler);
 		image = new Surface();
 		image.load("./image/dot4.png");
-		texture = graphics_context.create_texture();
+		
 		texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d, GpuTextureFormat.r8g8b8a8_unorm,
 				GpuTextureUsageFlags.sampler,
 				image.width, image.height,
 				1, 1,
 		));
-
-		// sampler
-		sampler = graphics_context.create_sampler();
 		sampler.create(GpuSamplerCreateInfo(
 				GpuFilter.nearest,
 				GpuFilter.nearest,
@@ -150,7 +145,7 @@ import std.stdio;
 			.unmap();
 
 		scope GfxUploadContext upload_context;
-		upload_context = graphics_context.create_upload_context();
+		graphics_context.create(upload_context);
 		upload_context.begin()
 			.upload(
 				GpuTransferBufferLocation(buffer_transfer_buffer, geometry.offset_vertex),
@@ -166,9 +161,6 @@ import std.stdio;
 			)
 			.end()
 			.submit();
-
-		destroy(buffer_transfer_buffer);
-		destroy(texture_transfer_buffer);
 
 		// audio
 		audio_device = new AudioDevice();
@@ -190,7 +182,7 @@ import std.stdio;
 		writeln(audio_stream.device_id);
 		writeln("gain:", audio_stream.gain, ",", audio_device.gain);
 
-		render_context = graphics_context.create_render_context();
+		graphics_context.create(render_context);
 		core.subsystem.query(timer);
 		core.subsystem.query(device);
 		return;

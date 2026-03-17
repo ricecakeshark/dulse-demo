@@ -35,8 +35,7 @@ class ShaderTest : AppInterface
 		// Shader
 		scope GpuVertexShader vertex_shader;
 		scope GpuFragmentShader fragment_shader;
-		vertex_shader = graphics_context.create_vertex_shader();
-		fragment_shader = graphics_context.create_fragment_shader();
+		graphics_context.create(graphics_pipeline, vertex_shader, fragment_shader);
 		vertex_shader.create(
 			ShaderFile("vertex_color.vert", graphics_context.get_shader_format()),
 			GpuShaderArguments(0, 2, 0, 0),
@@ -66,7 +65,6 @@ class ShaderTest : AppInterface
 			]
 			);
 		}
-		graphics_pipeline = graphics_context.create_graphics_pipeline();
 		graphics_pipeline.create(pipeline_create_info);
 
 		// Mesh
@@ -84,9 +82,8 @@ class ShaderTest : AppInterface
 		);
 		object_mesh.set([object_geometry]);
 		// Buffer
-		vertex_buffer = graphics_context.create_vertex_buffer();
+		graphics_context.create(vertex_buffer, index_buffer);
 		vertex_buffer.create(4, VertexPC.sizeof);
-		index_buffer = graphics_context.create_index_buffer();
 		index_buffer.create(6, GpuIndexElementSize._32bit);
 
 		// upload
@@ -99,7 +96,7 @@ class ShaderTest : AppInterface
 			.unmap();
 
 		scope GfxUploadContext upload_context;
-		upload_context = graphics_context.create_upload_context();
+		graphics_context.create(upload_context);
 		upload_context.begin()
 			.upload(
 				GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),
@@ -112,9 +109,7 @@ class ShaderTest : AppInterface
 			.end()
 			.submit();
 
-		//render_context = graphics_context.create_render_context();
-		graphics_context.create(command_buffer)
-			.create(swapchain_texture);
+		graphics_context.create(command_buffer, swapchain_texture);
 		core.subsystem.query(timer);
 		return;
 	}

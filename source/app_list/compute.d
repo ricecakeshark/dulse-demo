@@ -37,8 +37,7 @@ class ComputeDemo : AppInterface
 		// Render Shader
 		scope GpuVertexShader vertex_shader;
 		scope GpuFragmentShader fragment_shader;
-		vertex_shader = graphics_context.create_vertex_shader();
-		fragment_shader = graphics_context.create_fragment_shader();
+		graphics_context.create(render_pipeline, vertex_shader, fragment_shader);
 		vertex_shader.create(
 			ShaderFile("vertex_color.vert", graphics_context.get_shader_format()),
 			GpuShaderArguments(0, 2, 0, 0),
@@ -69,11 +68,10 @@ class ComputeDemo : AppInterface
 			]
 			);
 		}
-		render_pipeline = graphics_context.create_graphics_pipeline();
 		render_pipeline.create(render_pipeline_info);
 
 		// Compute Pipeline
-		compute_pipeline = this.graphics_context.create_compute_pipeline();
+		graphics_context.create(compute_pipeline);
 		auto compute_pipeline_info = GpuComputePipelineCreateInfo(
 			ShaderFile("compute.comp", GpuShaderFormat.spirv)
 		);
@@ -91,22 +89,18 @@ class ComputeDemo : AppInterface
 			compute_pipeline_info
 		);
 
-		// texture
-		compute_in_texture = graphics_context.create_texture();
+		// texture, sampler
+		graphics_context.create(compute_in_texture, compute_out_texture, sampler);
 		compute_in_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d, GpuTextureFormat.r32g32b32a32_float,
 				GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target | GpuTextureUsageFlags.compute_storage_read,
 				960, 540, 1, 1,
 		));
-
-		compute_out_texture = graphics_context.create_texture();
 		compute_out_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d, GpuTextureFormat.r32g32b32a32_float,
 				GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.compute_storage_write,
 				960, 540, 1, 1,
 		));
-		// sampler
-		sampler = graphics_context.create_sampler();
 		sampler.create(GpuSamplerCreateInfo(
 				GpuFilter.nearest,
 				GpuFilter.nearest,
@@ -115,8 +109,8 @@ class ComputeDemo : AppInterface
 				GpuSamplerAddressMode.clamp_to_edge,
 				GpuSamplerAddressMode.clamp_to_edge,
 		));
-		// Mesh
 
+		// Mesh
 		object_mesh.initialize(VertexPC.sizeof * 4, uint.sizeof * 6);
 		object_geometry.set(
 			[
@@ -131,9 +125,8 @@ class ComputeDemo : AppInterface
 		);
 		object_mesh.set([object_geometry]);
 		// Buffer
-		vertex_buffer = graphics_context.create_vertex_buffer();
+		graphics_context.create(vertex_buffer, index_buffer);
 		vertex_buffer.create(4, VertexPC.sizeof);
-		index_buffer = graphics_context.create_index_buffer();
 		index_buffer.create(6, GpuIndexElementSize._32bit);
 
 		// upload
@@ -146,7 +139,7 @@ class ComputeDemo : AppInterface
 			.unmap();
 
 		scope GfxUploadContext upload_context;
-		upload_context = graphics_context.create_upload_context();
+		graphics_context.create(upload_context);
 		upload_context.begin()
 			.upload(
 				GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),
@@ -159,17 +152,10 @@ class ComputeDemo : AppInterface
 			.end()
 			.submit();
 
-		compute_context = graphics_context.create_compute_context();
+		graphics_context.create(compute_context);
 		core.subsystem.query(timer);
 
-		//command_buffer = new GpuCommandBuffer(graphics_context.device, graphics_context.window);
-		graphics_context.create(command_buffer);
-		swapchain_texture = new GpuSwapchainTexture(
-			graphics_context.device,
-			graphics_context.window,
-		);
-		//render_pass = new GpuRenderPass();
-		//compute_pass = new GpuComputePass();
+		graphics_context.create(command_buffer, swapchain_texture);
 		return;
 	}
 
