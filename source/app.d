@@ -5,6 +5,7 @@ import kelp_core;
 import kelp_sdl;
 import kelp_gfx;
 import std.stdio;
+import core.memory;
 
 float aspect = 960.0f / 540.0f;
 
@@ -13,7 +14,7 @@ void main()
 	Core core;
 	DeviceSubsystem device;
 	TimerSubsystem timer;
-	GfxGraphicsContext graphics_context;
+	GfxGraphicsContext graphics;
 	AppInterface[] app_list;
 	LoopedInt!(4) app_index, app_index_next;
 
@@ -22,14 +23,15 @@ void main()
 		.initialize();
 	core.subsystem.query(device, timer);
 
-	graphics_context = new GfxGraphicsContext();
-	graphics_context.initialize(GpuBackend.vulkan);
+	graphics = new GfxGraphicsContext();
+	graphics.initialize(GpuBackend.vulkan);
 
 	app_list = [
-		cast(AppInterface) new ManyObject(core, graphics_context),
-		new ShaderTest(core, graphics_context),
-		cast(AppInterface) new TextApp(core, graphics_context),
-		new ComputeDemo(core, graphics_context),
+		cast(AppInterface) new ManyObject(core, graphics),
+		new CubeDemo(core, graphics),
+		//new ShaderTest(core, graphics_context),
+		//cast(AppInterface) new TextApp(core, graphics_context),
+		//new ComputeDemo(core, graphics_context),
 		//new KeyboardApp(core, graphics_context),
 	];
 	app_list[app_index].initialize();
@@ -63,7 +65,9 @@ void main()
 		app_list[app_index].process();
 		app_list[app_index].draw();
 	}
+	
 	app_list[app_index].finalize();
+	graphics.finalize();
 	core.finalize();
 
 	return;

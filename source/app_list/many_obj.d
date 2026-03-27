@@ -161,7 +161,9 @@ class ManyObject : AppInterface
 			)
 			.end()
 			.submit();
-
+		//buffer_transfer_buffer.release();
+		//texture_transfer_buffer.release();
+		graphics_context.release_transfer_buffer();
 		graphics_context.create(command_buffer, swapchain_texture);
 		core.subsystem.query(timer);
 		return;
