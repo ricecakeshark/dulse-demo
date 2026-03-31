@@ -11,8 +11,10 @@ layout(set = 1, binding = 1) uniform Model
 } model;
 
 // input
-layout(location = 0) in vec3 position;
-layout(location = 1) in vec4 color;
+layout(location = 0) in vec3 in_pos;
+layout(location = 1) in vec3 in_normal;
+layout(location = 2) in vec4 in_color;
+layout(location = 3) in vec3 in_tangent;
 
 layout(location = 0) out VS_Out
 {
@@ -22,6 +24,6 @@ layout(location = 0) out VS_Out
 void main(void)
 {
 	vs_out.color = color;
-	gl_Position = vec4(position, 1.0f) * (model.model_matrix * view.view_matrix);
+	gl_Position = vec4(in_pos, 1.0f) * (model.model_matrix * view.view_matrix);
 	return;
 }
