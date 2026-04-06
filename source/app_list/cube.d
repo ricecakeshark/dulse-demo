@@ -23,6 +23,7 @@ class CubeDemo : AppInterface
 	GpuGraphicsPipeline graphics_pipeline;
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
+	GpuStorageBuffer storage_buffer;
 	GpuTexture depth_texture;
 
 	Surface object_image;
@@ -45,11 +46,11 @@ class CubeDemo : AppInterface
 		graphics_context.create(graphics_pipeline, vertex_shader, fragment_shader);
 		vertex_shader.create(
 			ShaderFile("texture_2.vert", graphics_context.get_shader_format()),
-			GpuShaderArguments(0, 2, 0, 0),
+			GpuShaderArguments(0, 3, 0, 0),
 		);
 		fragment_shader.create(
 			ShaderFile("texture_2.frag", graphics_context.get_shader_format()),
-			GpuShaderArguments(1, 1, 0, 0),
+			GpuShaderArguments(1, 4, 0, 0),
 		);
 		// Pipeline
 		scope GpuGraphicsPipelineCreateInfo pipeline_create_info;
@@ -85,23 +86,13 @@ class CubeDemo : AppInterface
 		// Geometry
 		FileHandler("cube.obj").load_obj(object_geometry);
 		import std.exception;
+
 		enforce(object_geometry.size > 0);
 		import std.conv;
 
 		logger.log(to!string(object_geometry.vertices.length), LogLevel.info);
 		logger.log(to!string(object_geometry.indices.length), LogLevel.info);
 
-		/+object_geometry.set(
-			[
-			VertexPNU(Vec3(-0.5f, -0.5f, 0.0f), ColorF(1.0f, 0.0f, 0.0f)),
-			VertexPNU(Vec3(+0.5f, -0.5f, 0.0f,), ColorF(0.0f, 1.0f, 0.0f)),
-			VertexPNU(Vec3(+0.5f, +0.5f, 0.0f,), ColorF(0.0f, 0.0f, 1.0f)),
-			VertexPNU(Vec3(-0.5f, +0.5f, 0.0f,), ColorF(1.0f, 0.0f, 1.0f)),
-		],
-		[
-			0u, 1, 2, 0, 2, 3
-		],
-		);+/
 		// Mesh
 		object_mesh.initialize(
 			VertexPNU.sizeof * object_geometry.count_vertex,
@@ -109,9 +100,10 @@ class CubeDemo : AppInterface
 		);
 		object_mesh.set([object_geometry]);
 		// Buffer
-		graphics_context.create(vertex_buffer, index_buffer);
+		graphics_context.create(vertex_buffer, index_buffer,);
 		vertex_buffer.create(object_geometry.count_vertex, VertexPNU.sizeof);
 		index_buffer.create(object_geometry.count_index, GpuIndexElementSize._32bit);
+		//storage_buffer.create(LightPoint.sizeof * 1u);
 
 		// depth texture
 		graphics_context.create(depth_texture);
@@ -194,15 +186,21 @@ class CubeDemo : AppInterface
 
 		GpuColorTargetInfo color_target_info;
 		GpuDepthStencilTargetInfo depth_target_info;
-		Matrix!(4, 4) view_mat, object_mat;
+		UniformVertexScene vertex_scene;
+		UniformVertexView vertex_view;
+		UniformVertexModel vertex_model;
+		UniformFragmentView fragment_view;
+		UniformFragmentLight fragment_light;
 
-		view_mat = multiply_ltor(
+		
+		vertex_view.mat_view = multiply_ltor(
 			transformer_look_at(Vec3(0f, 0f, -2.5f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
 			transformer_perspective(PI_2),
 		);
-		Vec3 light_pos;
-		//light_pos = [sin(0.002f*timer.past)*10f,0f,cos(0.002f*timer.past)*10f];
-		light_pos = [+10f,0f,-10f];
+		fragment_view.vec_view = Vec3(0f, 0f, -2.5f);
+		fragment_light.color = Vec3(1.0f, 1.0f, 1.0f);
+		fragment_light.pos = [0f, 3f, -3f];
+		//fragment_light.pos = [sin(0.002f*timer.past)*10f,0f,cos(0.002f*timer.past)*10f];
 
 		command_buffer.acquire_buffer()
 			.acquire_texture(swapchain_texture);
@@ -222,19 +220,25 @@ class CubeDemo : AppInterface
 				[color_target_info],
 				depth_target_info,
 				(ref GpuRenderPass pass) {
-				object_mat = multiply_rtol(
+				vertex_model.mat_model = multiply_rtol(
 					transformer_rotate_y(0.0015 * timer.past),
 					transformer_scale([1.0f, 1.0f, 1.0f]),
 				);
+				vertex_model.mat_model_normal = cast(Matrix!(4, 4, float))(cast(Matrix!(3, 3, float))(
+					vertex_model.mat_model)).inverse()
+					.transpose();
+
 				pass.bind(graphics_pipeline)
 					.bind([
 						GpuTextureSamplerBinding(object_texture, object_sampler)
 					], 0)
 					.bind([vertex_buffer])
-					.bind(index_buffer)
-					.push_vertex(view_mat, 0)
-					.push_vertex(object_mat, 1)
-					.push_fragment(light_pos, 0)
+					.bind(index_buffer) //.bind_to_fragment([storage_buffer], 0u)
+					.push_vertex(vertex_view, 1)
+					.push_vertex(vertex_model, 2)
+					.push_fragment(Vec4(1.0f, 1.0f, 1.0f, 0.1f), 0)
+					.push_fragment(fragment_view, 1u)
+					.push_fragment(fragment_light, 3u)
 					.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 			},);
 		}
@@ -246,4 +250,37 @@ class CubeDemo : AppInterface
 	{
 		return 0;
 	}
+}
+
+struct UniformVertexScene
+{
+	ColorF ambient_light;
+}
+
+struct UniformVertexView
+{
+	Matrix!(4, 4) mat_view;
+}
+
+struct UniformVertexModel
+{
+	Matrix!(4, 4) mat_model;
+	Matrix!(4, 4) mat_model_normal;
+}
+
+struct UniformFragmentScene
+{
+	ColorF ambient_light;
+}
+
+struct UniformFragmentView
+{
+	Vec3 vec_view;
+}
+
+struct UniformFragmentLight
+{
+	Vec3 pos = [0.0f, 0.0f, -3.0f];
+	Vec3 color = [1.0f, 0.5f, 0.0f];
+	float intensity = 1.0f;
 }

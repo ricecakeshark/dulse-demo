@@ -28,9 +28,9 @@ void main()
 
 	app_list = [
 		cast(AppInterface) new ManyObject(core, graphics),
-		new CubeDemo(core, graphics),
+		cast(AppInterface) new CubeDemo(core, graphics),
 		//new ShaderTest(core, graphics_context),
-		//cast(AppInterface) new TextApp(core, graphics_context),
+		//new TextApp(core, graphics),
 		//new ComputeDemo(core, graphics_context),
 		//new KeyboardApp(core, graphics_context),
 	];

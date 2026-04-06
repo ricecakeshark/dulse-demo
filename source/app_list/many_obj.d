@@ -15,16 +15,19 @@ class ManyObject : AppInterface
 	GpuSwapchainTexture swapchain_texture;
 	GpuCommandBuffer command_buffer;
 
+	GfxGeometry!(VertexPNU, uint) object_geometry;
 	GfxMesh object_mesh;
-	alias ObjectGeometry = GfxGeometry!(VertexPT, uint);
+	//alias ObjectGeometry = GfxGeometry!(VertexPT, uint);
 	GpuGraphicsPipeline graphics_pipeline;
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
+	GpuStorageBuffer storage_buffer;
 	GpuTexture object_texture;
 	GpuSampler object_sampler;
 	Surface object_image;
 
 	float[3][100] entity_list;
+	//LightPoint[] light_point_list;
 
 	this(Core core, GfxGraphicsContext graphics_context)
 	{
@@ -43,18 +46,18 @@ class ManyObject : AppInterface
 			entity[1] = uniform(0.5f, 1.3f);
 			entity[2] = uniform(0.5f, 1.3f);
 		}
-		// Shader
 
+		// Shader
 		scope GpuVertexShader vertex_shader;
 		scope GpuFragmentShader fragment_shader;
 		graphics_context.create(graphics_pipeline, vertex_shader, fragment_shader);
 		vertex_shader.create(
-			ShaderFile("texture.vert", graphics_context.get_shader_format()),
-			GpuShaderArguments(0, 2, 0, 0),
+			ShaderFile("texture_2.vert", graphics_context.get_shader_format()),
+			GpuShaderArguments(0, 3, 0, 0),
 		);
 		fragment_shader.create(
-			ShaderFile("texture.frag", graphics_context.get_shader_format()),
-			GpuShaderArguments(1, 1, 0, 0),
+			ShaderFile("texture_2.frag", graphics_context.get_shader_format()),
+			GpuShaderArguments(1, 4, 0, 0),
 		);
 		// Pipeline
 		scope GpuGraphicsPipelineCreateInfo pipeline_create_info;
@@ -64,9 +67,9 @@ class ManyObject : AppInterface
 		{
 			vertex_input_state = GpuVertexInputState(
 				[
-					vertex_buffer_description!(float[3], float[2])
+					vertex_buffer_description!(float[3], float[3], float[2])
 				],
-				vertex_attributes!(float[3], float[2])(0),
+				vertex_attributes!(float[3], float[3], float[2])(0),
 			);
 			primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
 			target_info = GpuGraphicsPipelineTargetInfo(
@@ -90,16 +93,16 @@ class ManyObject : AppInterface
 		graphics_pipeline.create(pipeline_create_info);
 
 		// Mesh, Geometry
-		ObjectGeometry object_geometry;
-		object_mesh.initialize(VertexPT.sizeof * 4, uint.sizeof * 6);
-		object_geometry = ObjectGeometry([
-			VertexPT(Vec3(-0.5f, -0.5f, 0.0f), Vec2(0.0f, 0.0f,),),
-			VertexPT(Vec3(+0.5f, -0.5f, 0.0f,), Vec2(1.0f, 0.0f,),),
-			VertexPT(Vec3(0.5f, +0.5f, 0.0f,), Vec2(1.0f, 1.0f,),),
-			VertexPT(Vec3(-0.5f, +0.5f, 0.0f,), Vec2(0.0f, 1.0f,),),
-		],
-		[0, 1, 2, 0, 2, 3],
-		);
+		//ObjectGeometry object_geometry;
+
+		object_geometry.vertices = [
+			VertexPNU(Vec3(-0.5f, -0.5f, 0.0f), Vec3(-0.5f, -0.5f, 0f), Vec2(0.0f, 0.0f,),),
+			VertexPNU(Vec3(+0.5f, -0.5f, 0.0f,), Vec3(+0.5f, -0.5f, 0f), Vec2(1.0f, 0.0f,),),
+			VertexPNU(Vec3(0.5f, +0.5f, 0.0f,), Vec3(+0.5f, +0.5f, 0f), Vec2(1.0f, 1.0f,),),
+			VertexPNU(Vec3(-0.5f, +0.5f, 0.0f,), Vec3(-0.5f, +0.5f, 0f), Vec2(0.0f, 1.0f,),),
+		];
+		object_geometry.indices = [0, 1, 2, 0, 2, 3];
+		object_mesh.initialize(VertexPNU.sizeof * 4, uint.sizeof * 6);
 		object_mesh.set([object_geometry,]);
 
 		// Buffer
@@ -186,11 +189,22 @@ class ManyObject : AppInterface
 
 		GpuColorTargetInfo color_target_info;
 		Matrix!(4, 4) view_mat, pos_mat;
+		//UniformVertexScene vert_scene;
+		UniformVertexView vert_view;
+		UniformVertexModel vert_model;
+		UniformFragmentScene frag_scene;
+		UniformFragmentView frag_view;
+		UniformFragmentLight frag_light;
 
-		view_mat = multiply_ltor(
-			transformer_look_at(Vec3(0f, 0f, -20f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
+		frag_scene.ambient_light = ColorF(1.0f, 1.0f, 1.0f, 0.5f);
+		vert_view.mat_view = multiply_ltor(
+			transformer_look_at(Vec3(0f, 0f, -2.5f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
 			transformer_perspective(PI_2),
 		);
+		frag_view.vec_view = Vec3(0f, 0f, -2.5f);
+		frag_light.color = Vec3(1.0f, 1.0f, 1.0f);
+		frag_light.pos = [0f, 0f, -3f];
+		frag_light.intensity = 1.0f;
 
 		command_buffer.acquire_buffer()
 			.acquire_texture(swapchain_texture);
@@ -211,26 +225,27 @@ class ManyObject : AppInterface
 					.bind(index_buffer);
 				foreach (entity; entity_list)
 				{
-					pos_mat = multiply_ltor(
-						transformer_scale([10.0f, 10.0f, 10.0f]),
+					vert_model.mat_model = multiply_ltor(
+						transformer_scale([1.0f, 1.0f, 1.0f]),
 						transformer_rotate_z(timer.past * 0.002f * entity[0]),
 						transformer_translate([
-							cos((0.0012f * timer.past) * entity[0]) * 10.0f,
-							sin((0.0013f * timer.past) * entity[1]) * 10.0f,
-							cos((0.0015f * timer.past) * entity[0]) * 10.0f
+							cos((0.0012f * timer.past) * entity[0]) * 1.0f,
+							sin((0.0013f * timer.past) * entity[1]) * 1.0f,
+							cos((0.0015f * timer.past) * entity[0]) * 1.0f,
 						]),
 					);
-					pass.push_vertex(view_mat, 0)
-						.push_vertex(pos_mat, 1)
-						.push_fragment(
-							Vector!(4)(
-							cos((0.001f * timer.past) * entity[1])
-							.fabs() * 0.9f,
-							cos((0.001f * timer.past) * entity[2])
-							.fabs() * 0.9f,
-							1.0f, 1.0f),
-							0,
-						)
+					vert_model.mat_model_normal = cast(Matrix!(4, 4, float))(cast(Matrix!(3, 3, float))(
+						vert_model.mat_model)).inverse().transpose();
+					/+vert_model.mat_model = Vector!(4)(
+						cos((0.001f * timer.past) * entity[1]).fabs() * 0.9f,
+						cos((0.001f * timer.past) * entity[2]).fabs() * 0.9f,
+						1.0f, 1.0f,
+					);+/
+					pass.push_vertex(vert_view, 1)
+						.push_vertex(vert_model, 2)
+						.push_fragment(frag_scene, 0,)
+						.push_fragment(frag_view, 1,)
+						.push_fragment(frag_light, 3,)
 						.draw_indexed(ParamIndexedPrimitive(6, 1, 0, 0, 0));
 				}
 			},);
@@ -243,4 +258,32 @@ class ManyObject : AppInterface
 	{
 		return 0;
 	}
+}
+
+struct UniformVertexView
+{
+	Matrix!(4, 4) mat_view;
+}
+
+struct UniformVertexModel
+{
+	Matrix!(4, 4) mat_model;
+	Matrix!(4, 4) mat_model_normal;
+}
+
+struct UniformFragmentScene
+{
+	ColorF ambient_light;
+}
+
+struct UniformFragmentView
+{
+	Vec3 vec_view;
+}
+
+struct UniformFragmentLight
+{
+	Vec3 pos = [0.0f, 0.0f, -3.0f];
+	Vec3 color = [1.0f, 0.5f, 0.0f];
+	float intensity = 1.0f;
 }
