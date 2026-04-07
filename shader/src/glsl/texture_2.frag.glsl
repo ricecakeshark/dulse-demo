@@ -60,7 +60,7 @@ void main()
 	vec3 R = reflect(-vec_light, normal_world);
 
 	// ambient
-	vec3 ambient = texel_color.rgb * scene.light_ambient.rgb * scene.light_ambient.a;
+	vec3 ambient = scene.light_ambient.rgb * scene.light_ambient.a;
 	// diffuse
 	vec3 diffuse = light.light_point_list[0].color * max(dot(normal_world, vec_light), 0.0);
 	// specular is later

@@ -118,7 +118,7 @@ class ManyObject : AppInterface
 
 		// texture, sampler
 		object_image = new Surface();
-		object_image.load("./image/dot4.png");
+		object_image.load("./image/dot16.png");
 		graphics_context.create(object_texture, object_sampler);
 		object_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d, GpuTextureFormat.r8g8b8a8_unorm,
@@ -137,35 +137,38 @@ class ManyObject : AppInterface
 
 		// upload
 		scope GfxUploadContext upload_context;
-		scope GpuBufferTransferBuffer buffer_transfer_buffer;
-		scope GpuTextureTransferBuffer texture_transfer_buffer;
-		graphics_context.create(upload_context, buffer_transfer_buffer, texture_transfer_buffer);
-		buffer_transfer_buffer.create(object_geometry.size)
+		scope GpuBufferTransferBuffer tb_geometry, tb_storage;
+		scope GpuTextureTransferBuffer tb_texture;
+		graphics_context.create(upload_context, tb_geometry, tb_storage, tb_texture);
+		tb_geometry.create(object_geometry.size)
 			.map()
 			.set(object_geometry.vertices, object_geometry.offset_vertex)
 			.set(object_geometry.indices, object_geometry.offset_index)
 			.unmap();
-		texture_transfer_buffer.create(object_image.size)
+		tb_texture.create(object_image.size)
 			.map()
 			.set(object_image)
 			.unmap();
+		/+
+		tb_storage.create(storage_buffer.size)
+			.map()
+			.set(storage_data)
+			.unmap();+/
 		upload_context.begin()
 			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),
+				GpuTransferBufferLocation(tb_geometry, object_geometry.offset_vertex),
 				GpuBufferRegion(vertex_buffer, 0u)
 			)
 			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_index),
+				GpuTransferBufferLocation(tb_geometry, object_geometry.offset_index),
 				GpuBufferRegion(index_buffer, 0u)
 			)
 			.upload(
-				GpuTextureTransferInfo(texture_transfer_buffer, 0),
+				GpuTextureTransferInfo(tb_texture, 0),
 				GpuTextureRegion(object_texture.handle, 0, 0, 0, 0, 0, object_image.width, object_image.height, 1)
 			)
 			.end()
 			.submit();
-		//buffer_transfer_buffer.release();
-		//texture_transfer_buffer.release();
 		graphics_context.release_transfer_buffer();
 		graphics_context.create(command_buffer, swapchain_texture);
 		core.subsystem.query(timer);
@@ -196,7 +199,7 @@ class ManyObject : AppInterface
 		UniformFragmentView frag_view;
 		UniformFragmentLight frag_light;
 
-		frag_scene.ambient_light = ColorF(1.0f, 1.0f, 1.0f, 0.5f);
+		frag_scene.ambient_light = ColorF(1.0f, 1.0f, 1.0f, 0.1f);
 		vert_view.mat_view = multiply_ltor(
 			transformer_look_at(Vec3(0f, 0f, -2.5f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
 			transformer_perspective(PI_2),
@@ -229,7 +232,7 @@ class ManyObject : AppInterface
 						transformer_scale([1.0f, 1.0f, 1.0f]),
 						transformer_rotate_z(timer.past * 0.002f * entity[0]),
 						transformer_translate([
-							cos((0.0012f * timer.past) * entity[0]) * 1.0f,
+							cos((0.0012f * timer.past) * entity[0]) * 1.6f,
 							sin((0.0013f * timer.past) * entity[1]) * 1.0f,
 							cos((0.0015f * timer.past) * entity[0]) * 1.0f,
 						]),

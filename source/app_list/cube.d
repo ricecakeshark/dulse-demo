@@ -66,6 +66,11 @@ class CubeDemo : AppInterface
 				vertex_attributes!(float[3], float[3], float[2])(0),
 			);
 			primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+			rasterizer_state = GpuRasterizerState(
+				GpuFillMode.fill,
+				GpuCullMode.back,
+				GpuFrontFace.counter_clockwise,
+			);
 			depth_stencil_state = GpuDepthStencilState(
 				GpuCompareOp.less,
 				GpuStencilOpState.init,
@@ -85,13 +90,6 @@ class CubeDemo : AppInterface
 
 		// Geometry
 		FileHandler("cube.obj").load_obj(object_geometry);
-		import std.exception;
-
-		enforce(object_geometry.size > 0);
-		import std.conv;
-
-		logger.log(to!string(object_geometry.vertices.length), LogLevel.info);
-		logger.log(to!string(object_geometry.indices.length), LogLevel.info);
 
 		// Mesh
 		object_mesh.initialize(
@@ -192,7 +190,6 @@ class CubeDemo : AppInterface
 		UniformFragmentView fragment_view;
 		UniformFragmentLight fragment_light;
 
-		
 		vertex_view.mat_view = multiply_ltor(
 			transformer_look_at(Vec3(0f, 0f, -2.5f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
 			transformer_perspective(PI_2),
@@ -233,7 +230,7 @@ class CubeDemo : AppInterface
 						GpuTextureSamplerBinding(object_texture, object_sampler)
 					], 0)
 					.bind([vertex_buffer])
-					.bind(index_buffer) //.bind_to_fragment([storage_buffer], 0u)
+					.bind(index_buffer)
 					.push_vertex(vertex_view, 1)
 					.push_vertex(vertex_model, 2)
 					.push_fragment(Vec4(1.0f, 1.0f, 1.0f, 0.1f), 0)
