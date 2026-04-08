@@ -24,7 +24,7 @@ void main()
 	core.subsystem.query(device, timer);
 
 	graphics = new GfxGraphicsContext();
-	graphics.initialize(GpuBackend.vulkan);
+	graphics.initialize(960, 540, GpuBackend.vulkan);
 
 	app_list = [
 		cast(AppInterface) new ManyObject(core, graphics),
@@ -65,7 +65,7 @@ void main()
 		app_list[app_index].process();
 		app_list[app_index].draw();
 	}
-	
+
 	app_list[app_index].finalize();
 	graphics.finalize();
 	core.finalize();

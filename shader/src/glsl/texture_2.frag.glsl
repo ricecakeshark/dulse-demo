@@ -1,4 +1,5 @@
 #version 450
+#extension GL_EXT_scalar_block_layout : enable
 
 const float LIGHT_ATTENUATION = 0.9f;
 const int MAX_LIGHT_POINT = 32;
@@ -25,25 +26,25 @@ layout(set = 2, binding = 1) readonly buffer Scene
 } scene_ssbo;
 
 // uniform buffer
-layout(set = 3, binding = 0) uniform Scene
+layout(std430, set = 3, binding = 0) uniform Scene
 {
 	//float light_attenuation;
 	vec4 light_ambient;
 } scene;
 // View
-layout(set = 3, binding = 1) uniform View
+layout(std430, set = 3, binding = 1) uniform View
 {
 	//mat4 mat;
 	vec3 vec;
 } view;
 // Model
-layout(set = 3, binding = 2) uniform Model
+layout(std430, set = 3, binding = 2) uniform Model
 {
-	float none;
-	//vec3 mat;
+	float specular_strength;
+	float shininess;
 } model;
 // Light
-layout(set = 3, binding = 3) uniform Light
+layout(std430, set = 3, binding = 3) uniform Light
 {
 	//float light_attenuation;
 	LightPoint[1] light_point_list;
@@ -57,14 +58,21 @@ void main()
 	vec3 normal_world = normalize(in_normal);
 	vec3 vec_light = normalize(light.light_point_list[0].pos - in_world_pos);
 	vec3 vec_view = normalize(view.vec - in_world_pos);
-	vec3 R = reflect(-vec_light, normal_world);
+	vec3 vec_reflect = reflect(-vec_light, normal_world);
 
 	// ambient
 	vec3 ambient = scene.light_ambient.rgb * scene.light_ambient.a;
 	// diffuse
-	vec3 diffuse = light.light_point_list[0].color * max(dot(normal_world, vec_light), 0.0);
-	// specular is later
+	float diff = max(dot(normal_world, vec_light), 0.0);
+	vec3 diffuse = light.light_point_list[0].color * light.light_point_list[0].intensity * diff;
+	// specular
+	float spec = 0.0;
+	if(diff > 0.0){
+		spec = pow(max(dot(vec_view, vec_reflect), 0.0), model.shininess);
+	}
+	vec3 specular = light.light_point_list[0].color 
+		* light.light_point_list[0].intensity * model.specular_strength * spec;
 
-	draw_color = vec4((ambient + diffuse) * texel_color.rgb, texel_color.a);
+	draw_color = vec4((ambient + diffuse) * texel_color.rgb + specular, texel_color.a);
 	return;
 }

@@ -109,7 +109,7 @@ class CubeDemo : AppInterface
 				GpuTextureType._2d,
 				GpuTextureFormat.d32_float,
 				GpuTextureUsageFlags.depth_stencil_target,
-				960, 540,
+				graphics_context.client_width, graphics_context.client_height,
 				1, 1, GpuSampleCount.x1,
 		));
 
@@ -187,16 +187,24 @@ class CubeDemo : AppInterface
 		UniformVertexScene vertex_scene;
 		UniformVertexView vertex_view;
 		UniformVertexModel vertex_model;
+		UniformFragmentScene fragment_scene;
 		UniformFragmentView fragment_view;
+		UniformFragmentModel fragment_model;
 		UniformFragmentLight fragment_light;
 
 		vertex_view.mat_view = multiply_ltor(
 			transformer_look_at(Vec3(0f, 0f, -2.5f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
 			transformer_perspective(PI_2),
 		);
+		fragment_scene.ambient_light = ColorF(1.0f, 1.0f, 1.0f, 0.1f);
 		fragment_view.vec_view = Vec3(0f, 0f, -2.5f);
-		fragment_light.color = Vec3(1.0f, 1.0f, 1.0f);
-		fragment_light.pos = [0f, 3f, -3f];
+		with (fragment_light.list[0])
+		{
+			pos = Vec3(0f, +0.5f, -3f);
+			color = Vec3(0.7f, 0.7f, 0.7f);
+			intensity = 1.0;
+		}
+
 		//fragment_light.pos = [sin(0.002f*timer.past)*10f,0f,cos(0.002f*timer.past)*10f];
 
 		command_buffer.acquire_buffer()
@@ -219,11 +227,17 @@ class CubeDemo : AppInterface
 				(ref GpuRenderPass pass) {
 				vertex_model.mat_model = multiply_rtol(
 					transformer_rotate_y(0.0015 * timer.past),
+					transformer_rotate_x(0.0005 * timer.past),
 					transformer_scale([1.0f, 1.0f, 1.0f]),
 				);
 				vertex_model.mat_model_normal = cast(Matrix!(4, 4, float))(cast(Matrix!(3, 3, float))(
 					vertex_model.mat_model)).inverse()
 					.transpose();
+				with (fragment_model)
+				{
+					specular_strength = 1.0;
+					shininess = 32.0f;
+				}
 
 				pass.bind(graphics_pipeline)
 					.bind([
@@ -233,8 +247,9 @@ class CubeDemo : AppInterface
 					.bind(index_buffer)
 					.push_vertex(vertex_view, 1)
 					.push_vertex(vertex_model, 2)
-					.push_fragment(Vec4(1.0f, 1.0f, 1.0f, 0.1f), 0)
+					.push_fragment(fragment_scene, 0)
 					.push_fragment(fragment_view, 1u)
+					.push_fragment(fragment_model, 2u)
 					.push_fragment(fragment_light, 3u)
 					.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 			},);
@@ -275,9 +290,22 @@ struct UniformFragmentView
 	Vec3 vec_view;
 }
 
+struct UniformFragmentModel
+{
+//align(4):
+	float specular_strength = 0.0;
+	float shininess = 64.0;
+}
+
 struct UniformFragmentLight
 {
-	Vec3 pos = [0.0f, 0.0f, -3.0f];
-	Vec3 color = [1.0f, 0.5f, 0.0f];
+	LightPoint[1] list;
+	uint count;
+}
+
+struct LightPoint
+{
+	align(16) Vec3 pos = [0.0f, 0.0f, -3.0f];
+	align(16) Vec3 color = [1.0f, 1.0f, 1.0f];
 	float intensity = 1.0f;
 }
