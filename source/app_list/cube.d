@@ -40,6 +40,7 @@ class CubeDemo : AppInterface
 	override void initialize()
 	{
 		core.subsystem.query(timer, logger);
+		graphics_context.create(command_buffer, swapchain_texture);
 		// Shader
 		scope GpuVertexShader vertex_shader;
 		scope GpuFragmentShader fragment_shader;
@@ -132,10 +133,31 @@ class CubeDemo : AppInterface
 				GpuSamplerAddressMode.clamp_to_edge,
 		));
 
+		// compute pipeline
+		/+
+		graphics_context.create(compute_pipeline);
+		auto compute_pipeline_info = GpuComputePipelineCreateInfo(
+			ShaderFile("mozaic.comp", GpuShaderFormat.spirv)
+		);
+		with (compute_pipeline_info)
+		{
+			//num_readonly_storage_buffers = 0;
+			num_samplers = 1;
+			num_readwrite_storage_textures = 1;
+			num_uniform_buffers = 1;
+			threadcount_x = 8;
+			threadcount_y = 8;
+			threadcount_z = 1;
+		}
+		compute_pipeline.create(
+			compute_pipeline_info
+		);+/
+
 		// upload
 		scope GfxUploadContext upload_context;
 		scope GpuBufferTransferBuffer buffer_transfer_buffer;
 		scope GpuTextureTransferBuffer texture_transfer_buffer;
+
 		graphics_context.create(upload_context, buffer_transfer_buffer, texture_transfer_buffer);
 		buffer_transfer_buffer.create(object_geometry.size)
 			.map()
@@ -146,23 +168,22 @@ class CubeDemo : AppInterface
 			.map()
 			.set(object_image)
 			.unmap();
-		upload_context.begin()
-			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),
-				GpuBufferRegion(vertex_buffer, 0u)
-			)
-			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_index),
-				GpuBufferRegion(index_buffer, 0u)
-			)
-			.upload(
-				GpuTextureTransferInfo(texture_transfer_buffer, 0),
-				GpuTextureRegion(object_texture.handle, 0, 0, 0, 0, 0, object_image.width, object_image.height, 1)
-			)
-			.end()
-			.submit();
-
-		graphics_context.create(command_buffer, swapchain_texture);
+		command_buffer.acquire_buffer()
+			.with_copy_pass(
+				(ref GpuCopyPass pass) {
+				pass.upload(
+					buffer_transfer_buffer,
+					vertex_buffer,
+					index_buffer,
+				)
+					.upload(
+						GpuTextureTransferInfo(texture_transfer_buffer, object_image.width, object_image
+						.height),
+						GpuTextureRegion(object_texture.handle, 0, 0, 0, 0, 0, object_image.width, object_image.height, 1)
+					);
+				return;
+			}
+			).submit();
 		return;
 	}
 
@@ -292,7 +313,7 @@ struct UniformFragmentView
 
 struct UniformFragmentModel
 {
-//align(4):
+	//align(4):
 	float specular_strength = 0.0;
 	float shininess = 64.0;
 }
