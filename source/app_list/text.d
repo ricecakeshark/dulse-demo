@@ -17,8 +17,8 @@ class TextApp : AppInterface
 	TimerSubsystem timer;
 
 	GfxGraphicsContext graphics;
-	GfxRenderContext render_context;
-	GfxUploadContext upload_context;
+	GpuCommandBuffer command_buffer;
+	GpuSwapchainTexture swapchain_texture;
 	GfxTextContext text_context;
 
 	GpuBufferTransferBuffer buffer_transfer_buffer;
@@ -44,12 +44,14 @@ class TextApp : AppInterface
 
 	void initialize()
 	{
+		core.subsystem.query(timer);
+		graphics.create(command_buffer, swapchain_texture);
 		// pipeline, vertex shader, fragment shader
 		scope GpuVertexShader vertex_shader;
 		scope GpuFragmentShader fragment_shader;
 		graphics.create(pipeline, vertex_shader, fragment_shader);
 		vertex_shader.create(
-			ShaderFile("texture.vert", graphics.device.get_shader_format()), //ShaderFile("const_position.vert", graphics.device.get_shader_format()),
+			ShaderFile("text.vert", graphics.device.get_shader_format()), //ShaderFile("const_position.vert", graphics.device.get_shader_format()),
 			GpuShaderArguments(0, 2, 0, 0),
 		);
 		fragment_shader.create(
@@ -105,10 +107,6 @@ class TextApp : AppInterface
 			GpuSamplerCreateInfo(
 				GpuFilter.linear,
 				GpuFilter.linear,
-				GpuSamplerMipmapMode.linear,
-				GpuSamplerAddressMode.clamp_to_edge,
-				GpuSamplerAddressMode.clamp_to_edge,
-				GpuSamplerAddressMode.clamp_to_edge,
 		)
 		);
 		// text
@@ -120,15 +118,12 @@ class TextApp : AppInterface
 			.create_text("TEXT");
 
 		// upload
-		graphics.create(buffer_transfer_buffer);
+		graphics.create(
+			buffer_transfer_buffer,
+			texture_transfer_buffer,
+		);
 		buffer_transfer_buffer.create_by_size(
 			VertexPT.sizeof * max_vertex_count + uint.sizeof * max_index_count
-		);
-
-		core.subsystem.query(timer);
-		graphics.create(
-			upload_context, texture_transfer_buffer,
-			render_context,
 		);
 		return;
 	}
@@ -175,41 +170,49 @@ class TextApp : AppInterface
 			.unmap();
 
 		// upload
-		upload_context.begin()
-			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, text_mesh.offset_vertex),
-				GpuBufferRegion(vertex_buffer, 0),
-			)
-			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, text_mesh.offset_index),
-				GpuBufferRegion(index_buffer, 0),
-			)
-			.end()
+		command_buffer.acquire_buffer()
+			.with_copy_pass((ref GpuCopyPass pass) {
+				pass.upload(
+					buffer_transfer_buffer,
+					vertex_buffer,
+					index_buffer,
+				);
+				return;
+			})
 			.submit();
 
-		render_context.acquire_buffer()
-			.acquire_texture()
-			.if_acquired(() {
+		command_buffer.acquire_buffer()
+			.acquire_texture(swapchain_texture);
+		if (swapchain_texture.handle !is null)
+		{
+			color_target_info = GpuColorTargetInfo(
+				swapchain_texture,
+				GpuLoadOp.clear, GpuStoreOp.store,
+			);
+			color_target_info.clear_color = ColorF(0.4f, 0.6f, 0.8f, 1.0f);
+			command_buffer.with_render_pass(
+				[color_target_info],
+				(ref GpuRenderPass pass) {
 				// swapchain texture
-				color_target_info = GpuColorTargetInfo(
-					render_context.swapchain_texture,
-					GpuLoadOp.clear, GpuStoreOp.store,
-				);
-				color_target_info.clear_color = ColorF(0.4f, 0.6f, 0.8f, 1.0f);
-				render_context.begin([color_target_info])
-					.bind(pipeline)
+
+				pass.bind(pipeline)
 					.bind([vertex_buffer])
 					.bind(index_buffer);
-				render_context.push_vertex(transformer_projection, 0)
+				pass.push_vertex(transformer_projection, 0)
 					.push_vertex(transformer_model, 1)
 					.push_fragment(
-						Vector!(8)(1.0f, 1.0f, 1.0f, 1.0f, 0.2f, 0.2f, 0.2f, 1.0f), 0
-					);
-
+						UniformFragmentConfig(
+						ColorF(1.0f, 1.0f, 1.0f, 1.0f),
+						ColorF(0.0f, 0.0f, 0.0f, 1.0f),
+						ColorF(0.5f, 0.5f, 0.5f, 1.0f),
+						0.50f, 0.1f, 0.4f, 0.2f,
+					),
+					0,
+				);
 				foreach (count; 0 .. text_mesh.count!(TextureGeometry))
 				{
 					TextureGeometry temp_geometry = text_mesh.geometries!(TextureGeometry)[count];
-					render_context.bind([
+					pass.bind([
 						GpuTextureSamplerBinding(text_texture[count].handle, sampler.handle)
 					])
 						.draw_indexed(ParamIndexedPrimitive(
@@ -219,9 +222,44 @@ class TextApp : AppInterface
 					vertex_offset += temp_geometry.count_vertex;
 					index_offset += temp_geometry.count_index;
 				}
-				render_context.end();
 				return;
-			}).submit();
+			}
+			);
+
+		}
+		command_buffer.submit();
+		/+foreach (texture; text_texture)
+		{
+			SDL_ReleaseGPUTexture(graphics.device.handle, texture.handle);
+		}+/
+
 		return;
 	}
+}
+
+struct UniformBuffer
+{
+	UniformVertexView vert_view;
+	UniformVertexModel vert_model;
+}
+
+struct UniformVertexView
+{
+	Matrix!(4, 4) view_matrix;
+}
+
+struct UniformVertexModel
+{
+	Matrix!(4, 4) model_matrix;
+}
+
+struct UniformFragmentConfig
+{
+	ColorF color_line;
+	ColorF color_outline;
+	ColorF color_grow;
+	float width_edge;
+	float width_outline;
+	float width_grow;
+	float softness;
 }

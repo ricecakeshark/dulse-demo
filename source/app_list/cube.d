@@ -125,33 +125,9 @@ class CubeDemo : AppInterface
 				1, 1,
 		));
 		object_sampler.create(GpuSamplerCreateInfo(
-				GpuFilter.nearest,
-				GpuFilter.nearest,
-				GpuSamplerMipmapMode.nearest,
-				GpuSamplerAddressMode.clamp_to_edge,
-				GpuSamplerAddressMode.clamp_to_edge,
-				GpuSamplerAddressMode.clamp_to_edge,
+				GpuFilter.linear,
+				GpuFilter.linear,
 		));
-
-		// compute pipeline
-		/+
-		graphics_context.create(compute_pipeline);
-		auto compute_pipeline_info = GpuComputePipelineCreateInfo(
-			ShaderFile("mozaic.comp", GpuShaderFormat.spirv)
-		);
-		with (compute_pipeline_info)
-		{
-			//num_readonly_storage_buffers = 0;
-			num_samplers = 1;
-			num_readwrite_storage_textures = 1;
-			num_uniform_buffers = 1;
-			threadcount_x = 8;
-			threadcount_y = 8;
-			threadcount_z = 1;
-		}
-		compute_pipeline.create(
-			compute_pipeline_info
-		);+/
 
 		// upload
 		scope GfxUploadContext upload_context;
@@ -177,9 +153,10 @@ class CubeDemo : AppInterface
 					index_buffer,
 				)
 					.upload(
-						GpuTextureTransferInfo(texture_transfer_buffer, object_image.width, object_image
-						.height),
-						GpuTextureRegion(object_texture.handle, 0, 0, 0, 0, 0, object_image.width, object_image.height, 1)
+						GpuTextureTransferInfo(
+							texture_transfer_buffer, object_image.width, object_image.height
+						),
+						GpuTextureRegion(object_texture)
 					);
 				return;
 			}

@@ -129,10 +129,6 @@ class ManyObject : AppInterface
 		object_sampler.create(GpuSamplerCreateInfo(
 				GpuFilter.nearest,
 				GpuFilter.nearest,
-				GpuSamplerMipmapMode.nearest,
-				GpuSamplerAddressMode.clamp_to_edge,
-				GpuSamplerAddressMode.clamp_to_edge,
-				GpuSamplerAddressMode.clamp_to_edge,
 		));
 
 		// upload
@@ -165,7 +161,7 @@ class ManyObject : AppInterface
 			)
 			.upload(
 				GpuTextureTransferInfo(tb_texture, 0),
-				GpuTextureRegion(object_texture.handle, 0, 0, 0, 0, 0, object_image.width, object_image.height, 1)
+				GpuTextureRegion(object_texture)
 			)
 			.end()
 			.submit();

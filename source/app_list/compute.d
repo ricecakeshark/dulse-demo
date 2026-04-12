@@ -117,10 +117,6 @@ class ComputeDemo : AppInterface
 		object_sampler.create(GpuSamplerCreateInfo(
 				GpuFilter.nearest,
 				GpuFilter.nearest,
-				GpuSamplerMipmapMode.nearest,
-				GpuSamplerAddressMode.clamp_to_edge,
-				GpuSamplerAddressMode.clamp_to_edge,
-				GpuSamplerAddressMode.clamp_to_edge,
 		));
 		graphics_context.create(depth_texture);
 		depth_texture.create(GpuTextureCreateInfo(
@@ -143,12 +139,7 @@ class ComputeDemo : AppInterface
 				graphics_context.client_width, graphics_context.client_height, 1, 1,
 		));
 		sampler.create(GpuSamplerCreateInfo(
-				GpuFilter.nearest,
-				GpuFilter.nearest,
-				GpuSamplerMipmapMode.nearest,
-				GpuSamplerAddressMode.clamp_to_edge,
-				GpuSamplerAddressMode.clamp_to_edge,
-				GpuSamplerAddressMode.clamp_to_edge,
+				GpuFilter.linear, GpuFilter.linear,
 		));
 
 		// Geometry
@@ -191,7 +182,7 @@ class ComputeDemo : AppInterface
 			)
 			.upload(
 				GpuTextureTransferInfo(tb_texture, 0),
-				GpuTextureRegion(object_texture.handle, 0, 0, 0, 0, 0, object_image.width, object_image.height, 1)
+				GpuTextureRegion(object_texture)
 			)
 			.end()
 			.submit();

@@ -30,7 +30,7 @@ void main()
 		cast(AppInterface) new ManyObject(core, graphics),
 		cast(AppInterface) new CubeDemo(core, graphics),
 		//new ShaderTest(core, graphics_context),
-		//new TextApp(core, graphics),
+		new TextApp(core, graphics),
 		new ComputeDemo(core, graphics),
 		//new KeyboardApp(core, graphics_context),
 	];
