@@ -111,7 +111,7 @@ class TextApp : AppInterface
 		);
 		// text
 		graphics.create(text_context);
-		text_context.load_font("HackGen-Regular.ttf", 50.0f)
+		text_context.load_font("HackGen-Bold.ttf", 50.0f)
 			.set_SDF(true)
 			.set(TextAlign.center)
 			.create_engine()
@@ -189,7 +189,7 @@ class TextApp : AppInterface
 				swapchain_texture,
 				GpuLoadOp.clear, GpuStoreOp.store,
 			);
-			color_target_info.clear_color = ColorF(0.4f, 0.6f, 0.8f, 1.0f);
+			color_target_info.clear_color = ColorF(0.1f, 0.1f, 0.1f, 1.0f);
 			command_buffer.with_render_pass(
 				[color_target_info],
 				(ref GpuRenderPass pass) {
@@ -204,7 +204,7 @@ class TextApp : AppInterface
 						UniformFragmentConfig(
 						ColorF(1.0f, 1.0f, 1.0f, 1.0f),
 						ColorF(0.0f, 0.0f, 0.0f, 1.0f),
-						ColorF(0.5f, 0.5f, 0.5f, 1.0f),
+						ColorF(0.5f, 0.5f, 1.0f, 1.0f),
 						0.50f, 0.1f, 0.4f, 0.2f,
 					),
 					0,
@@ -257,9 +257,9 @@ struct UniformFragmentConfig
 {
 	ColorF color_line;
 	ColorF color_outline;
-	ColorF color_grow;
+	ColorF color_glow;
 	float width_edge;
 	float width_outline;
-	float width_grow;
+	float width_glow;
 	float softness;
 }
