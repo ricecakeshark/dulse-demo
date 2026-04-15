@@ -38,6 +38,7 @@ class ManyObject : AppInterface
 
 	override void initialize()
 	{
+		core.subsystem.query(timer);
 		foreach (ref entity; entity_list)
 		{
 			import std.random;
@@ -93,8 +94,6 @@ class ManyObject : AppInterface
 		graphics_pipeline.create(pipeline_create_info);
 
 		// Mesh, Geometry
-		//ObjectGeometry object_geometry;
-
 		object_geometry.vertices = [
 			VertexPNU(Vec3(-0.5f, -0.5f, 0.0f), Vec3(-0.5f, -0.5f, 0f), Vec2(0.0f, 0.0f,),),
 			VertexPNU(Vec3(+0.5f, -0.5f, 0.0f,), Vec3(+0.5f, -0.5f, 0f), Vec2(1.0f, 0.0f,),),
@@ -167,7 +166,7 @@ class ManyObject : AppInterface
 			.submit();
 		graphics_context.release_transfer_buffer();
 		graphics_context.create(command_buffer, swapchain_texture);
-		core.subsystem.query(timer);
+		
 		return;
 	}
 

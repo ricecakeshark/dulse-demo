@@ -11,12 +11,12 @@ float aspect = 960.0f / 540.0f;
 
 void main()
 {
-	Core core;
-	DeviceSubsystem device;
-	TimerSubsystem timer;
-	GfxGraphicsContext graphics;
-	AppInterface[] app_list;
-	LoopedInt!(4) app_index, app_index_next;
+	scope Core core;
+	scope DeviceSubsystem device;
+	scope TimerSubsystem timer;
+	scope GfxGraphicsContext graphics;
+	scope AppInterface[] app_list;
+	scope LoopedInt!(5) app_index, app_index_next;
 
 	core = new Core();
 	core.append_sdl_subsystem()
@@ -32,6 +32,7 @@ void main()
 		//new ShaderTest(core, graphics_context),
 		new TextApp(core, graphics),
 		new ComputeDemo(core, graphics),
+		new GuageDemo(core,graphics),
 		//new KeyboardApp(core, graphics_context),
 	];
 	app_list[app_index].initialize();
@@ -69,6 +70,7 @@ void main()
 	app_list[app_index].finalize();
 	graphics.finalize();
 	core.finalize();
+	destroy(core);
 
 	return;
 }

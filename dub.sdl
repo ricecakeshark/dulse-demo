@@ -25,5 +25,3 @@ subConfiguration "bindbc-sdl" "static"
 // kelp_render
 //libs "kelp_render"
 lflags "/LIBPATH:$PACKAGE_DIR\\..\\kelp_gfx\\build"
-
-
