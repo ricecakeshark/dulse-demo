@@ -21,7 +21,7 @@ class ManyObject : AppInterface
 	GpuGraphicsPipeline graphics_pipeline;
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
-	GpuStorageBuffer storage_buffer;
+	//GpuStorageBuffer storage_buffer;
 	GpuTexture object_texture;
 	GpuSampler object_sampler;
 	Surface object_image;
@@ -172,7 +172,7 @@ class ManyObject : AppInterface
 
 	override void finalize()
 	{
-		graphics_context.release_all();
+		graphics_context.resource_store.release_all();
 		return;
 	}
 

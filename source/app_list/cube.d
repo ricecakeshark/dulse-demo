@@ -165,7 +165,7 @@ class CubeDemo : AppInterface
 
 	override void finalize()
 	{
-		graphics_context.release_all();
+		graphics_context.resource_store.release_all();
 		return;
 	}
 

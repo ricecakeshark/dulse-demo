@@ -6,6 +6,7 @@ import kelp_sdl;
 import kelp_gfx;
 import std.stdio;
 import core.memory;
+//import core.runtime;
 
 float aspect = 960.0f / 540.0f;
 
@@ -70,7 +71,7 @@ void main()
 	app_list[app_index].finalize();
 	graphics.finalize();
 	core.finalize();
-	destroy(core);
 
+	writeln(GC.profileStats);
 	return;
 }

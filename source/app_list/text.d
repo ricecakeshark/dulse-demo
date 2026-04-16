@@ -155,12 +155,12 @@ class TextApp : AppInterface
 
 		// matrix
 		transformer_projection = multiply_ltor(
-			transformer_look_at(Vec3(0f, 0f, -80f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
+			transformer_look_at(Vec3(0f, 0f, -3f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
 			transformer_perspective(PI_2,),
 		);
 		transformer_model = multiply_ltor(
 			transformer_translate([-tw / 2.0f, th / 2.0f, 0.0f]),
-			transformer_scale([0.5f, 0.5f, 0.5f]),
+			transformer_scale([0.01f, 0.01f, 0.01f]),
 			transformer_rotate_y(cast(float)(timer.past * 0.001f)),
 		);
 		// transfer
