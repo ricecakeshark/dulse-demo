@@ -8,7 +8,7 @@ import std.stdio;
 import core.memory;
 //import core.runtime;
 
-float aspect = 960.0f / 540.0f;
+//float aspect = 960.0f / 540.0f;
 
 void main()
 {

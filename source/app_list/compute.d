@@ -43,11 +43,11 @@ class ComputeDemo : AppInterface
 		scope GpuFragmentShader fragment_shader;
 		graphics_context.create(render_pipeline, vertex_shader, fragment_shader);
 		vertex_shader.create(
-			ShaderFile("texture_2.vert", graphics_context.get_shader_format()),
+			ShaderFile("texture.vert", graphics_context.get_shader_format()),
 			GpuShaderArguments(0, 3, 0, 0),
 		);
 		fragment_shader.create(
-			ShaderFile("texture_2.frag", graphics_context.get_shader_format()),
+			ShaderFile("texture.frag", graphics_context.get_shader_format()),
 			GpuShaderArguments(1, 4, 0, 0),
 		);
 		// Render Pipeline
