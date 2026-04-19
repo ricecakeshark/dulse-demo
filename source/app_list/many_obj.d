@@ -12,8 +12,8 @@ class ManyObject : AppInterface
 	TimerSubsystem timer;
 	GfxGraphicsContext graphics_context;
 
-	GpuSwapchainTexture swapchain_texture;
 	GpuCommandBuffer command_buffer;
+	GpuSwapchainTexture swapchain_texture;
 
 	GfxGeometry!(VertexPNU, uint) object_geometry;
 	GfxMesh object_mesh;
@@ -39,6 +39,7 @@ class ManyObject : AppInterface
 	override void initialize()
 	{
 		core.subsystem.query(timer);
+		graphics_context.create(command_buffer, swapchain_texture);
 		foreach (ref entity; entity_list)
 		{
 			import std.random;
@@ -131,10 +132,9 @@ class ManyObject : AppInterface
 		));
 
 		// upload
-		scope GfxUploadContext upload_context;
 		scope GpuBufferTransferBuffer tb_geometry, tb_storage;
 		scope GpuTextureTransferBuffer tb_texture;
-		graphics_context.create(upload_context, tb_geometry, tb_storage, tb_texture);
+		graphics_context.create(tb_geometry, tb_storage, tb_texture);
 		tb_geometry.create(object_geometry.size)
 			.map()
 			.set(object_geometry.vertices, object_geometry.offset_vertex)
@@ -149,24 +149,26 @@ class ManyObject : AppInterface
 			.map()
 			.set(storage_data)
 			.unmap();+/
-		upload_context.begin()
-			.upload(
-				GpuTransferBufferLocation(tb_geometry, object_geometry.offset_vertex),
-				GpuBufferRegion(vertex_buffer, 0u)
-			)
-			.upload(
-				GpuTransferBufferLocation(tb_geometry, object_geometry.offset_index),
-				GpuBufferRegion(index_buffer, 0u)
-			)
-			.upload(
-				GpuTextureTransferInfo(tb_texture, 0),
-				GpuTextureRegion(object_texture)
-			)
-			.end()
-			.submit();
+
+		command_buffer.acquire_buffer()
+			.with_copy_pass((copy_pass) {
+				copy_pass.upload(
+					GpuTransferBufferLocation(tb_geometry, object_geometry.offset_vertex),
+					GpuBufferRegion(vertex_buffer, 0u)
+				)
+					.upload(
+						GpuTransferBufferLocation(tb_geometry, object_geometry.offset_index),
+						GpuBufferRegion(index_buffer, 0u)
+					)
+					.upload(
+						GpuTextureTransferInfo(tb_texture, 0),
+						GpuTextureRegion(object_texture)
+					);
+				return;
+			}).submit();
+
 		graphics_context.release_transfer_buffer();
-		graphics_context.create(command_buffer, swapchain_texture);
-		
+
 		return;
 	}
 

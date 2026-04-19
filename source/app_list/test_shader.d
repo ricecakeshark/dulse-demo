@@ -14,7 +14,6 @@ class ShaderTest : AppInterface
 	TimerSubsystem timer;
 	GfxGraphicsContext graphics_context;
 
-	//GfxRenderContext render_context;
 	GpuCommandBuffer command_buffer;
 	GpuSwapchainTexture swapchain_texture;
 	GfxMesh object_mesh;
@@ -32,6 +31,8 @@ class ShaderTest : AppInterface
 
 	override void initialize()
 	{
+		graphics_context.create(command_buffer, swapchain_texture);
+		core.subsystem.query(timer);
 		// Shader
 		scope GpuVertexShader vertex_shader;
 		scope GpuFragmentShader fragment_shader;
@@ -87,28 +88,23 @@ class ShaderTest : AppInterface
 		index_buffer.create(6, GpuIndexElementSize._32bit);
 
 		// upload
-		scope GfxUploadContext upload_context;
 		scope GpuBufferTransferBuffer buffer_transfer_buffer;
-		graphics_context.create(upload_context, buffer_transfer_buffer);
+		graphics_context.create(buffer_transfer_buffer);
 		buffer_transfer_buffer.create(object_geometry.size)
 			.map()
 			.set(object_geometry.vertices, object_geometry.offset_vertex)
 			.set(object_geometry.indices, object_geometry.offset_index)
 			.unmap();
-		upload_context.begin()
-			.upload(
+		command_buffer.with_copy_pass((ref GpuCopyPass copy_pass) {
+			copy_pass.upload(
 				GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),
 				GpuBufferRegion(vertex_buffer, 0u)
 			)
-			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_index),
-				GpuBufferRegion(index_buffer, 0u)
-			)
-			.end()
-			.submit();
-
-		graphics_context.create(command_buffer, swapchain_texture);
-		core.subsystem.query(timer);
+				.upload(
+					GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_index),
+					GpuBufferRegion(index_buffer, 0u)
+				);
+		}).submit();
 		return;
 	}
 

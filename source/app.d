@@ -6,6 +6,7 @@ import kelp_sdl;
 import kelp_gfx;
 import std.stdio;
 import core.memory;
+
 //import core.runtime;
 
 //float aspect = 960.0f / 540.0f;
@@ -33,7 +34,7 @@ void main()
 		//new ShaderTest(core, graphics_context),
 		new TextApp(core, graphics),
 		new ComputeDemo(core, graphics),
-		new GuageDemo(core,graphics),
+		new GuageDemo(core, graphics),
 		//new KeyboardApp(core, graphics_context),
 	];
 	app_list[app_index].initialize();
@@ -71,7 +72,7 @@ void main()
 	app_list[app_index].finalize();
 	graphics.finalize();
 	core.finalize();
-
+	GC.collect();
 	writeln(GC.profileStats);
 	return;
 }

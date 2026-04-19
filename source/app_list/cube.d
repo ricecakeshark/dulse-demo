@@ -14,7 +14,6 @@ class CubeDemo : AppInterface
 	LoggerSubsystem logger;
 	GfxGraphicsContext graphics_context;
 
-	//GfxRenderContext render_context;
 	GpuCommandBuffer command_buffer;
 	GpuSwapchainTexture swapchain_texture;
 	GfxMesh object_mesh;
@@ -129,11 +128,10 @@ class CubeDemo : AppInterface
 		));
 
 		// upload
-		scope GfxUploadContext upload_context;
 		scope GpuBufferTransferBuffer buffer_transfer_buffer;
 		scope GpuTextureTransferBuffer texture_transfer_buffer;
 
-		graphics_context.create(upload_context, buffer_transfer_buffer, texture_transfer_buffer);
+		graphics_context.create(buffer_transfer_buffer, texture_transfer_buffer);
 		buffer_transfer_buffer.create(object_geometry.size)
 			.map()
 			.set(object_geometry.vertices, object_geometry.offset_vertex)
@@ -145,18 +143,18 @@ class CubeDemo : AppInterface
 			.unmap();
 		command_buffer.acquire_buffer()
 			.with_copy_pass(
-				(ref GpuCopyPass pass) {
-				pass.upload(
+				(copy_pass) {
+				copy_pass.upload(
 					buffer_transfer_buffer,
 					vertex_buffer,
 					index_buffer,
 				)
 					.upload(
 						GpuTextureTransferInfo(
-							texture_transfer_buffer, object_image.width, object_image.height
-						),
-						GpuTextureRegion(object_texture)
-					);
+						texture_transfer_buffer, object_image.width, object_image.height
+					),
+					GpuTextureRegion(object_texture)
+				);
 				return;
 			}
 			).submit();
@@ -221,7 +219,7 @@ class CubeDemo : AppInterface
 			command_buffer.with_render_pass(
 				[color_target_info],
 				depth_target_info,
-				(ref GpuRenderPass pass) {
+				(render_pass) {
 				vertex_model.mat_model = multiply_rtol(
 					transformer_rotate_y(0.0015 * timer.past),
 					transformer_rotate_x(0.0005 * timer.past),
@@ -236,7 +234,7 @@ class CubeDemo : AppInterface
 					shininess = 32.0f;
 				}
 
-				pass.bind(graphics_pipeline)
+				render_pass.bind(graphics_pipeline)
 					.bind([
 						GpuTextureSamplerBinding(object_texture, object_sampler)
 					], 0)

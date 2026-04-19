@@ -58,13 +58,6 @@ class GuageDemo : AppInterface
 				300, 300, 1, 1,
 		)
 		);
-		/+
-		command_buffer.acquire_buffer()
-			.with_compute_pass([], [], (ref GpuComputePass pass) {
-				pass.push_uniform(UniformGuageConst(), 0);
-				return;
-			}).submit();
-+/
 		return;
 	}
 
@@ -97,14 +90,15 @@ class GuageDemo : AppInterface
 			);
 			command_buffer.with_render_pass(
 				[color_target_info],
-				(ref GpuRenderPass pass) { return; });
+				(render_pass) { return; });
 			command_buffer.with_compute_pass(
 				[GpuStorageTextureReadWriteBinding(guage_dst_texture)],
 				[],
-				(ref GpuComputePass pass) {
-				pass.bind(guage_pipeline)
+				(compute_pass) {
+				compute_pass.bind(guage_pipeline)
 					.push_uniform(UniformGuageConst(), 0)
-					.push_uniform(UniformGuageParam(0.4 + cos(timer.past * 0.001) * 0.3,-sin(timer.past * 0.001) * 0.1), 1)
+					.push_uniform(UniformGuageParam(0.4 + cos(timer.past * 0.001) * 0.3, -sin(
+						timer.past * 0.001) * 0.1), 1)
 					.dispatch(400 / 8, 400 / 8, 1);
 				return;
 			},);

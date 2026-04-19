@@ -11,8 +11,6 @@ class ComputeDemo : AppInterface
 	Core core;
 	TimerSubsystem timer;
 	GfxGraphicsContext graphics_context;
-	GfxComputeContext compute_context;
-	GfxRenderContext render_context;
 
 	GpuGraphicsPipeline render_pipeline;
 	GpuComputePipeline compute_pipeline;
@@ -38,6 +36,8 @@ class ComputeDemo : AppInterface
 
 	override void initialize()
 	{
+		core.subsystem.query(timer, logger);
+		graphics_context.create(command_buffer, swapchain_texture);
 		// Render Shader
 		scope GpuVertexShader vertex_shader;
 		scope GpuFragmentShader fragment_shader;
@@ -158,10 +158,9 @@ class ComputeDemo : AppInterface
 		index_buffer.create(object_geometry.count_index, GpuIndexElementSize._32bit);
 
 		// upload
-		scope GfxUploadContext upload_context;
 		scope GpuBufferTransferBuffer buffer_transfer_buffer;
 		scope GpuTextureTransferBuffer tb_texture;
-		graphics_context.create(upload_context, buffer_transfer_buffer, tb_texture);
+		graphics_context.create(buffer_transfer_buffer, tb_texture);
 		buffer_transfer_buffer.create(object_geometry.size)
 			.map()
 			.set(object_geometry.vertices, object_geometry.offset_vertex)
@@ -171,26 +170,23 @@ class ComputeDemo : AppInterface
 			.map()
 			.set(object_image)
 			.unmap();
-		upload_context.begin()
-			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),
-				GpuBufferRegion(vertex_buffer, 0u)
-			)
-			.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_index),
-				GpuBufferRegion(index_buffer, 0u)
-			)
-			.upload(
-				GpuTextureTransferInfo(tb_texture, 0),
-				GpuTextureRegion(object_texture)
-			)
-			.end()
-			.submit();
 
-		graphics_context.create(compute_context);
-		core.subsystem.query(timer, logger);
-
-		graphics_context.create(command_buffer, swapchain_texture);
+		command_buffer.acquire_buffer()
+			.with_copy_pass((ref copy_pass) {
+				copy_pass.upload(
+					GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),
+					GpuBufferRegion(vertex_buffer, 0u)
+				)
+					.upload(
+						GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_index),
+						GpuBufferRegion(index_buffer, 0u)
+					)
+					.upload(
+						GpuTextureTransferInfo(tb_texture, 0),
+						GpuTextureRegion(object_texture),
+					);
+				return;
+			}).submit();
 		return;
 	}
 
@@ -258,7 +254,7 @@ class ComputeDemo : AppInterface
 			command_buffer.with_render_pass(
 				[color_target_info],
 				depth_target_info,
-				(ref GpuRenderPass pass) {
+				(render_pass) {
 				vertex_model.mat_model = multiply_rtol(
 					transformer_rotate_y(0.0015 * timer.past),
 					transformer_rotate_x(0.0005 * timer.past),
@@ -272,7 +268,7 @@ class ComputeDemo : AppInterface
 					specular_strength = 1.0;
 					shininess = 32.0f;
 				}
-				pass.bind(render_pipeline)
+				render_pass.bind(render_pipeline)
 					.bind([
 						GpuTextureSamplerBinding(object_texture, object_sampler)
 					], 0)
@@ -290,10 +286,12 @@ class ComputeDemo : AppInterface
 			command_buffer.with_compute_pass(
 				[GpuStorageTextureReadWriteBinding(compute_dst_texture)],
 				[],
-				(ref GpuComputePass pass) {
-				pass.bind(compute_pipeline)
+				(compute_pass) {
+				compute_pass.bind(compute_pipeline)
 					.bind(
-						[GpuTextureSamplerBinding(compute_src_texture, sampler)], 0
+						[
+							GpuTextureSamplerBinding(compute_src_texture, sampler)
+						], 0
 					)
 					.push_uniform(ComputeUniform(960f, 540f))
 					.dispatch(960 / 8, 540 / 8, 1);
