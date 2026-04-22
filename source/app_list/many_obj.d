@@ -27,6 +27,7 @@ class ManyObject : AppInterface
 	Surface object_image;
 
 	float[3][100] entity_list;
+	ObjectManager!uint object_manager;
 	//LightPoint[] light_point_list;
 
 	this(Core core, GfxGraphicsContext graphics_context)
@@ -48,6 +49,19 @@ class ManyObject : AppInterface
 			entity[1] = uniform(0.5f, 1.3f);
 			entity[2] = uniform(0.5f, 1.3f);
 		}
+		// object manager
+		object_manager = new ObjectManager!uint;
+		object_manager.register!Comp();
+		object_manager.register!PositionSystem();
+		object_manager.with_store!Comp((store) {
+			import std.stdio;
+
+			foreach (uint count; 0 .. 100)
+			{
+				store.create(count);
+			}
+		});
+		object_manager.initialize();
 
 		// Shader
 		scope GpuVertexShader vertex_shader;
@@ -223,17 +237,22 @@ class ManyObject : AppInterface
 					], 0)
 					.bind([vertex_buffer])
 					.bind(index_buffer);
-				foreach (entity; entity_list)
+				object_manager.process();
+				foreach (entity; object_manager.get_store!Comp().entities)
 				{
-					vert_model.mat_model = multiply_ltor(
+					object_manager.with_store!Comp((store) {
+						vert_model.mat_model = multiply_ltor(
 						transformer_scale([1.0f, 1.0f, 1.0f]),
-						transformer_rotate_z(timer.past * 0.002f * entity[0]),
+						transformer_rotate_z(timer.past * 0.002f * store[entity].param[3]),
 						transformer_translate([
-							cos((0.0012f * timer.past) * entity[0]) * 1.6f,
-							sin((0.0013f * timer.past) * entity[1]) * 1.0f,
-							cos((0.0015f * timer.past) * entity[0]) * 1.0f,
+							cos((0.0012f * timer.past) * store[entity].param[0]) * 1.6f,
+							sin((0.0013f * timer.past) * store[entity].param[1]) * 1.0f,
+							cos((0.0015f * timer.past) * store[entity].param[2]) * 1.0f,
 						]),
-					);
+						);
+						return;
+					});
+
 					vert_model.mat_model_normal = cast(Matrix!(4, 4, float))(cast(Matrix!(3, 3, float))(
 						vert_model.mat_model)).inverse().transpose();
 					/+vert_model.mat_model = Vector!(4)(
@@ -286,4 +305,48 @@ struct UniformFragmentLight
 	Vec3 pos = [0.0f, 0.0f, -3.0f];
 	Vec3 color = [1.0f, 0.5f, 0.0f];
 	float intensity = 1.0f;
+}
+
+import std.random;
+
+struct Comp
+{
+	float[4] param;
+}
+
+class PositionSystem : IObjectSystem!(uint)
+{
+	void initialize(ObjectManager!uint object_manager)
+	{
+		object_manager.with_store!Comp((store) {
+			foreach (entity; store.entities)
+			{
+				store[entity].param[0] = uniform(0.7, 1.3);
+				store[entity].param[1] = uniform(0.7, 1.3);
+				store[entity].param[2] = uniform(0.7, 1.3);
+				store[entity].param[3] = uniform(0.7, 1.3);
+			}
+			return;
+		});
+		return;
+	}
+
+	void finalize(ObjectManager!uint object_manager)
+	{
+		return;
+	}
+
+	void process(ObjectManager!uint object_store)
+	{
+		/+ComponentStore!(uint, Comp) store;
+		object_store.store!Comp(store);
+		foreach (entity; store.entities)
+		{
+			store[entity].param[0] = uniform(0.7, 1.3);
+			store[entity].param[1] = uniform(0.7, 1.3);
+			store[entity].param[2] = uniform(0.7, 1.3);
+			store[entity].param[3] = uniform(0.7, 1.3);
+		}+/
+		return;
+	}
 }
