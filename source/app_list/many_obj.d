@@ -10,6 +10,7 @@ class ManyObject : AppInterface
 {
 	Core core;
 	TimerSubsystem timer;
+	LoggerSubsystem logger;
 	GfxGraphicsContext graphics_context;
 
 	GpuCommandBuffer command_buffer;
@@ -26,8 +27,8 @@ class ManyObject : AppInterface
 	GpuSampler object_sampler;
 	Surface object_image;
 
-	float[3][100] entity_list;
 	ObjectManager!uint object_manager;
+	Entity[100] entity_list;
 	//LightPoint[] light_point_list;
 
 	this(Core core, GfxGraphicsContext graphics_context)
@@ -39,28 +40,25 @@ class ManyObject : AppInterface
 
 	override void initialize()
 	{
-		core.subsystem.query(timer);
+		core.subsystem.query(timer,logger);
 		graphics_context.create(command_buffer, swapchain_texture);
-		foreach (ref entity; entity_list)
-		{
-			import std.random;
-
-			entity[0] = uniform(0.5f, 1.3f);
-			entity[1] = uniform(0.5f, 1.3f);
-			entity[2] = uniform(0.5f, 1.3f);
-		}
 		// object manager
 		object_manager = new ObjectManager!uint;
+		logger.log("many_obj");
+		object_manager.create(entity_list);
+		logger.log("many_obj");
 		object_manager.register!Comp();
 		object_manager.register!PositionSystem();
+		logger.log("many_obj");
 		object_manager.with_store!Comp((store) {
 			import std.stdio;
 
-			foreach (uint count; 0 .. 100)
+			foreach (entity; entity_list)
 			{
-				store.create(count);
+				store.create(entity);
 			}
 		});
+		logger.log("many_obj");
 		object_manager.initialize();
 
 		// Shader
@@ -219,7 +217,7 @@ class ManyObject : AppInterface
 		frag_light.color = Vec3(1.0f, 1.0f, 1.0f);
 		frag_light.pos = [0f, 0f, -3f];
 		frag_light.intensity = 1.0f;
-
+		logger.log("many_obj");
 		command_buffer.acquire_buffer()
 			.acquire_texture(swapchain_texture);
 		if (swapchain_texture !is null)
@@ -237,8 +235,8 @@ class ManyObject : AppInterface
 					], 0)
 					.bind([vertex_buffer])
 					.bind(index_buffer);
-				object_manager.process();
-				foreach (entity; object_manager.get_store!Comp().entities)
+				//object_manager.process();
+				foreach (entity; entity_list)
 				{
 					object_manager.with_store!Comp((store) {
 						vert_model.mat_model = multiply_ltor(
