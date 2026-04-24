@@ -27,7 +27,7 @@ class ManyObject : AppInterface
 	GpuSampler object_sampler;
 	Surface object_image;
 
-	ObjectManager!uint object_manager;
+	ObjectManager object_manager;
 	Entity[100] entity_list;
 	//LightPoint[] light_point_list;
 
@@ -40,25 +40,24 @@ class ManyObject : AppInterface
 
 	override void initialize()
 	{
-		core.subsystem.query(timer,logger);
+		import std.conv;
+
+		core.subsystem.query(timer, logger);
 		graphics_context.create(command_buffer, swapchain_texture);
 		// object manager
-		object_manager = new ObjectManager!uint;
-		logger.log("many_obj");
+		object_manager = new ObjectManager;
+
 		object_manager.create(entity_list);
-		logger.log("many_obj");
+
 		object_manager.register!Comp();
 		object_manager.register!PositionSystem();
-		logger.log("many_obj");
-		object_manager.with_store!Comp((store) {
-			import std.stdio;
 
+		object_manager.with_store!Comp((ref store) {
 			foreach (entity; entity_list)
 			{
-				store.create(entity);
+				object_manager.attach!Comp(entity);
 			}
 		});
-		logger.log("many_obj");
 		object_manager.initialize();
 
 		// Shader
@@ -217,7 +216,6 @@ class ManyObject : AppInterface
 		frag_light.color = Vec3(1.0f, 1.0f, 1.0f);
 		frag_light.pos = [0f, 0f, -3f];
 		frag_light.intensity = 1.0f;
-		logger.log("many_obj");
 		command_buffer.acquire_buffer()
 			.acquire_texture(swapchain_texture);
 		if (swapchain_texture !is null)
@@ -312,39 +310,29 @@ struct Comp
 	float[4] param;
 }
 
-class PositionSystem : IObjectSystem!(uint)
+class PositionSystem : IObjectSystem
 {
-	void initialize(ObjectManager!uint object_manager)
+	void initialize(ObjectManager object_manager)
 	{
-		object_manager.with_store!Comp((store) {
-			foreach (entity; store.entities)
-			{
-				store[entity].param[0] = uniform(0.7, 1.3);
-				store[entity].param[1] = uniform(0.7, 1.3);
-				store[entity].param[2] = uniform(0.7, 1.3);
-				store[entity].param[3] = uniform(0.7, 1.3);
-			}
-			return;
-		});
-		return;
-	}
-
-	void finalize(ObjectManager!uint object_manager)
-	{
-		return;
-	}
-
-	void process(ObjectManager!uint object_store)
-	{
-		/+ComponentStore!(uint, Comp) store;
-		object_store.store!Comp(store);
-		foreach (entity; store.entities)
+		foreach (entity; object_manager.list_entity)
 		{
-			store[entity].param[0] = uniform(0.7, 1.3);
-			store[entity].param[1] = uniform(0.7, 1.3);
-			store[entity].param[2] = uniform(0.7, 1.3);
-			store[entity].param[3] = uniform(0.7, 1.3);
-		}+/
+			object_manager.get_component!Comp(entity).param = [
+				uniform(0.7, 1.3),
+				uniform(0.7, 1.3),
+				uniform(0.7, 1.3),
+				uniform(0.7, 1.3),
+			];
+		}
+		return;
+	}
+
+	void finalize(ObjectManager object_manager)
+	{
+		return;
+	}
+
+	void process(ObjectManager object_store)
+	{
 		return;
 	}
 }
