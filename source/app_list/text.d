@@ -159,7 +159,7 @@ class TextApp : AppInterface
 		);
 		transformer_model = multiply_ltor(
 			transformer_translate([-tw / 2.0f, th / 2.0f, 0.0f]),
-			transformer_scale([0.01f, 0.01f, 0.01f]),
+			transformer_scale([0.02f, 0.02f, 0.02f]),
 			transformer_rotate_y(cast(float)(timer.past * 0.001f)),
 		);
 		// transfer
