@@ -7,10 +7,6 @@ import kelp_gfx;
 import std.stdio;
 import core.memory;
 
-//import core.runtime;
-
-//float aspect = 960.0f / 540.0f;
-
 void main()
 {
 	scope Core core;
