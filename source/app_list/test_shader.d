@@ -6,7 +6,6 @@ import app_list.app_interface;
 import kelp_core;
 import kelp_sdl;
 import kelp_gfx;
-import bindbc.sdl;
 
 class ShaderTest : AppInterface
 {
@@ -57,7 +56,7 @@ class ShaderTest : AppInterface
 				],
 				vertex_attributes!(float[3], float[4])(0),
 			);
-			primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+			primitive_type = GpuPrimitiveType.triangle_list;
 			target_info = GpuGraphicsPipelineTargetInfo(
 				[
 				GpuColorTargetDescription(

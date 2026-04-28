@@ -5,7 +5,6 @@ import app_list.app_interface;
 import kelp_core;
 import kelp_sdl;
 import kelp_gfx;
-import bindbc.sdl;
 
 class GuageDemo : AppInterface
 {

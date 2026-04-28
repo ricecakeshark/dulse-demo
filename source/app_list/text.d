@@ -3,7 +3,6 @@ module app_list.text;
 import app_list.app_interface;
 
 import kelp_core, kelp_sdl, kelp_gfx;
-import bindbc.sdl;
 
 import std.math;
 import std.format;
@@ -69,7 +68,7 @@ class TextApp : AppInterface
 				],
 				vertex_attributes!(float[3], float[2])(0),
 			);
-			primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+			primitive_type = GpuPrimitiveType.triangle_list;
 			target_info = GpuGraphicsPipelineTargetInfo(
 				[
 				GpuColorTargetDescription(

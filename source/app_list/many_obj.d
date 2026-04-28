@@ -4,7 +4,6 @@ import app_list.app_interface;
 import kelp_core;
 import kelp_sdl;
 import kelp_gfx;
-import bindbc.sdl;
 
 class ManyObject : AppInterface
 {
@@ -81,7 +80,7 @@ class ManyObject : AppInterface
 				],
 				vertex_attributes!(float[3], float[3], float[2])(0),
 			);
-			primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+			primitive_type = GpuPrimitiveType.triangle_list;
 			target_info = GpuGraphicsPipelineTargetInfo(
 				[
 				GpuColorTargetDescription(
@@ -93,7 +92,7 @@ class ManyObject : AppInterface
 						GpuBlendFactor.src_alpha,
 						GpuBlendFactor.one_minus_src_alpha,
 						GpuBlendOp.add,
-						cast(GpuColorComponentFlags) SDL_GPUColorComponentFlags.init,
+						cast(GpuColorComponentFlags) GpuColorComponentFlags.init,
 						true,
 				)
 				)

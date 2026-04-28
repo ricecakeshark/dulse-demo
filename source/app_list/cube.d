@@ -5,7 +5,6 @@ import app_list.app_interface;
 import kelp_core;
 import kelp_sdl;
 import kelp_gfx;
-import bindbc.sdl;
 
 class CubeDemo : AppInterface
 {
@@ -64,7 +63,7 @@ class CubeDemo : AppInterface
 				],
 				vertex_attributes!(float[3], float[3], float[2])(0),
 			);
-			primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+			primitive_type = GpuPrimitiveType.triangle_list;
 			rasterizer_state = GpuRasterizerState(
 				GpuFillMode.fill,
 				GpuCullMode.back,
