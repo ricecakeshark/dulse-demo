@@ -18,7 +18,6 @@ class ManyObject : AppInterface
 
 	GfxGeometry!(VertexPNU, uint) object_geometry;
 	GfxMesh object_mesh;
-	//alias ObjectGeometry = GfxGeometry!(VertexPT, uint);
 	GpuGraphicsPipeline graphics_pipeline;
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
@@ -46,13 +45,11 @@ class ManyObject : AppInterface
 		graphics_context.create(command_buffer, swapchain_texture);
 		// object manager
 		object_manager = new ObjectManager;
-
 		object_manager.create(entity_list);
-
 		object_manager.register!Comp();
 		object_manager.register!PositionSystem();
 
-		object_manager.with_store!Comp((ref store) {
+		object_manager.with_store!Comp((store) {
 			foreach (entity; entity_list)
 			{
 				object_manager.attach!Comp(entity);
