@@ -26,6 +26,8 @@ class CubeDemo : AppInterface
 	Surface object_image;
 	GpuTexture object_texture;
 	GpuSampler object_sampler;
+	ObjectManager object_manager;
+	Entity[1] entity_list;
 
 	this(Core core, GfxGraphicsContext graphics_context)
 	{
@@ -38,6 +40,19 @@ class CubeDemo : AppInterface
 	{
 		core.subsystem.query(timer, logger);
 		graphics_context.create(command_buffer, swapchain_texture);
+		// Entity
+		object_manager = new ObjectManager;
+		object_manager.create(entity_list)
+			.register!TransformComponent()
+			.register!TransformSystem()
+			.with_store!TransformComponent((store) {
+				foreach (entity; entity_list)
+				{
+					object_manager.attach!TransformComponent(entity);
+				}
+			}).append(TimerResource(0))
+			.initialize();
+
 		// Shader
 		scope GpuVertexShader vertex_shader;
 		scope GpuFragmentShader fragment_shader;
@@ -168,7 +183,9 @@ class CubeDemo : AppInterface
 
 	override void process()
 	{
-
+		object_manager.resource_store.refer!TimerResource().past_time = timer.past;
+		object_manager.resource_store.refer!TimerResource().delta_time = timer.delta;
+		object_manager.process();
 		return;
 	}
 
@@ -219,9 +236,12 @@ class CubeDemo : AppInterface
 				[color_target_info],
 				depth_target_info,
 				(render_pass) {
+				//import std.conv;
+
+				//logger.log(object_manager.get_component!TransformComponent(entity_list[0]).rotate.to!string);
 				vertex_model.mat_model = multiply_rtol(
-					transformer_rotate_y(0.0015 * timer.past),
-					transformer_rotate_x(0.0005 * timer.past),
+					transformer_rotate_y(object_manager.get_component!TransformComponent(entity_list[0]).rotate.y),
+					transformer_rotate_x(object_manager.get_component!TransformComponent(entity_list[0]).rotate.x),
 					transformer_scale([1.0f, 1.0f, 1.0f]),
 				);
 				vertex_model.mat_model_normal = cast(Matrix!(4, 4, float))(cast(Matrix!(3, 3, float))(
@@ -302,4 +322,56 @@ struct LightPoint
 	align(16) Vec3 pos = [0.0f, 0.0f, -3.0f];
 	align(16) Vec3 color = [1.0f, 1.0f, 1.0f];
 	float intensity = 1.0f;
+}
+
+struct TransformComponent
+{
+	Vec3 pos;
+	Vec3 rotate;
+	Vec3 scale;
+}
+
+class TransformSystem : IObjectSystem
+{
+	void initialize(ObjectManager manager)
+	{
+		foreach (entity; manager.list_entity)
+		{
+			with (manager.get_component!TransformComponent(entity))
+			{
+				pos = Vec3(0f, 0f, 0f);
+				rotate = Vec3(0f, 0f, 0f);
+				scale = pos = Vec3(0f, 0f, 0f);
+			}
+		}
+		return;
+	}
+
+	void finalize(ObjectManager manager)
+	{
+		return;
+	}
+
+	void process(ObjectManager manager)
+	{
+		foreach (entity; manager.list_entity)
+		{
+			with (manager.get_component!TransformComponent(entity))
+			{
+				/+
+				rotate.x += 0.005 * manager.resource_store.refer!TimerResource().delta_time;
+				rotate.y += 0.015 * manager.resource_store.refer!TimerResource().delta_time;
+				+/
+				rotate.x = 0.0005 * manager.resource_store.refer!TimerResource().past_time;
+				rotate.y = 0.0015 * manager.resource_store.refer!TimerResource().past_time;
+			}
+		}
+		return;
+	}
+}
+
+struct TimerResource
+{
+	long past_time;
+	long delta_time;
 }
