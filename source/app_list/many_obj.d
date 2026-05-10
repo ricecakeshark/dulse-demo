@@ -45,15 +45,12 @@ class ManyObject : AppInterface
 		// object manager
 		object_manager = new ObjectManager;
 		object_manager.create(entity_list);
-		object_manager.register!Comp();
+		object_manager.component.append!Comp();
 		object_manager.register!PositionSystem();
-
-		object_manager.with_store!Comp((store) {
-			foreach (entity; entity_list)
-			{
-				object_manager.attach!Comp(entity);
-			}
-		});
+		foreach (entity; entity_list)
+		{
+			object_manager.attach!Comp(entity);
+		}
 		object_manager.initialize();
 
 		// Shader
@@ -187,6 +184,7 @@ class ManyObject : AppInterface
 
 	override void process()
 	{
+		object_manager.process();
 		return;
 	}
 
@@ -229,17 +227,20 @@ class ManyObject : AppInterface
 					], 0)
 					.bind([vertex_buffer])
 					.bind(index_buffer);
-				//object_manager.process();
 				foreach (entity; entity_list)
 				{
-					object_manager.with_store!Comp((store) {
+					object_manager.with_in((storage) {
 						vert_model.mat_model = multiply_ltor(
 						transformer_scale([1.0f, 1.0f, 1.0f]),
-						transformer_rotate_z(timer.past * 0.002f * store[entity].param[3]),
+						transformer_rotate_z(timer.past * 0.002f * storage.get!Comp(entity)
+						.param[3]),
 						transformer_translate([
-							cos((0.0012f * timer.past) * store[entity].param[0]) * 1.6f,
-							sin((0.0013f * timer.past) * store[entity].param[1]) * 1.0f,
-							cos((0.0015f * timer.past) * store[entity].param[2]) * 1.0f,
+							cos((0.0012f * timer.past) * storage.get!Comp(entity)
+							.param[0]) * 1.6f,
+							sin((0.0013f * timer.past) * storage.get!Comp(entity)
+							.param[1]) * 1.0f,
+							cos((0.0015f * timer.past) * storage.get!Comp(entity)
+							.param[2]) * 1.0f,
 						]),
 						);
 						return;
@@ -310,9 +311,9 @@ class PositionSystem : IObjectSystem
 {
 	void initialize(ObjectManager object_manager)
 	{
-		foreach (entity; object_manager.list_entity)
+		foreach (entity; object_manager.entity.list)
 		{
-			object_manager.get_component!Comp(entity).param = [
+			object_manager.component.get!Comp(entity).param = [
 				uniform(0.7, 1.3),
 				uniform(0.7, 1.3),
 				uniform(0.7, 1.3),

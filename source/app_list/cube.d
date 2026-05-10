@@ -17,7 +17,7 @@ class CubeDemo : AppInterface
 	GpuSwapchainTexture swapchain_texture;
 	GfxMesh object_mesh;
 	GfxGeometry!(VertexPNU, uint) object_geometry;
-	GpuGraphicsPipeline graphics_pipeline;
+	GpuGraphicsPipeline texture_pipeline, solid_pipeline;
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
 	GpuStorageBuffer storage_buffer;
@@ -27,7 +27,7 @@ class CubeDemo : AppInterface
 	GpuTexture object_texture;
 	GpuSampler object_sampler;
 	ObjectManager object_manager;
-	Entity[1] entity_list;
+	Entity[4] entity_list;
 
 	this(Core core, GfxGraphicsContext graphics_context)
 	{
@@ -43,32 +43,43 @@ class CubeDemo : AppInterface
 		// Entity
 		object_manager = new ObjectManager;
 		object_manager.create(entity_list)
-			.register!TransformComponent()
-			.register!TransformSystem()
-			.with_store!TransformComponent((store) {
-				foreach (entity; entity_list)
-				{
-					object_manager.attach!TransformComponent(entity);
-				}
-			}).append(TimerResource(0))
+			.append_component!TransformComponent();
+		foreach (entity; entity_list)
+		{
+			object_manager.attach!TransformComponent(entity);
+		}
+		object_manager.register!TransformSystem()
+			.append_resource(TimerResource(0))
 			.initialize();
 
 		// Shader
-		scope GpuVertexShader vertex_shader;
-		scope GpuFragmentShader fragment_shader;
-		graphics_context.create(graphics_pipeline, vertex_shader, fragment_shader);
-		vertex_shader.create(
+		scope GpuVertexShader texture_vert_shader;
+		scope GpuFragmentShader texture_frag_shader;
+		scope GpuVertexShader solid_vert_shader;
+		scope GpuFragmentShader solid_frag_shader;
+		graphics_context.create(texture_pipeline, texture_vert_shader, texture_frag_shader);
+		texture_vert_shader.create(
 			ShaderFile("texture.vert", graphics_context.get_shader_format()),
 			GpuShaderArguments(0, 3, 0, 0),
 		);
-		fragment_shader.create(
+		texture_frag_shader.create(
 			ShaderFile("texture.frag", graphics_context.get_shader_format()),
 			GpuShaderArguments(1, 4, 0, 0),
 		);
+		graphics_context.create(solid_pipeline, solid_vert_shader, solid_frag_shader);
+		solid_vert_shader.create(
+			ShaderFile("vertex_color.vert", graphics_context.get_shader_format()),
+			GpuShaderArguments(0, 3, 0, 0),
+		);
+		solid_frag_shader.create(
+			ShaderFile("vertex_color.frag", graphics_context.get_shader_format()),
+			GpuShaderArguments(1, 4, 0, 0),
+		);
 		// Pipeline
+		// texture_pipeline
 		scope GpuGraphicsPipelineCreateInfo pipeline_create_info;
-		pipeline_create_info.vertex_shader = vertex_shader.handle;
-		pipeline_create_info.fragment_shader = fragment_shader.handle;
+		pipeline_create_info.vertex_shader = texture_vert_shader.handle;
+		pipeline_create_info.fragment_shader = texture_frag_shader.handle;
 		with (pipeline_create_info)
 		{
 
@@ -99,7 +110,28 @@ class CubeDemo : AppInterface
 			], GpuTextureFormat.d32_float,
 			);
 		}
-		graphics_pipeline.create(pipeline_create_info);
+		texture_pipeline.create(pipeline_create_info);
+		// solid pipeline
+		pipeline_create_info.vertex_shader = solid_vert_shader.handle;
+		pipeline_create_info.fragment_shader = solid_frag_shader.handle;
+		with (pipeline_create_info)
+		{
+			depth_stencil_state = GpuDepthStencilState(
+				GpuCompareOp.greater,
+				GpuStencilOpState.init,
+				GpuStencilOpState.init,
+				0u, 0u,
+				true, false, false,
+			);
+			target_info = GpuGraphicsPipelineTargetInfo(
+				[
+				GpuColorTargetDescription(
+					graphics_context.get_swapchain_texture_format()
+				)
+			], GpuTextureFormat.d32_float,
+			);
+		}
+		solid_pipeline.create(pipeline_create_info);
 
 		// Geometry
 		FileHandler("cube.obj").load_obj(object_geometry);
@@ -120,7 +152,7 @@ class CubeDemo : AppInterface
 		graphics_context.create(depth_texture);
 		depth_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d,
-				GpuTextureFormat.d32_float,
+				GpuTextureFormat.d32_float_s8_uint,
 				GpuTextureUsageFlags.depth_stencil_target,
 				graphics_context.client_width, graphics_context.client_height,
 				1, 1, GpuSampleCount.x1,
@@ -230,42 +262,87 @@ class CubeDemo : AppInterface
 				depth_texture.handle,
 				1.0f,
 				GpuLoadOp.clear,
-				GpuStoreOp.dont_care,
+				GpuStoreOp.store,
 			);
 			command_buffer.with_render_pass(
 				[color_target_info],
 				depth_target_info,
 				(render_pass) {
-				//import std.conv;
-
-				//logger.log(object_manager.get_component!TransformComponent(entity_list[0]).rotate.to!string);
-				vertex_model.mat_model = multiply_rtol(
-					transformer_rotate_y(object_manager.get_component!TransformComponent(entity_list[0]).rotate.y),
-					transformer_rotate_x(object_manager.get_component!TransformComponent(entity_list[0]).rotate.x),
-					transformer_scale([1.0f, 1.0f, 1.0f]),
-				);
-				vertex_model.mat_model_normal = cast(Matrix!(4, 4, float))(cast(Matrix!(3, 3, float))(
-					vertex_model.mat_model)).inverse()
-					.transpose();
-				with (fragment_model)
+				// texture render
+				foreach (entity; entity_list)
 				{
-					specular_strength = 1.0;
-					shininess = 32.0f;
-				}
+					vertex_model.mat_model = multiply_rtol(
+						transformer_translate(
+						object_manager.component.get!TransformComponent(entity)
+						.pos),
+						transformer_rotate_y(
+						object_manager.component.get!TransformComponent(entity)
+						.rotate.y),
+						transformer_rotate_x(object_manager.component.get!TransformComponent(entity)
+						.rotate.x),
+						transformer_scale(object_manager.component.get!TransformComponent(entity)
+						.scale),
+					);
+					vertex_model.mat_model_normal = cast(Matrix!(4, 4, float))(cast(Matrix!(3, 3, float))(
+						vertex_model.mat_model)).inverse()
+						.transpose();
+					with (fragment_model)
+					{
+						specular_strength = 1.0;
+						shininess = 32.0f;
+					}
 
-				render_pass.bind(graphics_pipeline)
-					.bind([
-						GpuTextureSamplerBinding(object_texture, object_sampler)
-					], 0)
-					.bind([vertex_buffer])
-					.bind(index_buffer)
-					.push_vertex(vertex_view, 1)
-					.push_vertex(vertex_model, 2)
-					.push_fragment(fragment_scene, 0)
-					.push_fragment(fragment_view, 1u)
-					.push_fragment(fragment_model, 2u)
-					.push_fragment(fragment_light, 3u)
-					.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
+					render_pass.bind(texture_pipeline)
+						.bind([
+							GpuTextureSamplerBinding(object_texture, object_sampler)
+						], 0)
+						.bind([vertex_buffer])
+						.bind(index_buffer)
+						.push_vertex(vertex_view, 1)
+						.push_vertex(vertex_model, 2)
+						.push_fragment(fragment_scene, 0)
+						.push_fragment(fragment_view, 1u)
+						.push_fragment(fragment_model, 2u)
+						.push_fragment(fragment_light, 3u)
+						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
+				}
+				// solid render
+				foreach (entity; entity_list)
+				{
+					vertex_model.mat_model = multiply_rtol(
+						transformer_translate(
+						object_manager.component.get!TransformComponent(entity)
+						.pos),
+						transformer_rotate_y(
+						object_manager.component.get!TransformComponent(entity)
+						.rotate.y),
+						transformer_rotate_x(object_manager.component.get!TransformComponent(entity)
+						.rotate.x),
+						transformer_scale(object_manager.component.get!TransformComponent(entity)
+						.scale * 1.01f),
+					);
+					vertex_model.mat_model_normal = cast(Matrix!(4, 4, float))(cast(Matrix!(3, 3, float))(
+						vertex_model.mat_model)).inverse()
+						.transpose();
+					with (fragment_model)
+					{
+						specular_strength = 1.0;
+						shininess = 32.0f;
+					}
+					render_pass.bind(solid_pipeline)
+						.bind([
+							GpuTextureSamplerBinding(object_texture, object_sampler)
+						], 0)
+						.bind([vertex_buffer])
+						.bind(index_buffer)
+						.push_vertex(vertex_view, 1)
+						.push_vertex(vertex_model, 2)
+						.push_fragment(fragment_scene, 0)
+						.push_fragment(fragment_view, 1u)
+						.push_fragment(fragment_model, 2u)
+						.push_fragment(fragment_light, 3u)
+						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
+				}
 			},);
 		}
 		command_buffer.submit();
@@ -335,13 +412,13 @@ class TransformSystem : IObjectSystem
 {
 	void initialize(ObjectManager manager)
 	{
-		foreach (entity; manager.list_entity)
+		foreach (entity; manager.entity.list)
 		{
-			with (manager.get_component!TransformComponent(entity))
+			with (manager.component.get!TransformComponent(entity))
 			{
 				pos = Vec3(0f, 0f, 0f);
 				rotate = Vec3(0f, 0f, 0f);
-				scale = pos = Vec3(0f, 0f, 0f);
+				scale = Vec3(0.6f, 0.6f, 0.6f);
 			}
 		}
 		return;
@@ -354,17 +431,23 @@ class TransformSystem : IObjectSystem
 
 	void process(ObjectManager manager)
 	{
-		foreach (entity; manager.list_entity)
+		import std.math;
+
+		foreach (index, entity; manager.entity.list)
 		{
-			with (manager.get_component!TransformComponent(entity))
+			with (manager.component.get!TransformComponent(entity))
 			{
-				/+
-				rotate.x += 0.005 * manager.resource_store.refer!TimerResource().delta_time;
-				rotate.y += 0.015 * manager.resource_store.refer!TimerResource().delta_time;
-				+/
-				rotate.x = 0.0005 * manager.resource_store.refer!TimerResource().past_time;
-				rotate.y = 0.0015 * manager.resource_store.refer!TimerResource().past_time;
+				float rad;
+				rad = (0.001f * manager.resource.refer!TimerResource().past_time) + (
+					2.0f / manager.entity.count * PI) * index;
+				rotate.x = rotate.x + cast(float) 0.5 * 0.001 * manager.resource.refer!TimerResource()
+					.delta_time;
+				rotate.y = rotate.y + cast(float) 1.5 * 0.001 * manager.resource.refer!TimerResource()
+					.delta_time;
+
+				pos = Vec3(cos(rad) * 1.2f, 0f, sin(rad) * 1.2f);
 			}
+
 		}
 		return;
 	}
