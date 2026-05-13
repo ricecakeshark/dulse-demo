@@ -107,7 +107,7 @@ class CubeDemo : AppInterface
 				GpuColorTargetDescription(
 					graphics_context.get_swapchain_texture_format()
 				)
-			], GpuTextureFormat.d32_float,
+			], GpuTextureFormat.d32_float_s8_uint,
 			);
 		}
 		texture_pipeline.create(pipeline_create_info);
@@ -122,13 +122,6 @@ class CubeDemo : AppInterface
 				GpuStencilOpState.init,
 				0u, 0u,
 				true, false, false,
-			);
-			target_info = GpuGraphicsPipelineTargetInfo(
-				[
-				GpuColorTargetDescription(
-					graphics_context.get_swapchain_texture_format()
-				)
-			], GpuTextureFormat.d32_float,
 			);
 		}
 		solid_pipeline.create(pipeline_create_info);
@@ -148,16 +141,6 @@ class CubeDemo : AppInterface
 		index_buffer.create(object_geometry.count_index, GpuIndexElementSize._32bit);
 		//storage_buffer.create(LightPoint.sizeof * 1u);
 
-		// depth texture
-		graphics_context.create(depth_texture);
-		depth_texture.create(GpuTextureCreateInfo(
-				GpuTextureType._2d,
-				GpuTextureFormat.d32_float_s8_uint,
-				GpuTextureUsageFlags.depth_stencil_target,
-				graphics_context.client_width, graphics_context.client_height,
-				1, 1, GpuSampleCount.x1,
-		));
-
 		// texture, sampler
 		object_image = new Surface();
 		object_image.load("./image/test_texture.png");
@@ -171,6 +154,16 @@ class CubeDemo : AppInterface
 		object_sampler.create(GpuSamplerCreateInfo(
 				GpuFilter.linear,
 				GpuFilter.linear,
+		));
+
+		// depth texture
+		graphics_context.create(depth_texture);
+		depth_texture.create(GpuTextureCreateInfo(
+				GpuTextureType._2d,
+				GpuTextureFormat.d32_float_s8_uint,
+				GpuTextureUsageFlags.depth_stencil_target,
+				graphics_context.client_width, graphics_context.client_height,
+				1, 1, GpuSampleCount.x1,
 		));
 
 		// upload
@@ -215,8 +208,12 @@ class CubeDemo : AppInterface
 
 	override void process()
 	{
-		object_manager.resource_store.refer!TimerResource().past_time = timer.past;
-		object_manager.resource_store.refer!TimerResource().delta_time = timer.delta;
+		with (object_manager.resource_store.refer!TimerResource())
+		{
+			past_time = timer.past;
+			delta_time = timer.delta;
+		}
+
 		object_manager.process();
 		return;
 	}
@@ -234,11 +231,12 @@ class CubeDemo : AppInterface
 		UniformFragmentView fragment_view;
 		UniformFragmentModel fragment_model;
 		UniformFragmentLight fragment_light;
-
+		// View
 		vertex_view.mat_view = multiply_ltor(
 			transformer_look_at(Vec3(0f, 0f, -2.5f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
 			transformer_perspective(PI_2),
 		);
+		// Light
 		fragment_scene.ambient_light = ColorF(1.0f, 1.0f, 1.0f, 0.1f);
 		fragment_view.vec_view = Vec3(0f, 0f, -2.5f);
 		with (fragment_light.list[0])
@@ -247,8 +245,6 @@ class CubeDemo : AppInterface
 			color = Vec3(0.7f, 0.7f, 0.7f);
 			intensity = 1.0;
 		}
-
-		//fragment_light.pos = [sin(0.002f*timer.past)*10f,0f,cos(0.002f*timer.past)*10f];
 
 		command_buffer.acquire_buffer()
 			.acquire_texture(swapchain_texture);
@@ -268,29 +264,16 @@ class CubeDemo : AppInterface
 				[color_target_info],
 				depth_target_info,
 				(render_pass) {
+				// scene, view
+				render_pass.push_vertex(vertex_view, 1)
+					.push_fragment(fragment_scene, 0)
+					.push_fragment(fragment_view, 1u);
 				// texture render
 				foreach (entity; entity_list)
 				{
-					vertex_model.mat_model = multiply_rtol(
-						transformer_translate(
-						object_manager.component.get!TransformComponent(entity)
-						.pos),
-						transformer_rotate_y(
-						object_manager.component.get!TransformComponent(entity)
-						.rotate.y),
-						transformer_rotate_x(object_manager.component.get!TransformComponent(entity)
-						.rotate.x),
-						transformer_scale(object_manager.component.get!TransformComponent(entity)
-						.scale),
-					);
-					vertex_model.mat_model_normal = cast(Matrix!(4, 4, float))(cast(Matrix!(3, 3, float))(
-						vertex_model.mat_model)).inverse()
-						.transpose();
-					with (fragment_model)
-					{
-						specular_strength = 1.0;
-						shininess = 32.0f;
-					}
+					vertex_model.mat_model = object_manager.component.get!TransformComponent(entity)
+						.model_matrix();
+					vertex_model.mat_model_normal = vertex_model.mat_model.to_normal();
 
 					render_pass.bind(texture_pipeline)
 						.bind([
@@ -298,10 +281,7 @@ class CubeDemo : AppInterface
 						], 0)
 						.bind([vertex_buffer])
 						.bind(index_buffer)
-						.push_vertex(vertex_view, 1)
 						.push_vertex(vertex_model, 2)
-						.push_fragment(fragment_scene, 0)
-						.push_fragment(fragment_view, 1u)
 						.push_fragment(fragment_model, 2u)
 						.push_fragment(fragment_light, 3u)
 						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
@@ -309,36 +289,13 @@ class CubeDemo : AppInterface
 				// solid render
 				foreach (entity; entity_list)
 				{
-					vertex_model.mat_model = multiply_rtol(
-						transformer_translate(
-						object_manager.component.get!TransformComponent(entity)
-						.pos),
-						transformer_rotate_y(
-						object_manager.component.get!TransformComponent(entity)
-						.rotate.y),
-						transformer_rotate_x(object_manager.component.get!TransformComponent(entity)
-						.rotate.x),
-						transformer_scale(object_manager.component.get!TransformComponent(entity)
-						.scale * 1.01f),
-					);
-					vertex_model.mat_model_normal = cast(Matrix!(4, 4, float))(cast(Matrix!(3, 3, float))(
-						vertex_model.mat_model)).inverse()
-						.transpose();
-					with (fragment_model)
-					{
-						specular_strength = 1.0;
-						shininess = 32.0f;
-					}
+					vertex_model.mat_model = object_manager.component.get!TransformComponent(entity)
+						.model_matrix(1.01f);
+					vertex_model.mat_model_normal = vertex_model.mat_model.to_normal();
 					render_pass.bind(solid_pipeline)
-						.bind([
-							GpuTextureSamplerBinding(object_texture, object_sampler)
-						], 0)
 						.bind([vertex_buffer])
 						.bind(index_buffer)
-						.push_vertex(vertex_view, 1)
 						.push_vertex(vertex_model, 2)
-						.push_fragment(fragment_scene, 0)
-						.push_fragment(fragment_view, 1u)
 						.push_fragment(fragment_model, 2u)
 						.push_fragment(fragment_light, 3u)
 						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
@@ -384,8 +341,8 @@ struct UniformFragmentView
 struct UniformFragmentModel
 {
 	//align(4):
-	float specular_strength = 0.0;
-	float shininess = 64.0;
+	float specular_strength = 0.5f;
+	float shininess = 32.0f;
 }
 
 struct UniformFragmentLight
@@ -406,6 +363,16 @@ struct TransformComponent
 	Vec3 pos;
 	Vec3 rotate;
 	Vec3 scale;
+
+	Matrix!(4, 4, float) model_matrix(float scale = 1.0f)
+	{
+		return multiply_rtol(
+			transformer_translate(this.pos),
+			transformer_rotate_y(this.rotate.y),
+			transformer_rotate_x(this.rotate.x),
+			transformer_scale(this.scale * scale),
+		);
+	}
 }
 
 class TransformSystem : IObjectSystem
@@ -416,9 +383,9 @@ class TransformSystem : IObjectSystem
 		{
 			with (manager.component.get!TransformComponent(entity))
 			{
-				pos = Vec3(0f, 0f, 0f);
-				rotate = Vec3(0f, 0f, 0f);
-				scale = Vec3(0.6f, 0.6f, 0.6f);
+				pos = Vec3(0f);
+				rotate = Vec3(0f);
+				scale = Vec3(0.6f);
 			}
 		}
 		return;
@@ -435,16 +402,15 @@ class TransformSystem : IObjectSystem
 
 		foreach (index, entity; manager.entity.list)
 		{
+			float rad;
+			TimerResource timer;
+			timer = manager.resource.refer!TimerResource();
 			with (manager.component.get!TransformComponent(entity))
 			{
-				float rad;
-				rad = (0.001f * manager.resource.refer!TimerResource().past_time) + (
+				rotate.x += cast(float) 0.5 * 0.001 * timer.delta_time;
+				rotate.y += cast(float) 1.5 * 0.001 * timer.delta_time;
+				rad = (0.001f * timer.past_time) + (
 					2.0f / manager.entity.count * PI) * index;
-				rotate.x = rotate.x + cast(float) 0.5 * 0.001 * manager.resource.refer!TimerResource()
-					.delta_time;
-				rotate.y = rotate.y + cast(float) 1.5 * 0.001 * manager.resource.refer!TimerResource()
-					.delta_time;
-
 				pos = Vec3(cos(rad) * 1.2f, 0f, sin(rad) * 1.2f);
 			}
 
