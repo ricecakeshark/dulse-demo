@@ -110,7 +110,8 @@ class ManyObject : AppInterface
 		object_mesh.set([object_geometry,]);
 
 		// Buffer
-		graphics_context.create(vertex_buffer, index_buffer);
+		graphics_context.create(vertex_buffer);
+		graphics_context.create(index_buffer);
 		vertex_buffer.create(
 			object_geometry.count_vertex,
 			object_geometry.stride_vertex

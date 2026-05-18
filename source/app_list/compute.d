@@ -77,7 +77,8 @@ class ComputeDemo : AppInterface
 			target_info = GpuGraphicsPipelineTargetInfo(
 				[
 				GpuColorTargetDescription(
-					swapchain_texture.get_format(),
+					//swapchain_texture.get_format(),
+					GpuTextureFormat.r32g32b32a32_float
 				)
 			], GpuTextureFormat.d32_float,
 			);
@@ -165,7 +166,7 @@ class ComputeDemo : AppInterface
 			.set(object_geometry.vertices, object_geometry.offset_vertex)
 			.set(object_geometry.indices, object_geometry.offset_index)
 			.unmap();
-		tb_texture.create(object_image.size)
+		tb_texture.create(object_texture.size)
 			.map()
 			.set(object_image)
 			.unmap();
