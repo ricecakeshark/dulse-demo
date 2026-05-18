@@ -39,11 +39,8 @@ class ManyObject : AppInterface
 	override void initialize()
 	{
 		import std.stdio;
-		writeln("many_obj");
 		core.subsystem.query(timer, logger);
-		writeln("many_obj");
 		graphics_context.create(command_buffer, swapchain_texture);
-		writeln("many_obj");
 		// object manager
 		object_manager = new ObjectManager;
 		object_manager.create(entity_list);

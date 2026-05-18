@@ -17,13 +17,12 @@ void main()
 	scope AppInterface[] app_list;
 	scope LoopedInt!(5) app_index, app_index_next;
 
+	
 	core = new Core();
-	core.append_sdl_subsystem();	
-	core.subsystem.append(new GfxGraphicsSubsystem());
+	core.append_sdl_subsystem();
+	core.subsystem.append(new GfxGraphicsSubsystem(core));
 	core.initialize();
 	core.subsystem.query(device, timer, graphics);
-
-	//graphics = new GfxGraphicsContext();
 	graphics.context.initialize(960, 540, GpuBackend.vulkan);
 
 	app_list = [
