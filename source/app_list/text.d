@@ -34,10 +34,10 @@ class TextApp : AppInterface
 
 	Matrix!(4, 4) transformer_projection, transformer_model;
 
-	this(Core core, GfxGraphicsContext graphics)
+	this(Core core)
 	{
 		this.core = core;
-		this.graphics = graphics;
+		this.graphics = core.subsystem.query!GfxGraphicsSubsystem().context;
 		return;
 	}
 

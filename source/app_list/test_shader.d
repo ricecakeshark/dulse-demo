@@ -21,10 +21,10 @@ class ShaderTest : AppInterface
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
 
-	this(Core core, GfxGraphicsContext graphics_context)
+	this(Core core)
 	{
 		this.core = core;
-		this.graphics_context = graphics_context;
+		this.graphics_context = core.subsystem.query!GfxGraphicsSubsystem().context;
 		return;
 	}
 

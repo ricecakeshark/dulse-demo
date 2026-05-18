@@ -10,27 +10,29 @@ import core.memory;
 void main()
 {
 	scope Core core;
+	scope GfxGraphicsSubsystem graphics;
 	scope DeviceSubsystem device;
 	scope TimerSubsystem timer;
-	scope GfxGraphicsContext graphics;
+	//scope GfxGraphicsContext graphics;
 	scope AppInterface[] app_list;
 	scope LoopedInt!(5) app_index, app_index_next;
 
 	core = new Core();
-	core.append_sdl_subsystem()
-		.initialize();
-	core.subsystem.query(device, timer);
+	core.append_sdl_subsystem();	
+	core.subsystem.append(new GfxGraphicsSubsystem());
+	core.initialize();
+	core.subsystem.query(device, timer, graphics);
 
-	graphics = new GfxGraphicsContext();
-	graphics.initialize(960, 540, GpuBackend.vulkan);
+	//graphics = new GfxGraphicsContext();
+	graphics.context.initialize(960, 540, GpuBackend.vulkan);
 
 	app_list = [
-		cast(AppInterface) new ManyObject(core, graphics),
-		cast(AppInterface) new CubeDemo(core, graphics),
+		cast(AppInterface) new ManyObject(core),
+		cast(AppInterface) new CubeDemo(core),
 		//new ShaderTest(core, graphics_context),
-		new TextApp(core, graphics),
-		new ComputeDemo(core, graphics),
-		new GuageDemo(core, graphics),
+		new TextApp(core),
+		new ComputeDemo(core),
+		new GuageDemo(core),
 		//new KeyboardApp(core, graphics_context),
 	];
 	app_list[app_index].initialize();
@@ -66,7 +68,7 @@ void main()
 	}
 
 	app_list[app_index].finalize();
-	graphics.finalize();
+	graphics.context.finalize();
 	core.finalize();
 	GC.collect();
 	writeln(GC.profileStats);

@@ -29,19 +29,21 @@ class ManyObject : AppInterface
 	Entity[100] entity_list;
 	//LightPoint[] light_point_list;
 
-	this(Core core, GfxGraphicsContext graphics_context)
+	this(Core core)
 	{
 		this.core = core;
-		this.graphics_context = graphics_context;
+		this.graphics_context = core.subsystem.query!GfxGraphicsSubsystem().context;
 		return;
 	}
 
 	override void initialize()
 	{
-		import std.conv;
-
+		import std.stdio;
+		writeln("many_obj");
 		core.subsystem.query(timer, logger);
+		writeln("many_obj");
 		graphics_context.create(command_buffer, swapchain_texture);
+		writeln("many_obj");
 		// object manager
 		object_manager = new ObjectManager;
 		object_manager.create(entity_list);
@@ -249,11 +251,7 @@ class ManyObject : AppInterface
 
 					vert_model.mat_model_normal = cast(Matrix!(4, 4, float))(cast(Matrix!(3, 3, float))(
 						vert_model.mat_model)).inverse().transpose();
-					/+vert_model.mat_model = Vector!(4)(
-						cos((0.001f * timer.past) * entity[1]).fabs() * 0.9f,
-						cos((0.001f * timer.past) * entity[2]).fabs() * 0.9f,
-						1.0f, 1.0f,
-					);+/
+
 					pass.push_vertex(vert_view, 1)
 						.push_vertex(vert_model, 2)
 						.push_fragment(frag_scene, 0,)

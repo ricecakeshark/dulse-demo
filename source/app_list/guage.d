@@ -19,10 +19,10 @@ class GuageDemo : AppInterface
 	GpuComputePipeline guage_pipeline;
 	GpuTexture guage_dst_texture;
 
-	this(Core core, GfxGraphicsContext graphics_context)
+	this(Core core)
 	{
 		this.core = core;
-		this.graphics_context = graphics_context;
+		this.graphics_context = core.subsystem.query!GfxGraphicsSubsystem().context;
 		return;
 	}
 
