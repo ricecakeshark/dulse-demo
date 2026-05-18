@@ -81,7 +81,7 @@ class ManyObject : AppInterface
 			target_info = GpuGraphicsPipelineTargetInfo(
 				[
 				GpuColorTargetDescription(
-					graphics_context.get_swapchain_texture_format(),
+					swapchain_texture.get_format(),
 					GpuColorTargetBlendState(
 						GpuBlendFactor.src_alpha,
 						GpuBlendFactor.one_minus_src_alpha,

@@ -105,7 +105,8 @@ class CubeDemo : AppInterface
 			target_info = GpuGraphicsPipelineTargetInfo(
 				[
 				GpuColorTargetDescription(
-					graphics_context.get_swapchain_texture_format()
+					//graphics_context.get_swapchain_texture_format()
+					swapchain_texture.get_format(),
 				)
 			], GpuTextureFormat.d32_float_s8_uint,
 			);

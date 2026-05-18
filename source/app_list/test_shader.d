@@ -60,7 +60,7 @@ class ShaderTest : AppInterface
 			target_info = GpuGraphicsPipelineTargetInfo(
 				[
 				GpuColorTargetDescription(
-					graphics_context.get_swapchain_texture_format()
+					swapchain_texture.get_format()
 				)
 			]
 			);

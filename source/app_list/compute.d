@@ -77,7 +77,7 @@ class ComputeDemo : AppInterface
 			target_info = GpuGraphicsPipelineTargetInfo(
 				[
 				GpuColorTargetDescription(
-					GpuTextureFormat.r32g32b32a32_float,
+					swapchain_texture.get_format(),
 				)
 			], GpuTextureFormat.d32_float,
 			);
