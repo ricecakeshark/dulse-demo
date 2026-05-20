@@ -13,14 +13,12 @@ void main()
 	scope GfxGraphicsSubsystem graphics;
 	scope DeviceSubsystem device;
 	scope TimerSubsystem timer;
-	//scope GfxGraphicsContext graphics;
 	scope AppInterface[] app_list;
 	scope LoopedInt!(5) app_index, app_index_next;
 
 	
 	core = new Core();
-	core.append_sdl_subsystem();
-	core.subsystem.append(new GfxGraphicsSubsystem(core));
+	core.append_gio_subsystem();
 	core.initialize();
 	core.subsystem.query(device, timer, graphics);
 	graphics.context.initialize(960, 540, GpuBackend.vulkan);
