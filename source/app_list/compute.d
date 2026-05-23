@@ -1,6 +1,8 @@
 module app_list.compute;
 
 import app_list.app_interface;
+import app_list.uniform;
+
 import kelp_core;
 import kelp_sdl;
 import kelp_gfx;
@@ -285,7 +287,7 @@ class ComputeDemo : AppInterface
 			// compute
 			command_buffer.with_compute_pass(
 				[GpuStorageTextureReadWriteBinding(compute_dst_texture)],
-				[],
+				null,
 				(compute_pass) {
 				compute_pass.bind(compute_pipeline)
 					.bind(
@@ -293,7 +295,7 @@ class ComputeDemo : AppInterface
 							GpuTextureSamplerBinding(compute_src_texture, sampler)
 						], 0
 					)
-					.push_uniform(ComputeUniform(960f, 540f))
+					.push_uniform(UniformCompute(960f, 540f))
 					.dispatch(960 / 8, 540 / 8, 1);
 				return;
 			}
@@ -316,58 +318,4 @@ class ComputeDemo : AppInterface
 	{
 		return 0;
 	}
-}
-
-struct UniformVertexScene
-{
-	ColorF ambient_light;
-}
-
-struct UniformVertexView
-{
-	Matrix!(4, 4) mat_view;
-}
-
-struct UniformVertexModel
-{
-	Matrix!(4, 4) mat_model;
-	Matrix!(4, 4) mat_model_normal;
-}
-
-struct UniformFragmentScene
-{
-	ColorF ambient_light;
-}
-
-struct UniformFragmentView
-{
-	Vec3 vec_view;
-}
-
-struct UniformFragmentModel
-{
-	//align(4):
-	float specular_strength = 0.0;
-	float shininess = 64.0;
-}
-
-struct UniformFragmentLight
-{
-	LightPoint[1] list;
-	uint count;
-}
-
-struct LightPoint
-{
-	align(16) Vec3 pos = [0.0f, 0.0f, -3.0f];
-	align(16) Vec3 color = [1.0f, 1.0f, 1.0f];
-	float intensity = 1.0f;
-}
-
-struct ComputeUniform
-{
-	float width;
-	float height;
-	float delta = 0.0f;
-	float level = 8.0f;
 }

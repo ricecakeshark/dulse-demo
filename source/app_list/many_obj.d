@@ -1,6 +1,7 @@
 module app_list.many_obj;
 
 import app_list.app_interface;
+import app_list.uniform;
 import kelp_core;
 import kelp_sdl;
 import kelp_gfx;
@@ -27,7 +28,6 @@ class ManyObject : AppInterface
 
 	ObjectManager object_manager;
 	Entity[100] entity_list;
-	//LightPoint[] light_point_list;
 
 	this(Core core)
 	{
@@ -39,6 +39,7 @@ class ManyObject : AppInterface
 	override void initialize()
 	{
 		import std.stdio;
+
 		core.subsystem.query(timer, logger);
 		graphics_context.create(command_buffer, swapchain_texture);
 		// object manager
@@ -199,6 +200,7 @@ class ManyObject : AppInterface
 		UniformVertexModel vert_model;
 		UniformFragmentScene frag_scene;
 		UniformFragmentView frag_view;
+		UniformFragmentModel frag_model;
 		UniformFragmentLight frag_light;
 
 		frag_scene.ambient_light = ColorF(1.0f, 1.0f, 1.0f, 0.1f);
@@ -207,9 +209,9 @@ class ManyObject : AppInterface
 			transformer_perspective(PI_2),
 		);
 		frag_view.vec_view = Vec3(0f, 0f, -2.5f);
-		frag_light.color = Vec3(1.0f, 1.0f, 1.0f);
-		frag_light.pos = [0f, 0f, -3f];
-		frag_light.intensity = 1.0f;
+		frag_light.list[0].color = Vec3(1.0f, 1.0f, 1.0f);
+		frag_light.list[0].pos = [0f, 0f, -3f];
+		frag_light.list[0].intensity = 1.0f;
 		command_buffer.acquire_buffer()
 			.acquire_texture(swapchain_texture);
 		if (swapchain_texture !is null)
@@ -253,6 +255,7 @@ class ManyObject : AppInterface
 						.push_vertex(vert_model, 2)
 						.push_fragment(frag_scene, 0,)
 						.push_fragment(frag_view, 1,)
+						.push_fragment(frag_model, 2,)
 						.push_fragment(frag_light, 3,)
 						.draw_indexed(ParamIndexedPrimitive(6, 1, 0, 0, 0));
 				}
@@ -266,34 +269,6 @@ class ManyObject : AppInterface
 	{
 		return 0;
 	}
-}
-
-struct UniformVertexView
-{
-	Matrix!(4, 4) mat_view;
-}
-
-struct UniformVertexModel
-{
-	Matrix!(4, 4) mat_model;
-	Matrix!(4, 4) mat_model_normal;
-}
-
-struct UniformFragmentScene
-{
-	ColorF ambient_light;
-}
-
-struct UniformFragmentView
-{
-	Vec3 vec_view;
-}
-
-struct UniformFragmentLight
-{
-	Vec3 pos = [0.0f, 0.0f, -3.0f];
-	Vec3 color = [1.0f, 0.5f, 0.0f];
-	float intensity = 1.0f;
 }
 
 import std.random;

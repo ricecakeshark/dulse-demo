@@ -1,8 +1,6 @@
 module app_list.test_shader;
 
 import app_list.app_interface;
-
-import app_list.app_interface;
 import kelp_core;
 import kelp_sdl;
 import kelp_gfx;
