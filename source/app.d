@@ -16,7 +16,6 @@ void main()
 	scope AppInterface[] app_list;
 	scope LoopedInt!(5) app_index, app_index_next;
 
-	
 	core = new Core();
 	core.append_gio_subsystem();
 	core.initialize();
@@ -26,6 +25,7 @@ void main()
 	app_list = [
 		cast(AppInterface) new ManyObject(core),
 		cast(AppInterface) new CubeDemo(core),
+		cast(AppInterface) new CubeMulti(core),
 		//new ShaderTest(core, graphics_context),
 		new TextApp(core),
 		new ComputeDemo(core),
@@ -53,10 +53,8 @@ void main()
 		}
 		if (app_index_next != app_index)
 		{
-			writefln("finalize : %s", app_index);
 			app_list[app_index].finalize();
 			timer.sleep(100);
-			writefln("initialize : %s", app_index_next);
 			app_list[app_index_next].initialize();
 			app_index = app_index_next;
 		}

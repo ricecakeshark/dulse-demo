@@ -1,4 +1,4 @@
-module app_list.cube;
+module app_list.cube_multi;
 
 import app_list.app_interface;
 
@@ -6,7 +6,7 @@ import kelp_core;
 import kelp_sdl;
 import kelp_gfx;
 
-class CubeDemo : AppInterface
+class CubeMulti : AppInterface
 {
 	Core core;
 	TimerSubsystem timer;
@@ -27,7 +27,7 @@ class CubeDemo : AppInterface
 	GpuTexture object_texture;
 	GpuSampler object_sampler;
 	ObjectManager object_manager;
-	Entity[1] entity_list;
+	Entity[4] entity_list;
 
 	this(Core core)
 	{
@@ -365,22 +365,12 @@ struct TransformComponent
 	Vec3 rotate;
 	Vec3 scale;
 
-	//Quaternion!float pos_quat = Quaternion!float(1.0f);
-	Quaternion!float rotate_quat = Quaternion!float(0.0f, 0.0f, 0.0f);
-	//Quaternion!float scale_quat = Quaternion!float(1.0f);
-
 	Matrix!(4, 4, float) model_matrix(float scale = 1.0f)
 	{
-		Vector!(3, float) scale_vec;
-		Quaternion!float rotated_quat;
-		/+scale_vec = this.scale * scale;
-		rotated_quat = rotate_quat * Quaternion!float(scale_vec);
-		//rotated_quat = Quaternion!float(scale_vec);
-		return (transformer_translate(this.pos) * rotated_quat.to_vec4()).to_matrix();
-		+/
 		return multiply_rtol(
 			transformer_translate(this.pos),
-			transformer_rotate(this.rotate_quat),
+			transformer_rotate_y(this.rotate.y),
+			transformer_rotate_x(this.rotate.x),
 			transformer_scale(this.scale * scale),
 		);
 	}
@@ -418,11 +408,8 @@ class TransformSystem : IObjectSystem
 			timer = manager.resource.refer!TimerResource();
 			with (manager.component.get!TransformComponent(entity))
 			{
-				//rotate.x += cast(float) 0.5 * 0.001 * timer.delta_time;
-				//rotate.y += cast(float) 1.5 * 0.001 * timer.delta_time;
-				rotate_quat = quaternion_rotate!float(
-					Vec3(1f, 1f, 0f), 0.003 * timer.past_time
-				);
+				rotate.x += cast(float) 0.5 * 0.001 * timer.delta_time;
+				rotate.y += cast(float) 1.5 * 0.001 * timer.delta_time;
 				rad = (0.001f * timer.past_time) + (
 					2.0f / manager.entity.count * PI) * index;
 				pos = Vec3(cos(rad) * 1.2f, 0f, sin(rad) * 1.2f);

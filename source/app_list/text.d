@@ -146,6 +146,9 @@ class TextApp : AppInterface
 		index_offset = 0;
 		int tw, th;
 
+		UniformVertexView ub_view;
+		UniformVertexModel ub_model;
+
 		// text
 		string test_str = format("ABCDE 12345\n縁取り文字\n%s ms", timer.past);
 		text_context.set(test_str)
@@ -153,15 +156,17 @@ class TextApp : AppInterface
 			.get_draw_data!(TextureGeometry)(text_mesh, text_texture);
 
 		// matrix
-		transformer_projection = multiply_ltor(
-			transformer_look_at(Vec3(0f, 0f, -3f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
+		ub_view.view_matrix = multiply_rtol(
 			transformer_perspective(PI_2,),
+			transformer_look_at(Vec3(0f, 0f, -3f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
 		);
-		transformer_model = multiply_ltor(
-			transformer_translate([-tw / 2.0f, th / 2.0f, 0.0f]),
-			transformer_scale([0.02f, 0.02f, 0.02f]),
+		ub_model.model_matrix = multiply_rtol(
 			transformer_rotate_y(cast(float)(timer.past * 0.001f)),
+			transformer_scale(0.02f,0.02f,0.02f),
+			transformer_translate([-tw / 2.0f, th / 2.0f, 0.0f]),
 		);
+		assert(!ub_view.view_matrix.contain_nan);
+		assert(!ub_model.model_matrix.contain_nan);
 		// transfer
 		buffer_transfer_buffer.map()
 			.set(text_mesh.vertices!(TextureGeometry), text_mesh.offset_vertex,)
@@ -197,8 +202,8 @@ class TextApp : AppInterface
 				pass.bind(pipeline)
 					.bind([vertex_buffer])
 					.bind(index_buffer);
-				pass.push_vertex(transformer_projection, 0)
-					.push_vertex(transformer_model, 1)
+				pass.push_vertex(ub_view, 0)
+					.push_vertex(ub_model, 1)
 					.push_fragment(
 						UniformFragmentConfig(
 						ColorF(1.0f, 1.0f, 1.0f, 1.0f),
@@ -250,6 +255,7 @@ struct UniformVertexView
 struct UniformVertexModel
 {
 	Matrix!(4, 4) model_matrix;
+	Matrix!(4, 4) normal_matrix;
 }
 
 struct UniformFragmentConfig
