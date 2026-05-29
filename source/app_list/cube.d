@@ -288,6 +288,7 @@ class CubeDemo : AppInterface
 						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 				}
 				// solid render
+				/+
 				foreach (entity; entity_list)
 				{
 					vertex_model.mat_model = object_manager.component.get!TransformComponent(entity)
@@ -301,6 +302,7 @@ class CubeDemo : AppInterface
 						.push_fragment(fragment_light, 3u)
 						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 				}
+				+/
 			},);
 		}
 		command_buffer.submit();
@@ -318,16 +320,16 @@ struct TransformComponent
 	Vec3 pos;
 	Vec3 rotate;
 	Vec3 scale;
-
 	Quaternion!float rotate_quat = Quaternion!float(Vec3(1.0f, 0.0f, 0.0f), 0f);
 
 	Matrix!(4, 4, float) model_matrix(float scale = 1.0f)
 	{
 		import std.math;
 
-		return Vec3(0.6f, 0.6f, 0.6f).to_matrix_scale()
+		return matrix_scale!3(0.6f)
 			.multiply(rotate_quat.to_matrix)
-			.extend!(Matrix!(4, 4));
+			.extend!(Matrix!(4, 4))
+			.multiply(transformer_translate(pos));
 	}
 }
 
@@ -367,14 +369,24 @@ class TransformSystem : IObjectSystem
 				//rotate.y += cast(float) 1.5 * 0.001 * timer.delta_time;
 				rotate.x += float(0.5) * 0.001 * timer.delta_time;
 				rotate_quat = Quaternion!float(
-					Vec3(1f, 1f, 0f), 0.003 * timer.past_time
+					Vec3(1f, 1f, 0f), 0.0015 * timer.past_time
 				)
 					* Quaternion!float(
-						Vec3(0f, 1f, 1f), 0.002 * timer.past_time
+						Vec3(0f, 1f, 1f), 0.001 * timer.past_time
 					);
 				rad = (0.001f * timer.past_time) + (
 					2.0f / manager.entity.count * PI) * index;
 				pos = Vec3(cos(rad) * 1.2f, 0f, sin(rad) * 1.2f);
+
+				pos = rotate_by(Vec3(0f,0f,1f),(Quaternion!float(
+					Vec3(1f, 0f, 0f), 0.0015 * timer.past_time
+				)
+				* Quaternion!float(
+					Vec3(0f, 1f, 0f), 0.0012 * timer.past_time
+				)
+				* Quaternion!float(
+					Vec3(0f, 0f, 1f), 0.001 * timer.past_time
+				)));
 			}
 
 		}
