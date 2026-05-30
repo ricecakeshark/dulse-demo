@@ -3,7 +3,7 @@
 	"versions": {
 		"bindbc-common": "1.0.5",
 		"bindbc-loader": "1.1.5",
-		"bindbc-sdl": "2.3.5",
+		"bindbc-sdl": "2.4.0",
 		"kelp-api": {"path":"../kelp_api"},
 		"kelp-core": {"path":"../kelp_core"},
 		"kelp-gfx": {"path":"../kelp_gfx"},
