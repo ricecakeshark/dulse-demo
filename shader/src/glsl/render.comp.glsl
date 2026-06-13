@@ -5,7 +5,9 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) uniform sampler2D albedo_texture;
 layout(set = 0, binding = 1) uniform sampler2D normal_texture;
-//layout(set = 0, binding = 0) uniform sampler2D input_texture;
+layout(set = 0, binding = 2) uniform sampler2D pos_texture;
+layout(set = 0, binding = 3) uniform sampler2D model_texture;
+layout(set = 0, binding = 4) uniform sampler2D depth_texture;
 
 layout(set = 1, binding = 0, rgba32f) uniform writeonly image2D output_image;
 
@@ -16,21 +18,21 @@ struct LightPoint
 	float intensity;
 };
 
-layout(std430, set = 3, binding = 0) uniform Scene
+layout(std430, set = 2, binding = 0) uniform Scene
 {
 	//float light_attenuation;
 	vec4 light_ambient;
 } scene;
 // View
-layout(std430, set = 3, binding = 1) uniform View
+layout(std430, set = 2, binding = 1) uniform View
 {
-	//mat4 mat;
+	layout(row_major) mat4 mat_projection;
 	vec3 vec;
 } view;
 // Model
-layout(std430, set = 3, binding = 2) uniform Model
+layout(std430, set = 2, binding = 2) uniform Model
 {
-	mat4 matrix_model;
+	layout(row_major) mat4 matrix_model;
 	float specular_strength;
 	float shininess;
 } model;
@@ -42,24 +44,64 @@ layout(std430, set = 2, binding = 3) uniform Light
 	uint count_light_point;
 } light;
 
-
+vec3 reconstruct_world_pos(vec2 uv, float depth);
 
 void main()
 {
 	vec4 albedo_color;
 	vec3 normal_world;
+	vec3 world_pos;
 	vec2 image_size = imageSize(output_image);
-	uvec2 pos = gl_GlobalInvocationID.xy;
-	if(pos.x >= image_size.x || pos.y >= image_size.y)
+	ivec2 screen_pos = ivec2(gl_GlobalInvocationID.xy);
+	if(screen_pos.x >= image_size.x || screen_pos.y >= image_size.y)
 	{
 		return;
 	}
-	vec2 uv = vec2((vec2(pos)+0.5) / vec2(image_size));
-
+	vec2 uv = vec2((vec2(screen_pos)+0.5) / vec2(image_size));
+	// read texture (g-buffer)
 	albedo_color = texture(albedo_texture, uv);
-	normal_world = vec3(texture(normal_texture, uv));
+	normal_world = texture(normal_texture, uv).rgb;
+	//world_pos = texelFetch(pos_texture, screen_pos,0).rgb;
+	world_pos = reconstruct_world_pos(uv, texelFetch(depth_texture, screen_pos, 0).r);
+	float specular_strength = texelFetch(model_texture, screen_pos, 0).r;
+	float shininess = texelFetch(model_texture, screen_pos, 0).g;
+	int entity_id = int(texelFetch(model_texture, screen_pos, 0).b);
 
-	vec4 draw_color = albedo_color;
+	// render
+	vec3 vec_light = normalize(light.light_point_list[0].pos - world_pos);
+	vec3 vec_view = normalize(view.vec - world_pos);
+	vec3 vec_reflect = reflect(-vec_light, normal_world);
 
-	imageStore(output_image, ivec2(pos), draw_color);
+	// ambient
+	vec3 ambient = scene.light_ambient.rgb * scene.light_ambient.a;
+	// diffuse
+	float diff = max(dot(normal_world, vec_light), 0.0);
+	vec3 diffuse = light.light_point_list[0].color * light.light_point_list[0].intensity * diff;
+	// specular
+	float spec = 0.0;
+	if(diff > 0.0){
+		spec = pow(max(dot(vec_view, vec_reflect), 0.0), model.shininess);
+	}
+	vec3 specular = light.light_point_list[0].color 
+		* light.light_point_list[0].intensity * model.specular_strength * spec;
+
+	vec4 draw_color = vec4((ambient + diffuse) * albedo_color.rgb + specular, albedo_color.a);
+	//vec4 draw_color = albedo_color;
+	// write
+	imageStore(output_image, ivec2(screen_pos), draw_color);
+}
+
+vec3 reconstruct_world_pos(vec2 uv, float depth)
+{
+	vec4 clip_pos;
+	clip_pos = vec4(
+		uv.x * 2.0 - 1.0,
+		uv.y * 2.0 - 1.0,
+		depth,
+		1.0
+	);
+
+	vec4 world_pos = transpose(inverse(view.mat_projection)) * clip_pos;
+	world_pos.xyz /= world_pos.w;
+	return world_pos.xyz;
 }

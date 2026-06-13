@@ -19,15 +19,16 @@ class CubeDeferDemo : AppInterface
 	GfxMesh object_mesh;
 	GfxGeometry!(VertexPNU, uint) object_geometry;
 
-	GpuTexture albedo_texture, normal_texture, render_texture;
+	GpuTexture render_texture;
+	GpuTexture albedo_texture, normal_texture, pos_texture, model_texture;
+	GpuSampler sampler_nearest, sampler_smooth;
+
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
 
 	GpuTexture object_texture;
-	GpuSampler object_sampler;
 	GpuTexture depth_texture;
 
-	GpuSampler sampler;
 	Surface object_image;
 
 	this(Core core)
@@ -86,13 +87,16 @@ class CubeDeferDemo : AppInterface
 					GpuTextureFormat.r32g32b32a32_float
 				), GpuColorTargetDescription(
 					GpuTextureFormat.r32g32b32a32_float
+				), GpuColorTargetDescription(
+					GpuTextureFormat.r32g32b32a32_float
+				), GpuColorTargetDescription(
+					GpuTextureFormat.r32g32b32a32_float
 				),
 			], GpuTextureFormat.d32_float,
 			);
 		}
 		defer_pipeline.create(defer_pipeline_info);
-		import std.stdio;
-		writeln("cube_defer");
+
 		// Compute Pipeline
 		graphics_context.create(render_pipeline);
 		//GpuComputePipelineCreateInfo render_pipeline_info;
@@ -102,9 +106,9 @@ class CubeDeferDemo : AppInterface
 		with (render_pipeline_info)
 		{
 			//num_readonly_storage_buffers = 0;
-			num_samplers = 2;
+			num_samplers = 5;
 			num_readwrite_storage_textures = 1;
-			num_uniform_buffers = 1;
+			num_uniform_buffers = 4;
 			threadcount_x = 8;
 			threadcount_y = 8;
 			threadcount_z = 1;
@@ -116,44 +120,48 @@ class CubeDeferDemo : AppInterface
 		// texture, sampler
 		object_image = new Surface();
 		object_image.load("./image/test_texture.png");
-		graphics_context.create(object_texture, object_sampler);
+		graphics_context.create(object_texture);
 		object_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d, GpuTextureFormat.r8g8b8a8_unorm,
 				GpuTextureUsageFlags.sampler,
 				object_image.width, object_image.height,
 				1, 1,
 		));
-		object_sampler.create(GpuSamplerCreateInfo(
-				GpuFilter.nearest,
-				GpuFilter.nearest,
-		));
+
 		graphics_context.create(depth_texture);
 		depth_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d,
 				GpuTextureFormat.d32_float,
-				GpuTextureUsageFlags.depth_stencil_target,
+				GpuTextureUsageFlags.depth_stencil_target | GpuTextureUsageFlags.sampler,
 				graphics_context.client_width, graphics_context.client_height,
 				1, 1, GpuSampleCount.x1,
 		));
 
-		graphics_context.create(albedo_texture, normal_texture, render_texture, sampler);
-		albedo_texture.create(GpuTextureCreateInfo(
-				GpuTextureType._2d, GpuTextureFormat.r32g32b32a32_float,
-				GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target | GpuTextureUsageFlags.compute_storage_read,
-				graphics_context.client_width, graphics_context.client_height, 1, 1,
-		));
-		normal_texture.create(GpuTextureCreateInfo(
-				GpuTextureType._2d, GpuTextureFormat.r32g32b32a32_float,
-				GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target | GpuTextureUsageFlags.compute_storage_read,
-				graphics_context.client_width, graphics_context.client_height, 1, 1,
-		));
+		graphics_context.create(
+			render_texture, sampler_smooth, sampler_nearest,
+			albedo_texture, normal_texture, pos_texture, model_texture,
+		);
 		render_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d, GpuTextureFormat.r32g32b32a32_float,
 				GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.compute_storage_simultaneous_read_write,
 				graphics_context.client_width, graphics_context.client_height, 1, 1,
 		));
-		sampler.create(GpuSamplerCreateInfo(
+		scope GpuTextureCreateInfo tci;
+		tci = GpuTextureCreateInfo(
+			GpuTextureType._2d, GpuTextureFormat.r32g32b32a32_float,
+			GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target | GpuTextureUsageFlags.compute_storage_read,
+			graphics_context.client_width, graphics_context.client_height, 1, 1,
+		);
+		albedo_texture.create(tci);
+		normal_texture.create(tci);
+		pos_texture.create(tci);
+		model_texture.create(tci);
+
+		sampler_smooth.create(GpuSamplerCreateInfo(
 				GpuFilter.linear, GpuFilter.linear,
+		));
+		sampler_nearest.create(GpuSamplerCreateInfo(
+				GpuFilter.nearest, GpuFilter.nearest,
 		));
 
 		// Geometry
@@ -261,7 +269,15 @@ class CubeDeferDemo : AppInterface
 				GpuColorTargetInfo(
 					normal_texture,
 					GpuLoadOp.clear, GpuStoreOp.store,
-				)
+				),
+				GpuColorTargetInfo(
+					pos_texture,
+					GpuLoadOp.clear, GpuStoreOp.store,
+				),
+				GpuColorTargetInfo(
+					model_texture,
+					GpuLoadOp.clear, GpuStoreOp.store,
+				),
 			];
 			depth_target_info = GpuDepthStencilTargetInfo(
 				depth_texture.handle,
@@ -289,7 +305,7 @@ class CubeDeferDemo : AppInterface
 				}
 				render_pass.bind(defer_pipeline)
 					.bind([
-						GpuTextureSamplerBinding(object_texture, object_sampler)
+						GpuTextureSamplerBinding(object_texture, sampler_smooth)
 					], 0)
 					.bind([vertex_buffer])
 					.bind(index_buffer)
@@ -309,12 +325,25 @@ class CubeDeferDemo : AppInterface
 				compute_pass.bind(render_pipeline)
 					.bind(
 						[
-							GpuTextureSamplerBinding(albedo_texture, sampler),
-							GpuTextureSamplerBinding(normal_texture, sampler),
-						], 0
-					)
-					.push_uniform(UniformCompute(960f, 540f))
-					.dispatch(960 / 8, 540 / 8, 1);
+						GpuTextureSamplerBinding(albedo_texture, sampler_smooth),
+						GpuTextureSamplerBinding(normal_texture, sampler_nearest),
+						GpuTextureSamplerBinding(pos_texture, sampler_nearest),
+						GpuTextureSamplerBinding(model_texture, sampler_nearest),
+						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
+					], 0
+				)
+					.push_uniform(fragment_scene, 0)
+					.push_uniform(UniformView(
+						multiply(transformer_look_at(Vec3(0f, 0f, -2.5f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
+						transformer_perspective(PI_2),),
+						Vec3(0f, 0f, -2.5f),
+					), 1)
+					.push_uniform(UniformModel(
+						cast(Matrix!(4, 4, float))(cast(Matrix!(3, 3, float))(
+						vertex_model.mat_model)).inverse().transpose(), 1.0f, 32.0f,
+					), 2)
+					.push_uniform(fragment_light, 3)
+					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
 				return;
 			}
 			);
