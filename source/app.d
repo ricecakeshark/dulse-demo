@@ -13,8 +13,9 @@ void main()
 	scope GfxGraphicsSubsystem graphics;
 	scope DeviceSubsystem device;
 	scope TimerSubsystem timer;
+	scope LoggerSubsystem logger;
 	scope AppInterface[] app_list;
-	scope LoopedInt!(5) app_index, app_index_next;
+	scope LoopedInt!(6) app_index, app_index_next;
 
 	core = new Core();
 	core.append_gio_subsystem();
@@ -26,6 +27,7 @@ void main()
 		cast(AppInterface) new ManyObject(core),
 		cast(AppInterface) new CubeDemo(core),
 		cast(AppInterface) new CubeMulti(core),
+		cast(AppInterface) new CubeDeferDemo(core),
 		//new ShaderTest(core, graphics_context),
 		new TextApp(core),
 		new ComputeDemo(core),
@@ -55,6 +57,8 @@ void main()
 		{
 			app_list[app_index].finalize();
 			timer.sleep(100);
+			//import std.conv;
+			//logger.log("cube_defer" ~ text(app_index_next));
 			app_list[app_index_next].initialize();
 			app_index = app_index_next;
 		}
