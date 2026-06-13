@@ -302,6 +302,7 @@ class CubeDeferDemo : AppInterface
 				{
 					specular_strength = 1.0;
 					shininess = 32.0f;
+					entity_id = 0;
 				}
 				render_pass.bind(defer_pipeline)
 					.bind([

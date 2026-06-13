@@ -34,6 +34,7 @@ struct UniformFragmentModel
 	//align(4):
 	float specular_strength = 0.5f;
 	float shininess = 32.0f;
+	int entity_id;
 }
 
 struct UniformFragmentLight
