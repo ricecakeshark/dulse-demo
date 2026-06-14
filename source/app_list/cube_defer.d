@@ -3,6 +3,12 @@ module app_list.cube_defer;
 import app_list.app_interface;
 import app_list.uniform;
 
+import app_list.ecs;
+
+import app_list.pipeline.defer_pipeline;
+import app_list.pipeline.post_render;
+import app_list.pipeline.post_edge;
+
 import kelp_core;
 import kelp_sdl;
 import kelp_gfx;
@@ -15,11 +21,11 @@ class CubeDeferDemo : AppInterface
 	GfxGraphicsContext graphics_context;
 
 	GpuGraphicsPipeline defer_pipeline;
-	GpuComputePipeline render_pipeline;
+	GpuComputePipeline post_render_pipeline, post_edge_pipeline;
 	GfxMesh object_mesh;
 	GfxGeometry!(VertexPNU, uint) object_geometry;
 
-	GpuTexture render_texture;
+	GpuTexture render_texture, depth_texture;
 	GpuTexture albedo_texture, normal_texture, pos_texture, model_texture;
 	GpuSampler sampler_nearest, sampler_smooth;
 
@@ -27,9 +33,10 @@ class CubeDeferDemo : AppInterface
 	GpuIndexBuffer index_buffer;
 
 	GpuTexture object_texture;
-	GpuTexture depth_texture;
-
 	Surface object_image;
+
+	Entity[4] entity_list;
+	ObjectManager object_manager;
 
 	this(Core core)
 	{
@@ -40,82 +47,24 @@ class CubeDeferDemo : AppInterface
 
 	override void initialize()
 	{
-
 		core.subsystem.query(timer, logger);
 		graphics_context.create(command_buffer, swapchain_texture);
-
-		// Render Shader
-		scope GpuVertexShader vertex_shader;
-		scope GpuFragmentShader fragment_shader;
-		graphics_context.create(defer_pipeline, vertex_shader, fragment_shader);
-		vertex_shader.create(
-			ShaderFile("texture.vert", graphics_context.get_shader_format()),
-			GpuShaderArguments(0, 3, 0, 0),
-		);
-		fragment_shader.create(
-			ShaderFile("defer_texture.frag", graphics_context.get_shader_format()),
-			GpuShaderArguments(1, 4, 0, 0),
-		);
-		// Render Pipeline
-		scope GpuGraphicsPipelineCreateInfo defer_pipeline_info;
-		defer_pipeline_info.vertex_shader = vertex_shader.handle;
-		defer_pipeline_info.fragment_shader = fragment_shader.handle;
-		with (defer_pipeline_info)
+		// Entity
+		object_manager = new ObjectManager;
+		object_manager.create(entity_list)
+			.append_component!TransformComponent();
+		foreach (entity; entity_list)
 		{
-			vertex_input_state = GpuVertexInputState(
-				[
-					vertex_buffer_description!(float[3], float[3], float[2])
-				],
-				vertex_attributes!(float[3], float[3], float[2])(0),
-			);
-			primitive_type = GpuPrimitiveType.triangle_list;
-			rasterizer_state = GpuRasterizerState(
-				GpuFillMode.fill,
-				GpuCullMode.back,
-				GpuFrontFace.counter_clockwise,
-			);
-			depth_stencil_state = GpuDepthStencilState(
-				GpuCompareOp.less,
-				GpuStencilOpState.init,
-				GpuStencilOpState.init,
-				0u, 0u,
-				true, true, false,
-			);
-			target_info = GpuGraphicsPipelineTargetInfo(
-				[
-				GpuColorTargetDescription(
-					GpuTextureFormat.r32g32b32a32_float
-				), GpuColorTargetDescription(
-					GpuTextureFormat.r32g32b32a32_float
-				), GpuColorTargetDescription(
-					GpuTextureFormat.r32g32b32a32_float
-				), GpuColorTargetDescription(
-					GpuTextureFormat.r32g32b32a32_float
-				),
-			], GpuTextureFormat.d32_float,
-			);
+			object_manager.attach!TransformComponent(entity);
 		}
-		defer_pipeline.create(defer_pipeline_info);
+		object_manager.register!TransformSystem()
+			.append_resource(TimerResource(0))
+			.initialize();
 
-		// Compute Pipeline
-		graphics_context.create(render_pipeline);
-		//GpuComputePipelineCreateInfo render_pipeline_info;
-		auto render_pipeline_info = GpuComputePipelineCreateInfo(
-			ShaderFile("render.comp", GpuShaderFormat.spirv)
-		);
-		with (render_pipeline_info)
-		{
-			//num_readonly_storage_buffers = 0;
-			num_samplers = 5;
-			num_readwrite_storage_textures = 1;
-			num_uniform_buffers = 4;
-			threadcount_x = 8;
-			threadcount_y = 8;
-			threadcount_z = 1;
-		}
-		render_pipeline.create(
-			render_pipeline_info
-		);
+		// Pipeline
+		create_defer_pipeline(graphics_context, defer_pipeline);
+		create_post_render_pipeline(graphics_context, post_render_pipeline);
+		create_post_edge_pipeline(graphics_context, post_edge_pipeline);
 
 		// texture, sampler
 		object_image = new Surface();
@@ -220,7 +169,13 @@ class CubeDeferDemo : AppInterface
 
 	override void process()
 	{
+		with (object_manager.resource_store.refer!TimerResource())
+		{
+			past_time = timer.past;
+			delta_time = timer.delta;
+		}
 
+		object_manager.process();
 		return;
 	}
 
@@ -234,24 +189,28 @@ class CubeDeferDemo : AppInterface
 
 		GpuColorTargetInfo[] color_targets;
 		GpuDepthStencilTargetInfo depth_target_info;
-		UniformVertexScene vertex_scene;
-		UniformVertexView vertex_view;
-		UniformVertexModel vertex_model;
-		UniformFragmentScene fragment_scene;
-		UniformFragmentView fragment_view;
-		UniformFragmentModel fragment_model;
-		UniformFragmentLight fragment_light;
 
-		vertex_view.mat_view = multiply_ltor(
+		UniformScene uniform_scene;
+		UniformView uniform_view;
+		UniformModelVert uniform_model_vert;
+		UniformModelFrag uniform_model_frag;
+		UniformLight uniform_light;
+		UniformViewComp uniform_view_comp;
+		// prepare uniform buffer object
+		uniform_scene = UniformScene(Vec4(1f,1f,1f,0.1f));
+		uniform_view = UniformView(
+			multiply(transformer_look_at(Vec3(0f, 0f, -2.5f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
+				transformer_perspective(PI_2),),
+		);
+		uniform_view_comp = UniformViewComp(
 			transformer_look_at(Vec3(0f, 0f, -2.5f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
 			transformer_perspective(PI_2),
+			Vec3(0f, 0f, -2.5f),
 		);
-		fragment_scene.ambient_light = ColorF(1.0f, 1.0f, 1.0f, 0.1f);
-		fragment_view.vec_view = Vec3(0f, 0f, -2.5f);
-		with (fragment_light.list[0])
+		with (uniform_light.light_point_list[0])
 		{
-			pos = Vec3(0f, +0.5f, -3f);
-			color = Vec3(0.7f, 0.7f, 0.7f);
+			pos = Vec4(0f, +0.5f, -3f,0f);
+			color = Vec4(0.7f, 0.7f, 0.7f,0f);
 			intensity = 1.0;
 		}
 
@@ -290,40 +249,40 @@ class CubeDeferDemo : AppInterface
 				color_targets,
 				depth_target_info,
 				(render_pass) {
-				vertex_model.mat_model = multiply_rtol(
-					transformer_rotate_y(0.0015 * timer.past),
-					transformer_rotate_x(0.0005 * timer.past),
-					transformer_scale([1.0f, 1.0f, 1.0f]),
-				);
-				vertex_model.mat_model_normal = cast(Matrix!(4, 4, float))(cast(Matrix!(3, 3, float))(
-					vertex_model.mat_model)).inverse()
-					.transpose();
-				with (fragment_model)
+				// prepare defer_pipeline
+				render_pass.push_vertex(uniform_view, 1)
+					.push_fragment(uniform_view, 1);
+				// foreach entity
+				foreach (entity; 0 .. 1)
 				{
-					specular_strength = 1.0;
-					shininess = 32.0f;
-					entity_id = 0;
+					uniform_model_vert = UniformModelVert(
+						multiply_rtol(
+						transformer_rotate_y(0.0015 * timer.past),
+						transformer_rotate_x(0.0005 * timer.past),
+						transformer_scale([1.0f, 1.0f, 1.0f]),
+					)
+					);
+					uniform_model_frag = UniformModelFrag(1.0f, 32.0f,1);
+
+					render_pass.bind(defer_pipeline)
+						.bind([
+							GpuTextureSamplerBinding(object_texture, sampler_smooth)
+						], 0)
+						.bind([vertex_buffer])
+						.bind(index_buffer)
+						.push_vertex(uniform_view, 1)
+						.push_vertex(uniform_model_vert, 2)
+						.push_fragment(uniform_model_frag, 2u)
+						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 				}
-				render_pass.bind(defer_pipeline)
-					.bind([
-						GpuTextureSamplerBinding(object_texture, sampler_smooth)
-					], 0)
-					.bind([vertex_buffer])
-					.bind(index_buffer)
-					.push_vertex(vertex_view, 1)
-					.push_vertex(vertex_model, 2)
-					.push_fragment(fragment_scene, 0)
-					.push_fragment(fragment_view, 1u)
-					.push_fragment(fragment_model, 2u)
-					.push_fragment(fragment_light, 3u)
-					.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
+
 			},);
-			// compute
+			// post_render
 			command_buffer.with_compute_pass(
 				[GpuStorageTextureReadWriteBinding(render_texture)],
 				null,
 				(compute_pass) {
-				compute_pass.bind(render_pipeline)
+				compute_pass.bind(post_render_pipeline)
 					.bind(
 						[
 						GpuTextureSamplerBinding(albedo_texture, sampler_smooth),
@@ -333,21 +292,36 @@ class CubeDeferDemo : AppInterface
 						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
 					], 0
 				)
-					.push_uniform(fragment_scene, 0)
-					.push_uniform(UniformView(
-						multiply(transformer_look_at(Vec3(0f, 0f, -2.5f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
-						transformer_perspective(PI_2),),
-						Vec3(0f, 0f, -2.5f),
-					), 1)
-					.push_uniform(UniformModel(
-						cast(Matrix!(4, 4, float))(cast(Matrix!(3, 3, float))(
-						vertex_model.mat_model)).inverse().transpose(), 1.0f, 32.0f,
-					), 2)
-					.push_uniform(fragment_light, 3)
+					.push_uniform(uniform_scene, 0)
+					.push_uniform(uniform_view_comp, 1)
+					.push_uniform(uniform_model_frag, 2)
+					.push_uniform(uniform_light, 3)
 					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
 				return;
 			}
 			);
+
+			// post_edge
+			
+			command_buffer.with_compute_pass(
+				[GpuStorageTextureReadWriteBinding(render_texture)],
+				null,
+				(compute_pass) {
+				compute_pass.bind(post_edge_pipeline)
+					.bind(
+						[
+						GpuTextureSamplerBinding(albedo_texture, sampler_smooth),
+						GpuTextureSamplerBinding(normal_texture, sampler_nearest),
+						GpuTextureSamplerBinding(pos_texture, sampler_nearest),
+						GpuTextureSamplerBinding(model_texture, sampler_nearest),
+						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
+					], 0
+				)
+					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
+				return;
+			}
+			);
+			
 			// blit
 			command_buffer.blit_texture(
 				GpuBlitInfo(

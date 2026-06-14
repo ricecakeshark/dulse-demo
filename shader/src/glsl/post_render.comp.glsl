@@ -13,28 +13,28 @@ layout(set = 1, binding = 0, rgba32f) uniform writeonly image2D output_image;
 
 struct LightPoint
 {
-	vec3 pos;
-	vec3 color;
+	vec4 pos;
+	vec4 color;
 	float intensity;
 };
 
 layout(std430, set = 2, binding = 0) uniform Scene
 {
-	//float light_attenuation;
 	vec4 light_ambient;
 } scene;
 // View
 layout(std430, set = 2, binding = 1) uniform View
 {
-	layout(row_major) mat4 mat_projection;
+	layout(row_major) mat4 mat_view;
+	layout(row_major) mat4 mat_proj;
 	vec3 vec;
 } view;
 // Model
 layout(std430, set = 2, binding = 2) uniform Model
 {
-	layout(row_major) mat4 matrix_model;
 	float specular_strength;
 	float shininess;
+	int entity_id;
 } model;
 // Light
 layout(std430, set = 2, binding = 3) uniform Light
@@ -44,6 +44,7 @@ layout(std430, set = 2, binding = 3) uniform Light
 	uint count_light_point;
 } light;
 
+vec4 calc_light(vec4 albedo_color, vec3 world_pos, vec3 normal_world);
 vec3 reconstruct_world_pos(vec2 uv, float depth);
 
 void main()
@@ -67,8 +68,17 @@ void main()
 	float shininess = texelFetch(model_texture, screen_pos, 0).g;
 	int entity_id = int(texelFetch(model_texture, screen_pos, 0).b);
 
+	//vec4 draw_color = albedo_color;
+	// write
+	// imageStore(output_image, screen_pos, draw_color);
+	imageStore(output_image, screen_pos, calc_light(albedo_color, world_pos, normal_world));
+	return;
+}
+
+vec4 calc_light(vec4 albedo_color, vec3 world_pos, vec3 normal_world)
+{
 	// render
-	vec3 vec_light = normalize(light.light_point_list[0].pos - world_pos);
+	vec3 vec_light = normalize(light.light_point_list[0].pos.xyz - world_pos);
 	vec3 vec_view = normalize(view.vec - world_pos);
 	vec3 vec_reflect = reflect(-vec_light, normal_world);
 
@@ -76,19 +86,16 @@ void main()
 	vec3 ambient = scene.light_ambient.rgb * scene.light_ambient.a;
 	// diffuse
 	float diff = max(dot(normal_world, vec_light), 0.0);
-	vec3 diffuse = light.light_point_list[0].color * light.light_point_list[0].intensity * diff;
+	vec3 diffuse = light.light_point_list[0].color.xyz * light.light_point_list[0].intensity * diff;
 	// specular
 	float spec = 0.0;
 	if(diff > 0.0){
 		spec = pow(max(dot(vec_view, vec_reflect), 0.0), model.shininess);
 	}
-	vec3 specular = light.light_point_list[0].color 
+	vec3 specular = light.light_point_list[0].color.xyz 
 		* light.light_point_list[0].intensity * model.specular_strength * spec;
-
 	vec4 draw_color = vec4((ambient + diffuse) * albedo_color.rgb + specular, albedo_color.a);
-	//vec4 draw_color = albedo_color;
-	// write
-	imageStore(output_image, ivec2(screen_pos), draw_color);
+	return draw_color;
 }
 
 vec3 reconstruct_world_pos(vec2 uv, float depth)
@@ -101,7 +108,7 @@ vec3 reconstruct_world_pos(vec2 uv, float depth)
 		1.0
 	);
 
-	vec4 world_pos = transpose(inverse(view.mat_projection)) * clip_pos;
+	vec4 world_pos = inverse(view.mat_view * view.mat_proj) * clip_pos;
 	world_pos.xyz /= world_pos.w;
 	return world_pos.xyz;
 }

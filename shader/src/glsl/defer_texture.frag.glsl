@@ -33,14 +33,12 @@ layout(set = 2, binding = 1) readonly buffer Scene
 // uniform buffer
 layout(std430, set = 3, binding = 0) uniform Scene
 {
-	//float light_attenuation;
-	vec4 light_ambient;
+	vec4 light_ambient; // no use
 } scene;
 // View
 layout(std430, set = 3, binding = 1) uniform View
 {
-	//mat4 mat;
-	vec3 vec;
+	layout(row_major) mat4 mat_view;
 } view;
 // Model
 layout(std430, set = 3, binding = 2) uniform Model
@@ -52,7 +50,6 @@ layout(std430, set = 3, binding = 2) uniform Model
 // Light
 layout(std430, set = 3, binding = 3) uniform Light
 {
-	//float light_attenuation;
 	LightPoint[1] light_point_list;
 	uint count_light_point;
 } light;
