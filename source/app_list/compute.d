@@ -295,7 +295,7 @@ class ComputeDemo : AppInterface
 							GpuTextureSamplerBinding(compute_src_texture, sampler)
 						], 0
 					)
-					.push_uniform(UniformCompute(960f, 540f))
+					.push(UniformCompute(960f, 540f))
 					.dispatch(960 / 8, 540 / 8, 1);
 				return;
 			}

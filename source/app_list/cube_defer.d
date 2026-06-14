@@ -197,20 +197,20 @@ class CubeDeferDemo : AppInterface
 		UniformLight uniform_light;
 		UniformViewComp uniform_view_comp;
 		// prepare uniform buffer object
-		uniform_scene = UniformScene(Vec4(1f,1f,1f,0.1f));
+		uniform_scene = UniformScene(Vec4(1f, 1f, 1f, 0.1f));
 		uniform_view = UniformView(
-			multiply(transformer_look_at(Vec3(0f, 0f, -2.5f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
+			multiply(transformer_look_at(Vec3(0f, 0f, -3.0f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
 				transformer_perspective(PI_2),),
 		);
 		uniform_view_comp = UniformViewComp(
-			transformer_look_at(Vec3(0f, 0f, -2.5f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
+			transformer_look_at(Vec3(0f, 0f, -3.0f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
 			transformer_perspective(PI_2),
-			Vec3(0f, 0f, -2.5f),
+			Vec3(0f, 0f, -3.0f),
 		);
 		with (uniform_light.light_point_list[0])
 		{
-			pos = Vec4(0f, +0.5f, -3f,0f);
-			color = Vec4(0.7f, 0.7f, 0.7f,0f);
+			pos = Vec4(0f, +0.5f, -3f, 0f);
+			color = Vec4(0.7f, 0.7f, 0.7f, 0f);
 			intensity = 1.0;
 		}
 
@@ -253,16 +253,14 @@ class CubeDeferDemo : AppInterface
 				render_pass.push_vertex(uniform_view, 1)
 					.push_fragment(uniform_view, 1);
 				// foreach entity
-				foreach (entity; 0 .. 1)
+				foreach (entity; entity_list)
 				{
 					uniform_model_vert = UniformModelVert(
-						multiply_rtol(
-						transformer_rotate_y(0.0015 * timer.past),
-						transformer_rotate_x(0.0005 * timer.past),
-						transformer_scale([1.0f, 1.0f, 1.0f]),
-					)
+						object_manager.component.get!TransformComponent(entity)
+						.model_matrix()
 					);
-					uniform_model_frag = UniformModelFrag(1.0f, 32.0f,1);
+
+					uniform_model_frag = UniformModelFrag(1.0f, 32.0f, 1);
 
 					render_pass.bind(defer_pipeline)
 						.bind([
@@ -292,17 +290,17 @@ class CubeDeferDemo : AppInterface
 						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
 					], 0
 				)
-					.push_uniform(uniform_scene, 0)
-					.push_uniform(uniform_view_comp, 1)
-					.push_uniform(uniform_model_frag, 2)
-					.push_uniform(uniform_light, 3)
+					.push(uniform_scene, 0)
+					.push(uniform_view_comp, 1)
+					.push(uniform_model_frag, 2)
+					.push(uniform_light, 3)
 					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
 				return;
 			}
 			);
 
 			// post_edge
-			
+
 			command_buffer.with_compute_pass(
 				[GpuStorageTextureReadWriteBinding(render_texture)],
 				null,
@@ -321,7 +319,7 @@ class CubeDeferDemo : AppInterface
 				return;
 			}
 			);
-			
+
 			// blit
 			command_buffer.blit_texture(
 				GpuBlitInfo(

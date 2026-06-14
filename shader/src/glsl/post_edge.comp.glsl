@@ -20,6 +20,9 @@ layout(std430, set = 2, binding = 1) uniform View
 
 vec3 reconstruct_world_pos(vec2 uv, float depth);
 bool is_edge(ivec2 screen_pos);
+bool is_entity_edge(ivec2 screen_pos);
+bool is_normal_edge(ivec2 screen_pos);
+bool is_valid_normal(vec3 normal);
 
 void main()
 {
@@ -48,6 +51,11 @@ void main()
 
 bool is_edge(ivec2 screen_pos)
 {
+	return is_entity_edge(screen_pos) || is_normal_edge(screen_pos);
+}
+
+bool is_entity_edge(ivec2 screen_pos)
+{
 	const ivec2 offsets[4] = ivec2[](
 		ivec2(0, -1),
 		ivec2(0, +1),
@@ -56,7 +64,6 @@ bool is_edge(ivec2 screen_pos)
 	);
 
 	int entity_id = int(texelFetch(model_texture, screen_pos, 0)[2]);
-	// entity_id
 	for(int count; count < 4; ++count)
 	{
 		if(entity_id != int(texelFetch(model_texture, screen_pos + offsets[count], 0)[2]))
@@ -65,6 +72,40 @@ bool is_edge(ivec2 screen_pos)
 		}
 	}
 	return false;
+}
+
+bool is_normal_edge(ivec2 screen_pos)
+{
+	const ivec2 offsets[4] = ivec2[](
+		ivec2(0, -1),
+		ivec2(0, +1),
+		ivec2(-1, 0),
+		ivec2(+1, 0)
+	);
+	vec3 normal = texelFetch(normal_texture, screen_pos, 0).xyz;
+	if(!is_valid_normal(normal))
+	{
+		return false;
+	}
+
+	for(int count; count < 4; ++count)
+	{
+		vec3 other_normal = texelFetch(normal_texture, screen_pos + offsets[count], 0).xyz;
+		if(!is_valid_normal(other_normal))
+		{
+			continue;
+		}
+		if(dot(normal, other_normal) < cos(30.0))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool is_valid_normal(vec3 normal)
+{
+	return dot(normal, normal) > 0.0001;
 }
 
 vec3 reconstruct_world_pos(vec2 uv, float depth)
