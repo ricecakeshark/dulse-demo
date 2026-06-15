@@ -6,8 +6,11 @@ import app_list.uniform;
 import app_list.ecs;
 
 import app_list.pipeline.defer_pipeline;
-import app_list.pipeline.post_render;
-import app_list.pipeline.post_edge;
+import app_list.pipeline;
+
+/+import app_list.pipeline.pre_phong;
+import app_list.pipeline.post_shade;
+import app_list.pipeline.post_edge;+/
 
 import kelp_core;
 import kelp_sdl;
@@ -21,12 +24,12 @@ class CubeDeferDemo : AppInterface
 	GfxGraphicsContext graphics_context;
 
 	GpuGraphicsPipeline defer_pipeline;
-	GpuComputePipeline post_render_pipeline, post_edge_pipeline;
+	GpuComputePipeline pipeline_shade, pipeline_phong, pipeline_edge;
 	GfxMesh object_mesh;
 	GfxGeometry!(VertexPNU, uint) object_geometry;
 
 	GpuTexture render_texture, depth_texture;
-	GpuTexture albedo_texture, normal_texture, pos_texture, model_texture;
+	GpuTexture albedo_texture, normal_texture, color_texture, material_texture;
 	GpuSampler sampler_nearest, sampler_smooth;
 
 	GpuVertexBuffer vertex_buffer;
@@ -63,8 +66,9 @@ class CubeDeferDemo : AppInterface
 
 		// Pipeline
 		create_defer_pipeline(graphics_context, defer_pipeline);
-		create_post_render_pipeline(graphics_context, post_render_pipeline);
-		create_post_edge_pipeline(graphics_context, post_edge_pipeline);
+		create_pipeline_shade(graphics_context, pipeline_shade);
+		create_pipeline_phong(graphics_context, pipeline_phong);
+		create_pipeline_edge(graphics_context, pipeline_edge);
 
 		// texture, sampler
 		object_image = new Surface();
@@ -88,7 +92,7 @@ class CubeDeferDemo : AppInterface
 
 		graphics_context.create(
 			render_texture, sampler_smooth, sampler_nearest,
-			albedo_texture, normal_texture, pos_texture, model_texture,
+			albedo_texture, normal_texture, color_texture, material_texture,
 		);
 		render_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d, GpuTextureFormat.r32g32b32a32_float,
@@ -98,13 +102,13 @@ class CubeDeferDemo : AppInterface
 		scope GpuTextureCreateInfo tci;
 		tci = GpuTextureCreateInfo(
 			GpuTextureType._2d, GpuTextureFormat.r32g32b32a32_float,
-			GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target | GpuTextureUsageFlags.compute_storage_read,
+			GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target | GpuTextureUsageFlags.compute_storage_simultaneous_read_write,
 			graphics_context.client_width, graphics_context.client_height, 1, 1,
 		);
 		albedo_texture.create(tci);
 		normal_texture.create(tci);
-		pos_texture.create(tci);
-		model_texture.create(tci);
+		color_texture.create(tci);
+		material_texture.create(tci);
 
 		sampler_smooth.create(GpuSamplerCreateInfo(
 				GpuFilter.linear, GpuFilter.linear,
@@ -195,14 +199,9 @@ class CubeDeferDemo : AppInterface
 		UniformModelVert uniform_model_vert;
 		UniformModelFrag uniform_model_frag;
 		UniformLight uniform_light;
-		UniformViewComp uniform_view_comp;
 		// prepare uniform buffer object
 		uniform_scene = UniformScene(Vec4(1f, 1f, 1f, 0.1f));
 		uniform_view = UniformView(
-			multiply(transformer_look_at(Vec3(0f, 0f, -3.0f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
-				transformer_perspective(PI_2),),
-		);
-		uniform_view_comp = UniformViewComp(
 			transformer_look_at(Vec3(0f, 0f, -3.0f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
 			transformer_perspective(PI_2),
 			Vec3(0f, 0f, -3.0f),
@@ -230,19 +229,18 @@ class CubeDeferDemo : AppInterface
 					GpuLoadOp.clear, GpuStoreOp.store,
 				),
 				GpuColorTargetInfo(
-					pos_texture,
+					color_texture,
 					GpuLoadOp.clear, GpuStoreOp.store,
 				),
 				GpuColorTargetInfo(
-					model_texture,
+					material_texture,
 					GpuLoadOp.clear, GpuStoreOp.store,
 				),
 			];
 			depth_target_info = GpuDepthStencilTargetInfo(
 				depth_texture.handle,
 				1.0f,
-				GpuLoadOp.clear,
-				GpuStoreOp.dont_care,
+				GpuLoadOp.clear, GpuStoreOp.dont_care,
 			);
 			// render
 			command_buffer.with_render_pass(
@@ -275,43 +273,59 @@ class CubeDeferDemo : AppInterface
 				}
 
 			},);
+			// phong
+
+			command_buffer.with_compute_pass(
+				[GpuStorageTextureReadWriteBinding(color_texture)],
+				null,
+				(compute_pass) {
+				compute_pass.bind(pipeline_phong)
+					.bind([
+						GpuTextureSamplerBinding(albedo_texture, sampler_smooth),
+						GpuTextureSamplerBinding(normal_texture, sampler_nearest),
+						GpuTextureSamplerBinding(material_texture, sampler_nearest),
+						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
+					])
+					.push(uniform_scene, 0)
+					.push(uniform_view, 1)
+					.push(uniform_light, 2)
+					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
+				return;
+			}
+			);
 			// post_render
 			command_buffer.with_compute_pass(
 				[GpuStorageTextureReadWriteBinding(render_texture)],
 				null,
 				(compute_pass) {
-				compute_pass.bind(post_render_pipeline)
+				compute_pass.bind(pipeline_shade)
 					.bind(
 						[
 						GpuTextureSamplerBinding(albedo_texture, sampler_smooth),
 						GpuTextureSamplerBinding(normal_texture, sampler_nearest),
-						GpuTextureSamplerBinding(pos_texture, sampler_nearest),
-						GpuTextureSamplerBinding(model_texture, sampler_nearest),
+						GpuTextureSamplerBinding(color_texture, sampler_nearest),
+						GpuTextureSamplerBinding(material_texture, sampler_nearest),
 						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
 					], 0
 				)
-					.push(uniform_scene, 0)
-					.push(uniform_view_comp, 1)
-					.push(uniform_model_frag, 2)
-					.push(uniform_light, 3)
+					.push(uniform_view, 0)
 					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
 				return;
 			}
 			);
 
 			// post_edge
-
 			command_buffer.with_compute_pass(
 				[GpuStorageTextureReadWriteBinding(render_texture)],
 				null,
 				(compute_pass) {
-				compute_pass.bind(post_edge_pipeline)
+				compute_pass.bind(pipeline_edge)
 					.bind(
 						[
 						GpuTextureSamplerBinding(albedo_texture, sampler_smooth),
 						GpuTextureSamplerBinding(normal_texture, sampler_nearest),
-						GpuTextureSamplerBinding(pos_texture, sampler_nearest),
-						GpuTextureSamplerBinding(model_texture, sampler_nearest),
+						GpuTextureSamplerBinding(color_texture, sampler_nearest),
+						GpuTextureSamplerBinding(material_texture, sampler_nearest),
 						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
 					], 0
 				)

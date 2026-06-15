@@ -9,14 +9,25 @@ struct UniformScene
 
 struct UniformView
 {
-	Matrix!(4, 4, float) mat_projection;
-}
-
-struct UniformViewComp
-{
 	Matrix!(4, 4, float) mat_view;
-	Matrix!(4, 4, float) mat_projection;
+	Matrix!(4, 4, float) mat_proj;
+	Matrix!(4, 4, float) mat_view_proj;
+	Matrix!(4, 4, float) mat_inv_view_proj;
 	Vec3 vec_view;
+
+	this(
+		Matrix!(4, 4, float) mat_view,
+		Matrix!(4, 4, float) mat_proj,
+		Vec3 vec_view,
+	)
+	{
+		this.mat_view = mat_view;
+		this.mat_proj = mat_proj;
+		this.vec_view = vec_view;
+		this.mat_view_proj = mat_view * mat_proj;
+		this.mat_inv_view_proj = cast(Matrix!(4,4))inverse(cast(Matrix!(3,3))(mat_view * mat_proj));
+		return;
+	}
 }
 
 struct UniformModelVert

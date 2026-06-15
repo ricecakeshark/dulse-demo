@@ -39,6 +39,10 @@ layout(std430, set = 3, binding = 0) uniform Scene
 layout(std430, set = 3, binding = 1) uniform View
 {
 	layout(row_major) mat4 mat_view;
+	layout(row_major) mat4 mat_proj;
+	layout(row_major) mat4 mat_view_proj;
+	layout(row_major) mat4 mat_inv_view_proj;
+	vec3 vec;
 } view;
 // Model
 layout(std430, set = 3, binding = 2) uniform Model
@@ -63,7 +67,7 @@ void main()
 	vec3 normal_world = normalize(in_normal);
 	out_normal = vec4(normal_world, 0.0);
 	// out_pos
-	out_pos = vec4(in_world_pos, 0.0);
+	out_pos = vec4(view.vec, 0.0);
 	// out_model
 	out_model = vec4(model.specular_strength, model.shininess, float(model.entity_id), 0.0);
 	return;
