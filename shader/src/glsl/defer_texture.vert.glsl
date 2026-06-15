@@ -21,6 +21,7 @@ layout(std430, set = 1, binding = 1) uniform View
 	layout(row_major) mat4 mat_proj;
 	layout(row_major) mat4 mat_view_proj;
 	layout(row_major) mat4 mat_inv_view_proj;
+	vec3 pos;
 	vec3 vec;
 } view;
 // uniform Per-Object: (Model, View, Projection)

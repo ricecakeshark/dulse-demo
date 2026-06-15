@@ -29,7 +29,7 @@ class CubeDeferDemo : AppInterface
 	GfxGeometry!(VertexPNU, uint) object_geometry;
 
 	GpuTexture render_texture, depth_texture;
-	GpuTexture albedo_texture, normal_texture, color_texture, material_texture;
+	GpuTexture albedo_texture, normal_texture, color_texture, material_texture, pos_texture;
 	GpuSampler sampler_nearest, sampler_smooth;
 
 	GpuVertexBuffer vertex_buffer;
@@ -92,7 +92,7 @@ class CubeDeferDemo : AppInterface
 
 		graphics_context.create(
 			render_texture, sampler_smooth, sampler_nearest,
-			albedo_texture, normal_texture, color_texture, material_texture,
+			albedo_texture, normal_texture, color_texture, material_texture, pos_texture,
 		);
 		render_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d, GpuTextureFormat.r32g32b32a32_float,
@@ -109,6 +109,7 @@ class CubeDeferDemo : AppInterface
 		normal_texture.create(tci);
 		color_texture.create(tci);
 		material_texture.create(tci);
+		pos_texture.create(tci);
 
 		sampler_smooth.create(GpuSamplerCreateInfo(
 				GpuFilter.linear, GpuFilter.linear,
@@ -205,16 +206,15 @@ class CubeDeferDemo : AppInterface
 			transformer_look_at(Vec3(0f, 0f, -3.0f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
 			transformer_perspective(PI_2),
 			Vec3(0f, 0f, -3.0f),
+			Vec3(0f, 0f, -3.0f),
 		);
 		with (uniform_light.light_point_list[0])
 		{
-			pos = Vec4(0f, +0.5f, -3f, 0f);
+			pos = Vec4(0f, +0.5f, -3f, 1.0f);
 			color = Vec4(0.7f, 0.7f, 0.7f, 0f);
 			intensity = 1.0;
 		}
-
-		//fragment_light.pos = [sin(0.002f*timer.past)*10f,0f,cos(0.002f*timer.past)*10f];
-
+		// render
 		command_buffer.acquire_buffer()
 			.acquire_texture(swapchain_texture);
 		if (swapchain_texture.handle !is null)
@@ -229,7 +229,7 @@ class CubeDeferDemo : AppInterface
 					GpuLoadOp.clear, GpuStoreOp.store,
 				),
 				GpuColorTargetInfo(
-					color_texture,
+					pos_texture,
 					GpuLoadOp.clear, GpuStoreOp.store,
 				),
 				GpuColorTargetInfo(
@@ -242,7 +242,7 @@ class CubeDeferDemo : AppInterface
 				1.0f,
 				GpuLoadOp.clear, GpuStoreOp.dont_care,
 			);
-			// render
+			// g-buffer
 			command_buffer.with_render_pass(
 				color_targets,
 				depth_target_info,
@@ -253,11 +253,11 @@ class CubeDeferDemo : AppInterface
 				// foreach entity
 				foreach (entity; entity_list)
 				{
+					// update UB
 					uniform_model_vert = UniformModelVert(
 						object_manager.component.get!TransformComponent(entity)
 						.model_matrix()
 					);
-
 					uniform_model_frag = UniformModelFrag(1.0f, 32.0f, 1);
 
 					render_pass.bind(defer_pipeline)
@@ -266,15 +266,12 @@ class CubeDeferDemo : AppInterface
 						], 0)
 						.bind([vertex_buffer])
 						.bind(index_buffer)
-						.push_vertex(uniform_view, 1)
 						.push_vertex(uniform_model_vert, 2)
 						.push_fragment(uniform_model_frag, 2u)
 						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 				}
-
 			},);
 			// phong
-
 			command_buffer.with_compute_pass(
 				[GpuStorageTextureReadWriteBinding(color_texture)],
 				null,
@@ -284,7 +281,8 @@ class CubeDeferDemo : AppInterface
 						GpuTextureSamplerBinding(albedo_texture, sampler_smooth),
 						GpuTextureSamplerBinding(normal_texture, sampler_nearest),
 						GpuTextureSamplerBinding(material_texture, sampler_nearest),
-						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
+						GpuTextureSamplerBinding(pos_texture, sampler_nearest),
+						//GpuTextureSamplerBinding(depth_texture, sampler_nearest),
 					])
 					.push(uniform_scene, 0)
 					.push(uniform_view, 1)
@@ -308,7 +306,7 @@ class CubeDeferDemo : AppInterface
 						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
 					], 0
 				)
-					.push(uniform_view, 0)
+					.push(UniformCompositeConfig(0), 0)
 					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
 				return;
 			}

@@ -14,7 +14,11 @@ layout(set = 1, binding = 0, rgba32f) uniform writeonly image2D output_image;
 // View
 layout(std430, set = 2, binding = 1) uniform View
 {
-	layout(row_major) mat4 mat_projection;
+	layout(row_major) mat4 mat_view;
+	layout(row_major) mat4 mat_proj;
+	layout(row_major) mat4 mat_view_proj;
+	layout(row_major) mat4 mat_inv_view_proj;
+	vec3 pos;
 	vec3 vec;
 } view;
 
@@ -118,7 +122,7 @@ vec3 reconstruct_world_pos(vec2 uv, float depth)
 		1.0
 	);
 
-	vec4 world_pos = transpose(inverse(view.mat_projection)) * clip_pos;
+	vec4 world_pos = transpose(inverse(view.mat_view_proj)) * clip_pos;
 	world_pos.xyz /= world_pos.w;
 	return world_pos.xyz;
 }

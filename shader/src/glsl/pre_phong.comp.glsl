@@ -6,7 +6,8 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 layout(set = 0, binding = 0) uniform sampler2D albedo_texture;
 layout(set = 0, binding = 1) uniform sampler2D normal_texture;
 layout(set = 0, binding = 2) uniform sampler2D material_texture;
-layout(set = 0, binding = 3) uniform sampler2D depth_texture;
+layout(set = 0, binding = 3) uniform sampler2D pos_texture;
+//layout(set = 0, binding = 4) uniform sampler2D depth_texture;
 
 layout(set = 1, binding = 0, rgba32f) uniform writeonly image2D color_texture;
 //layout(set = 1, binding = 1, rgba32f) uniform writeonly image2D specular_texture;
@@ -29,6 +30,7 @@ layout(std430, set = 2, binding = 1) uniform View
 	layout(row_major) mat4 mat_proj;
 	layout(row_major) mat4 mat_view_proj;
 	layout(row_major) mat4 mat_inv_view_proj;
+	vec3 pos;
 	vec3 vec;
 } view;
 // Light
@@ -52,12 +54,10 @@ void main()
 	}
 	vec2 uv = vec2((vec2(screen_pos) + 0.5) / vec2(image_size));
 	// prepare
-	vec4 albedo_color = texture(albedo_texture, uv);
+	vec4 albedo_color = texelFetch(albedo_texture, screen_pos, 0);
+	vec3 view_pos = texelFetch(pos_texture,screen_pos, 0).xyz;
 	vec3 normal_world = normalize(texture(normal_texture, uv).rgb);
-	//float specular_strength = texelFetch(material_texture, screen_pos, 0).r;
-	//float shininess = texelFetch(material_texture, screen_pos, 0).g;
-	// reconstruct
-	vec3 world_pos = reconstruct_world_pos(uv, texelFetch(depth_texture, screen_pos, 0).r);
+	vec3 world_pos = normalize(texelFetch(pos_texture, screen_pos, 0).rgb);
 	// render
 	vec3 vec_light = normalize(light.light_point_list[0].pos.xyz - world_pos);
 	vec3 vec_view = normalize(view.vec - world_pos);
@@ -94,7 +94,7 @@ vec3 reconstruct_world_pos(vec2 uv, float depth)
 	);
 
 	//vec4 world_pos = view.mat_inv_view_proj * clip_pos;
-	vec4 world_pos = inverse(view.mat_view * view.mat_proj) * clip_pos;
+	vec4 world_pos = inverse(view.mat_view_proj) * clip_pos;
 	world_pos.xyz /= world_pos.w;
 	return world_pos.xyz;
 }

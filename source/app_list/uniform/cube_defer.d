@@ -13,17 +13,20 @@ struct UniformView
 	Matrix!(4, 4, float) mat_proj;
 	Matrix!(4, 4, float) mat_view_proj;
 	Matrix!(4, 4, float) mat_inv_view_proj;
-	Vec3 vec_view;
+	align(16) Vec3 pos;
+	align(16) Vec3 vec;
 
 	this(
 		Matrix!(4, 4, float) mat_view,
 		Matrix!(4, 4, float) mat_proj,
-		Vec3 vec_view,
+		Vec3 pos,
+		Vec3 vec,
 	)
 	{
 		this.mat_view = mat_view;
 		this.mat_proj = mat_proj;
-		this.vec_view = vec_view;
+		this.pos = pos;
+		this.vec = vec;
 		this.mat_view_proj = mat_view * mat_proj;
 		this.mat_inv_view_proj = cast(Matrix!(4,4))inverse(cast(Matrix!(3,3))(mat_view * mat_proj));
 		return;
@@ -61,4 +64,9 @@ struct LightPoint
 	Vec4 pos = [0.0f, 0.0f, -3.0f, 0f];
 	Vec4 color = [1.0f, 1.0f, 1.0f, 0f];
 	float intensity = 1.0f;
+}
+
+struct UniformCompositeConfig
+{
+	int mode = 0;
 }
