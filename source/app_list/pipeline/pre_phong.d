@@ -9,7 +9,6 @@ void create_pipeline_phong(
 )
 {
 	graphics_context.create(pipeline);
-	//GpuComputePipelineCreateInfo pipeline_create_info;
 	auto pipeline_create_info = GpuComputePipelineCreateInfo(
 		ShaderFile("pre_phong.comp", GpuShaderFormat.spirv)
 	);

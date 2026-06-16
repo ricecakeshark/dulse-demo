@@ -1,9 +1,9 @@
-module app_list.pipeline.defer_pipeline;
+module app_list.pipeline.pipeline_defer;
 
 import kelp_sdl;
 import kelp_gfx;
 
-void create_defer_pipeline(
+void create_pipeline_defer(
 	ref GfxGraphicsContext graphics_context,
 	out GpuGraphicsPipeline defer_pipeline
 )
@@ -47,8 +47,6 @@ void create_defer_pipeline(
 		target_info = GpuGraphicsPipelineTargetInfo(
 			[
 			GpuColorTargetDescription(
-				GpuTextureFormat.r32g32b32a32_float
-			), GpuColorTargetDescription(
 				GpuTextureFormat.r32g32b32a32_float
 			), GpuColorTargetDescription(
 				GpuTextureFormat.r32g32b32a32_float

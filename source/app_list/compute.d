@@ -263,7 +263,7 @@ class ComputeDemo : AppInterface
 					transformer_scale([1.0f, 1.0f, 1.0f]),
 				);
 				vertex_model.mat_model_normal = cast(Matrix!(4, 4, float))(cast(Matrix!(3, 3, float))(
-					vertex_model.mat_model)).inverse()
+					vertex_model.mat_model)).invert()
 					.transpose();
 				with (fragment_model)
 				{

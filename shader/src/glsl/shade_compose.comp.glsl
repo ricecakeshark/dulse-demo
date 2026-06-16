@@ -32,31 +32,34 @@ void main()
 	float specular_strength = texelFetch(model_texture, screen_pos, 0).r;
 	float shininess = texelFetch(model_texture, screen_pos, 0).g;
 	int entity_id = int(texelFetch(model_texture, screen_pos, 0).b);
+	float depth = texelFetch(depth_texture, screen_pos, 0).r;
 
-	//vec4 draw_color = vec4(albedo_color.xyz + light_color.xyz, albedo_color.a);
 	vec4 draw_color;
 	switch(config.mode)
 	{
 		case 0:
 			draw_color = light_color;
 			break;
+		// albedo
 		case 1:
 			draw_color = albedo_color;
 			break;
+		// normal
 		case 2:
 			draw_color = vec4(normal_world, 1.0);
 			break;
+		// light
 		case 3:
 			draw_color = light_color;
 			break;
+		// depth
 		case 4:
-			draw_color = vec4(texelFetch(depth_texture, screen_pos, 0).r);
+			draw_color = vec4(vec3(depth), 1.0);
 			break;
 		default:
 			draw_color = vec4(1.0, 0.0, 1.0, 0.0);
 			break;
 	}
-	 
 	// write
 	imageStore(output_image, screen_pos, draw_color);
 	return;

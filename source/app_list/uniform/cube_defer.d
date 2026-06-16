@@ -28,7 +28,7 @@ struct UniformView
 		this.pos = pos;
 		this.vec = vec;
 		this.mat_view_proj = mat_view * mat_proj;
-		this.mat_inv_view_proj = cast(Matrix!(4,4))inverse(cast(Matrix!(3,3))(mat_view * mat_proj));
+		this.mat_inv_view_proj = (mat_view * mat_proj).invert;
 		return;
 	}
 }
@@ -66,7 +66,7 @@ struct LightPoint
 	float intensity = 1.0f;
 }
 
-struct UniformCompositeConfig
+struct UniformComposeConfig
 {
 	int mode = 0;
 }

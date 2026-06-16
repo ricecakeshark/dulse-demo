@@ -10,12 +10,11 @@ layout(location = 2) in vec3 in_world_pos;
 // out
 layout(location = 0) out vec4 out_albedo;
 layout(location = 1) out vec4 out_normal;
-layout(location = 2) out vec4 out_pos;
-layout(location = 3) out vec4 out_model;
+layout(location = 2) out vec4 out_model;
+//layout(location = ) out vec4 out_pos;
 
 // sampled texture
 layout(set = 2, binding = 0) uniform sampler2D user_texture;
-
 
 struct LightPoint
 {
@@ -67,9 +66,9 @@ void main()
 	// out_normal
 	vec3 normal_world = normalize(in_normal);
 	out_normal = vec4(normal_world, 0.0);
-	// out_pos
-	out_pos = vec4(view.vec, 0.0);
 	// out_model
-	out_model = vec4(model.specular_strength, model.shininess, float(model.entity_id), 0.0);
+	out_model = vec4(model.specular_strength, model.shininess, float(model.entity_id), 0.0) + 1;
+	// out_pos
+	// out_pos = vec4(view.vec, 0.0);
 	return;
 }

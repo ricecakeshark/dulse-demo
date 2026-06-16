@@ -1,17 +1,17 @@
-module app_list.pipeline.post_shade;
+module app_list.pipeline.shade_compose;
 
 import kelp_sdl;
 import kelp_gfx;
 
-void create_pipeline_shade(
+void create_pipeline_compose(
 	ref GfxGraphicsContext graphics_context,
-	out GpuComputePipeline shade_pipeline,
+	out GpuComputePipeline compose_pipeline,
 )
 {
-	graphics_context.create(shade_pipeline);
+	graphics_context.create(compose_pipeline);
 	//GpuComputePipelineCreateInfo pipeline_create_info;
 	auto pipeline_create_info = GpuComputePipelineCreateInfo(
-		ShaderFile("post_shade.comp", GpuShaderFormat.spirv)
+		ShaderFile("shade_compose.comp", GpuShaderFormat.spirv)
 	);
 	with (pipeline_create_info)
 	{
@@ -23,7 +23,7 @@ void create_pipeline_shade(
 		threadcount_y = 8;
 		threadcount_z = 1;
 	}
-	shade_pipeline.create(
+	compose_pipeline.create(
 		pipeline_create_info
 	);
 	return;

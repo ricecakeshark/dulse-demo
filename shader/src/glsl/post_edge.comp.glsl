@@ -5,14 +5,14 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) uniform sampler2D albedo_texture;
 layout(set = 0, binding = 1) uniform sampler2D normal_texture;
-layout(set = 0, binding = 2) uniform sampler2D pos_texture;
-layout(set = 0, binding = 3) uniform sampler2D model_texture;
-layout(set = 0, binding = 4) uniform sampler2D depth_texture;
+layout(set = 0, binding = 2) uniform sampler2D model_texture;
+layout(set = 0, binding = 3) uniform sampler2D depth_texture;
+//layout(set = 0, binding = ) uniform sampler2D pos_texture;
 
 layout(set = 1, binding = 0, rgba32f) uniform writeonly image2D output_image;
 
 // View
-layout(std430, set = 2, binding = 1) uniform View
+layout(std430, set = 2, binding = 0) uniform View
 {
 	layout(row_major) mat4 mat_view;
 	layout(row_major) mat4 mat_proj;
@@ -44,7 +44,7 @@ void main()
 	albedo_color = texture(albedo_texture, uv);
 	normal_world = texture(normal_texture, uv).rgb;
 	world_pos = reconstruct_world_pos(uv, texelFetch(depth_texture, screen_pos, 0).r);
-	//int entity_id = int(texelFetch(model_texture, screen_pos, 0).b);
+	int entity_id = int(texelFetch(model_texture, screen_pos, 0).b);
 	vec4 draw_color;
 	if (is_edge(screen_pos))
 	{
@@ -121,8 +121,7 @@ vec3 reconstruct_world_pos(vec2 uv, float depth)
 		depth,
 		1.0
 	);
-
-	vec4 world_pos = transpose(inverse(view.mat_view_proj)) * clip_pos;
+	vec4 world_pos = clip_pos * view.mat_inv_view_proj;
 	world_pos.xyz /= world_pos.w;
 	return world_pos.xyz;
 }

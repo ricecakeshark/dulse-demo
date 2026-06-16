@@ -290,7 +290,7 @@ class ManyObject : AppInterface
 						.model_matrix;
 
 					vert_model.mat_model_normal = cast(Matrix!(4, 4, float))(cast(Matrix!(3, 3, float))(
-						vert_model.mat_model)).inverse().transpose();
+						vert_model.mat_model)).invert().transpose();
 
 					pass.push_vertex(vert_model, 2)
 						.push_fragment(frag_model, 2,)
