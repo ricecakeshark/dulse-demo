@@ -28,7 +28,7 @@ class CubeDeferDemo : AppInterface
 	GfxGeometry!(VertexPNU, uint) object_geometry;
 
 	GpuTexture render_texture, depth_texture;
-	GpuTexture albedo_texture, normal_texture, color_texture, material_texture, pos_texture;
+	GpuTexture albedo_texture, normal_texture, color_texture, material_texture;
 	GpuSampler sampler_nearest, sampler_smooth;
 
 	GpuVertexBuffer vertex_buffer;
@@ -91,7 +91,7 @@ class CubeDeferDemo : AppInterface
 
 		graphics_context.create(
 			render_texture, sampler_smooth, sampler_nearest,
-			albedo_texture, normal_texture, color_texture, material_texture, pos_texture,
+			albedo_texture, normal_texture, color_texture, material_texture,
 		);
 		render_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d, GpuTextureFormat.r32g32b32a32_float,
@@ -99,16 +99,19 @@ class CubeDeferDemo : AppInterface
 				graphics_context.client_width, graphics_context.client_height, 1, 1,
 		));
 		scope GpuTextureCreateInfo tci;
+
 		tci = GpuTextureCreateInfo(
 			GpuTextureType._2d, GpuTextureFormat.r32g32b32a32_float,
-			GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target | GpuTextureUsageFlags.compute_storage_simultaneous_read_write,
-			graphics_context.client_width, graphics_context.client_height, 1, 1,
+			GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target
+				| GpuTextureUsageFlags.compute_storage_read,
+				graphics_context.client_width, graphics_context.client_height, 1, 1,
 		);
 		albedo_texture.create(tci);
 		normal_texture.create(tci);
-		color_texture.create(tci);
 		material_texture.create(tci);
-		pos_texture.create(tci);
+		tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target
+			| GpuTextureUsageFlags.compute_storage_simultaneous_read_write;
+		color_texture.create(tci);
 
 		sampler_smooth.create(GpuSamplerCreateInfo(
 				GpuFilter.linear, GpuFilter.linear,
@@ -267,7 +270,7 @@ class CubeDeferDemo : AppInterface
 				}
 			},);
 			// phong
-			
+
 			command_buffer.with_compute_pass(
 				[GpuStorageTextureReadWriteBinding(color_texture)],
 				null,
