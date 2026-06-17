@@ -3,11 +3,11 @@
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
-layout(set = 0, binding = 0) uniform sampler2D depth_texture;
-layout(set = 0, binding = 1) uniform sampler2D albedo_texture;
-layout(set = 0, binding = 2) uniform sampler2D normal_texture;
-layout(set = 0, binding = 3) uniform sampler2D material_texture;
-layout(set = 0, binding = 4) uniform isampler2D entity_texture;
+layout(set = 0, binding = 0) uniform sampler2D albedo_texture;
+layout(set = 0, binding = 1) uniform sampler2D normal_texture;
+layout(set = 0, binding = 2) uniform sampler2D model_texture;
+layout(set = 0, binding = 3) uniform sampler2D depth_texture;
+//layout(set = 0, binding = ) uniform sampler2D pos_texture;
 
 layout(set = 1, binding = 0, rgba32f) uniform writeonly image2D output_image;
 
@@ -42,13 +42,13 @@ void main()
 	vec2 uv = vec2((vec2(screen_pos)+0.5) / vec2(image_size));
 	// read texture (g-buffer)
 	albedo_color = texture(albedo_texture, uv);
-	normal_world = texture(normal_texture, uv).xyz;
-	
+	normal_world = texture(normal_texture, uv).rgb;
 	world_pos = reconstruct_world_pos(uv, texelFetch(depth_texture, screen_pos, 0).r);
+	int entity_id = int(texelFetch(model_texture, screen_pos, 0).b);
 	vec4 draw_color;
 	if (is_edge(screen_pos))
 	{
-		draw_color = vec4(1.0, 0.0, 1.0, 0.0);
+		draw_color = vec4(1.0,0.0,1.0,0.0);
 		imageStore(output_image, ivec2(screen_pos), draw_color);
 	}
 }
@@ -67,10 +67,10 @@ bool is_entity_edge(ivec2 screen_pos)
 		ivec2(+1, 0)
 	);
 
-	int entity_id = texelFetch(entity_texture, screen_pos, 0)[0];
+	int entity_id = int(texelFetch(model_texture, screen_pos, 0)[2]);
 	for(int count; count < 4; ++count)
 	{
-		if(entity_id != texelFetch(entity_texture, screen_pos + offsets[count], 0)[0])
+		if(entity_id != int(texelFetch(model_texture, screen_pos + offsets[count], 0)[2]))
 		{
 			return true;
 		}

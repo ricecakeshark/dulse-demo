@@ -16,7 +16,7 @@ void create_pipeline_compose(
 	with (pipeline_create_info)
 	{
 		//num_readonly_storage_buffers = 0;
-		num_samplers = 5;
+		num_samplers = 6;
 		num_readwrite_storage_textures = 1;
 		num_uniform_buffers = 1;
 		threadcount_x = 8;

@@ -10,8 +10,8 @@ layout(location = 2) in vec3 in_world_pos;
 // out
 layout(location = 0) out vec4 out_albedo;
 layout(location = 1) out vec4 out_normal;
-layout(location = 2) out vec4 out_model;
-//layout(location = ) out vec4 out_pos;
+layout(location = 2) out vec4 out_material;
+layout(location = 3) out ivec2 out_entity;
 
 // sampled texture
 layout(set = 2, binding = 0) uniform sampler2D user_texture;
@@ -66,9 +66,9 @@ void main()
 	// out_normal
 	vec3 normal_world = normalize(in_normal);
 	out_normal = vec4(normal_world, 0.0);
-	// out_model
-	out_model = vec4(model.specular_strength, model.shininess, float(model.entity_id), 0.0) + 1;
-	// out_pos
-	// out_pos = vec4(view.vec, 0.0);
+	// out_material
+	out_material = ivec4(model.specular_strength, model.shininess, float(model.entity_id), 0.0) + 1;
+	// out_entity
+	out_entity = ivec2(model.entity_id, 0);
 	return;
 }

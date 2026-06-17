@@ -28,7 +28,7 @@ class CubeDeferDemo : AppInterface
 	GfxGeometry!(VertexPNU, uint) object_geometry;
 
 	GpuTexture render_texture, depth_texture;
-	GpuTexture albedo_texture, normal_texture, color_texture, material_texture;
+	GpuTexture albedo_texture, normal_texture, color_texture, material_texture, entity_texture;
 	GpuSampler sampler_nearest, sampler_smooth;
 
 	GpuVertexBuffer vertex_buffer;
@@ -79,7 +79,7 @@ class CubeDeferDemo : AppInterface
 				object_image.width, object_image.height,
 				1, 1,
 		));
-
+		// depth texture
 		graphics_context.create(depth_texture);
 		depth_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d,
@@ -88,18 +88,12 @@ class CubeDeferDemo : AppInterface
 				graphics_context.client_width, graphics_context.client_height,
 				1, 1, GpuSampleCount.x1,
 		));
-
+		// texture
+		scope GpuTextureCreateInfo tci;
 		graphics_context.create(
 			render_texture, sampler_smooth, sampler_nearest,
-			albedo_texture, normal_texture, color_texture, material_texture,
+			albedo_texture, normal_texture, color_texture, material_texture, entity_texture,
 		);
-		render_texture.create(GpuTextureCreateInfo(
-				GpuTextureType._2d, GpuTextureFormat.r32g32b32a32_float,
-				GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.compute_storage_simultaneous_read_write,
-				graphics_context.client_width, graphics_context.client_height, 1, 1,
-		));
-		scope GpuTextureCreateInfo tci;
-
 		tci = GpuTextureCreateInfo(
 			GpuTextureType._2d, GpuTextureFormat.r32g32b32a32_float,
 			GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target
@@ -109,6 +103,11 @@ class CubeDeferDemo : AppInterface
 		albedo_texture.create(tci);
 		normal_texture.create(tci);
 		material_texture.create(tci);
+		tci.format = GpuTextureFormat.r32g32_int;
+		entity_texture.create(tci);
+		tci.format = GpuTextureFormat.r32g32b32a32_float;
+		tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.compute_storage_write;
+		render_texture.create(tci);
 		tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target
 			| GpuTextureUsageFlags.compute_storage_simultaneous_read_write;
 		color_texture.create(tci);
@@ -234,6 +233,10 @@ class CubeDeferDemo : AppInterface
 					material_texture,
 					GpuLoadOp.clear, GpuStoreOp.store,
 				),
+				GpuColorTargetInfo(
+					entity_texture,
+					GpuLoadOp.clear, GpuStoreOp.store,
+				),
 			];
 			depth_target_info = GpuDepthStencilTargetInfo(
 				depth_texture.handle,
@@ -270,17 +273,16 @@ class CubeDeferDemo : AppInterface
 				}
 			},);
 			// phong
-
 			command_buffer.with_compute_pass(
 				[GpuStorageTextureReadWriteBinding(color_texture)],
 				null,
 				(compute_pass) {
 				compute_pass.bind(pipeline_phong)
 					.bind([
+						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
 						GpuTextureSamplerBinding(albedo_texture, sampler_smooth),
 						GpuTextureSamplerBinding(normal_texture, sampler_nearest),
 						GpuTextureSamplerBinding(material_texture, sampler_nearest),
-						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
 					])
 					.push(uniform_scene, 0)
 					.push(uniform_view, 1)
@@ -297,11 +299,13 @@ class CubeDeferDemo : AppInterface
 				compute_pass.bind(pipeline_compose)
 					.bind(
 						[
+						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
 						GpuTextureSamplerBinding(albedo_texture, sampler_smooth),
 						GpuTextureSamplerBinding(normal_texture, sampler_nearest),
 						GpuTextureSamplerBinding(color_texture, sampler_nearest),
 						GpuTextureSamplerBinding(material_texture, sampler_nearest),
-						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
+						GpuTextureSamplerBinding(entity_texture, sampler_nearest),
+
 					], 0
 				)
 					.push(UniformComposeConfig(0), 0)
@@ -318,10 +322,12 @@ class CubeDeferDemo : AppInterface
 				compute_pass.bind(pipeline_edge)
 					.bind(
 						[
+						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
 						GpuTextureSamplerBinding(albedo_texture, sampler_smooth),
 						GpuTextureSamplerBinding(normal_texture, sampler_nearest),
 						GpuTextureSamplerBinding(material_texture, sampler_nearest),
-						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
+						GpuTextureSamplerBinding(entity_texture, sampler_nearest),
+						
 					], 0
 				)
 					.push(uniform_view)

@@ -52,6 +52,8 @@ void create_pipeline_defer(
 				GpuTextureFormat.r32g32b32a32_float
 			), GpuColorTargetDescription(
 				GpuTextureFormat.r32g32b32a32_float
+			),GpuColorTargetDescription(
+				GpuTextureFormat.r32g32_int
 			),
 		], GpuTextureFormat.d32_float,
 		);
