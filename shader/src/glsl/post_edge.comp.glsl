@@ -9,7 +9,7 @@ layout(set = 0, binding = 2) uniform sampler2D normal_texture;
 layout(set = 0, binding = 3) uniform sampler2D material_texture;
 layout(set = 0, binding = 4) uniform isampler2D entity_texture;
 
-layout(set = 1, binding = 0, rgba32f) uniform writeonly image2D output_image;
+layout(set = 1, binding = 0, rgba16f) uniform writeonly image2D output_image;
 
 // View
 layout(std430, set = 2, binding = 0) uniform View

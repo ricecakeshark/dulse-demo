@@ -8,7 +8,7 @@ layout(set = 0, binding = 1) uniform sampler2D albedo_texture;
 layout(set = 0, binding = 2) uniform sampler2D normal_texture;
 layout(set = 0, binding = 3) uniform sampler2D material_texture;
 
-layout(set = 1, binding = 0, rgba32f) uniform writeonly image2D color_texture;
+layout(set = 1, binding = 0, rgba16f) uniform writeonly image2D color_texture;
 //layout(set = 1, binding = 1, rgba32f) uniform writeonly image2D specular_texture;
 
 struct LightPoint

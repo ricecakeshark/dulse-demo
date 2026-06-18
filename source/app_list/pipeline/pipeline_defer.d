@@ -47,11 +47,11 @@ void create_pipeline_defer(
 		target_info = GpuGraphicsPipelineTargetInfo(
 			[
 			GpuColorTargetDescription(
-				GpuTextureFormat.r32g32b32a32_float
+				GpuTextureFormat.r16g16b16a16_float
 			), GpuColorTargetDescription(
-				GpuTextureFormat.r32g32b32a32_float
+				GpuTextureFormat.r16g16b16a16_float
 			), GpuColorTargetDescription(
-				GpuTextureFormat.r32g32b32a32_float
+				GpuTextureFormat.r16g16b16a16_float
 			),GpuColorTargetDescription(
 				GpuTextureFormat.r32g32_int
 			),

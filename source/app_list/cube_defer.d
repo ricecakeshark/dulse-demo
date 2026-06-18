@@ -95,22 +95,23 @@ class CubeDeferDemo : AppInterface
 			albedo_texture, normal_texture, color_texture, material_texture, entity_texture,
 		);
 		tci = GpuTextureCreateInfo(
-			GpuTextureType._2d, GpuTextureFormat.r32g32b32a32_float,
-			GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target
-				| GpuTextureUsageFlags.compute_storage_read,
+			GpuTextureType._2d, GpuTextureFormat.r16g16b16a16_float,
+			tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.compute_storage_write,
 				graphics_context.client_width, graphics_context.client_height, 1, 1,
 		);
+		render_texture.create(tci);
+		tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target
+				| GpuTextureUsageFlags.compute_storage_read;
 		albedo_texture.create(tci);
 		normal_texture.create(tci);
 		material_texture.create(tci);
-		tci.format = GpuTextureFormat.r32g32_int;
-		entity_texture.create(tci);
-		tci.format = GpuTextureFormat.r32g32b32a32_float;
-		tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.compute_storage_write;
-		render_texture.create(tci);
 		tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target
 			| GpuTextureUsageFlags.compute_storage_simultaneous_read_write;
 		color_texture.create(tci);
+		tci.format = GpuTextureFormat.r32g32_int;
+		tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target
+			| GpuTextureUsageFlags.compute_storage_read;
+		entity_texture.create(tci);
 
 		sampler_smooth.create(GpuSamplerCreateInfo(
 				GpuFilter.linear, GpuFilter.linear,
