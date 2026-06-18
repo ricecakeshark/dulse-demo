@@ -9,6 +9,7 @@ layout(set = 0, binding = 2) uniform sampler2D normal_texture;
 layout(set = 0, binding = 3) uniform sampler2D color_texture;
 layout(set = 0, binding = 4) uniform sampler2D model_texture;
 layout(set = 0, binding = 5) uniform isampler2D entity_texture;
+layout(set = 0, binding = 6) uniform sampler2D edge_texture;
 
 layout(set = 1, binding = 0, rgba16f) uniform writeonly image2D output_image;
 
@@ -34,6 +35,7 @@ void main()
 	float specular_strength = texelFetch(model_texture, screen_pos, 0)[0];
 	float shininess = texelFetch(model_texture, screen_pos, 0)[1];
 	int entity_id = texelFetch(entity_texture, screen_pos, 0)[0];
+	vec4 edge_color = texelFetch(edge_texture, screen_pos, 0);
 
 	vec4 draw_color;
 	switch(config.mode)
@@ -56,6 +58,10 @@ void main()
 		// depth
 		case 4:
 			draw_color = vec4(vec3(depth), 1.0);
+			break;
+		// edge
+		case 5:
+			draw_color = vec4(edge_color.xyz, 1.0);
 			break;
 		default:
 			draw_color = vec4(1.0, 0.0, 1.0, 0.0);

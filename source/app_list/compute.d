@@ -273,15 +273,11 @@ class ComputeDemo : AppInterface
 				render_pass.bind(render_pipeline)
 					.bind([
 						GpuTextureSamplerBinding(object_texture, object_sampler)
-					], 0)
+					])
 					.bind([vertex_buffer])
 					.bind(index_buffer)
-					.push_vertex(vertex_view, 1)
-					.push_vertex(vertex_model, 2)
-					.push_fragment(fragment_scene, 0)
-					.push_fragment(fragment_view, 1u)
-					.push_fragment(fragment_model, 2u)
-					.push_fragment(fragment_light, 3u)
+					.push_vertex(1, vertex_view, vertex_model)
+					.push_fragment(0, fragment_scene, fragment_view, fragment_model, fragment_light,)
 					.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 			},);
 			// compute
@@ -291,9 +287,7 @@ class ComputeDemo : AppInterface
 				(compute_pass) {
 				compute_pass.bind(compute_pipeline)
 					.bind(
-						[
-							GpuTextureSamplerBinding(compute_src_texture, sampler)
-						], 0
+						GpuTextureSamplerBinding(compute_src_texture, sampler)
 					)
 					.push(UniformCompute(960f, 540f))
 					.dispatch(960 / 8, 540 / 8, 1);

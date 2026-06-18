@@ -22,13 +22,13 @@ class CubeDeferDemo : AppInterface
 	TimerSubsystem logger;
 	GfxGraphicsContext graphics_context;
 
-	GpuGraphicsPipeline pipeline_defer;
-	GpuComputePipeline pipeline_compose, pipeline_phong, pipeline_edge;
+	GpuGraphicsPipeline pipeline_defer_texture, pipeline_defer_solid;
+	GpuComputePipeline pipeline_compose, pipeline_phong, pipeline_pre_edge, pipeline_post_edge;
 	GfxMesh object_mesh;
 	GfxGeometry!(VertexPNU, uint) object_geometry;
 
 	GpuTexture render_texture, depth_texture;
-	GpuTexture albedo_texture, normal_texture, color_texture, material_texture, entity_texture;
+	GpuTexture albedo_texture, normal_texture, color_texture, material_texture, entity_texture, edge_texture;
 	GpuSampler sampler_nearest, sampler_smooth;
 
 	GpuVertexBuffer vertex_buffer;
@@ -64,10 +64,12 @@ class CubeDeferDemo : AppInterface
 			.initialize();
 
 		// Pipeline
-		create_pipeline_defer(graphics_context, pipeline_defer);
+		create_pipeline_defer_texture(graphics_context, pipeline_defer_texture);
+		create_pipeline_defer_solid(graphics_context, pipeline_defer_solid);
 		create_pipeline_compose(graphics_context, pipeline_compose);
 		create_pipeline_phong(graphics_context, pipeline_phong);
-		create_pipeline_edge(graphics_context, pipeline_edge);
+		create_pipeline_pre_edge(graphics_context, pipeline_pre_edge);
+		create_pipeline_post_edge(graphics_context, pipeline_post_edge);
 
 		// texture, sampler
 		object_image = new Surface();
@@ -93,21 +95,26 @@ class CubeDeferDemo : AppInterface
 		graphics_context.create(
 			render_texture, sampler_smooth, sampler_nearest,
 			albedo_texture, normal_texture, color_texture, material_texture, entity_texture,
+			edge_texture,
 		);
 		tci = GpuTextureCreateInfo(
 			GpuTextureType._2d, GpuTextureFormat.r16g16b16a16_float,
 			tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.compute_storage_write,
-				graphics_context.client_width, graphics_context.client_height, 1, 1,
+			graphics_context.client_width, graphics_context.client_height, 1, 1,
 		);
 		render_texture.create(tci);
+		tci.format = GpuTextureFormat.r8g8b8a8_unorm;
 		tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target
-				| GpuTextureUsageFlags.compute_storage_read;
+			| GpuTextureUsageFlags.compute_storage_read;
 		albedo_texture.create(tci);
+		tci.format = GpuTextureFormat.r16g16b16a16_float;
 		normal_texture.create(tci);
 		material_texture.create(tci);
 		tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target
 			| GpuTextureUsageFlags.compute_storage_simultaneous_read_write;
 		color_texture.create(tci);
+		tci.format = GpuTextureFormat.r8g8b8a8_unorm;
+		edge_texture.create(tci);
 		tci.format = GpuTextureFormat.r32g32_int;
 		tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target
 			| GpuTextureUsageFlags.compute_storage_read;
@@ -250,8 +257,8 @@ class CubeDeferDemo : AppInterface
 				depth_target_info,
 				(render_pass) {
 				// prepare pipeline_defer
-				render_pass.push_vertex(uniform_view, 1)
-					.push_fragment(uniform_view, 1);
+				render_pass.push_vertex(1, uniform_view)
+					.push_fragment(1, uniform_view);
 				// foreach entity
 				foreach (entity; entity_list)
 				{
@@ -262,14 +269,14 @@ class CubeDeferDemo : AppInterface
 					);
 					uniform_model_frag = UniformModelFrag(0.5f, 64.0f, 1);
 
-					render_pass.bind(pipeline_defer)
+					render_pass.bind(pipeline_defer_texture)
 						.bind([
 							GpuTextureSamplerBinding(object_texture, sampler_smooth)
-						], 0)
+						])
 						.bind([vertex_buffer])
 						.bind(index_buffer)
-						.push_vertex(uniform_model_vert, 2)
-						.push_fragment(uniform_model_frag, 2u)
+						.push_vertex(2, uniform_model_vert)
+						.push_fragment(2, uniform_model_frag)
 						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 				}
 			},);
@@ -279,15 +286,29 @@ class CubeDeferDemo : AppInterface
 				null,
 				(compute_pass) {
 				compute_pass.bind(pipeline_phong)
-					.bind([
+					.bind(
 						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
 						GpuTextureSamplerBinding(albedo_texture, sampler_smooth),
 						GpuTextureSamplerBinding(normal_texture, sampler_nearest),
 						GpuTextureSamplerBinding(material_texture, sampler_nearest),
-					])
-					.push(uniform_scene, 0)
-					.push(uniform_view, 1)
-					.push(uniform_light, 2)
+					)
+					.push(0, uniform_scene, uniform_view, uniform_light,)
+					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
+				return;
+			}
+			);
+			// pre_edge
+			command_buffer.with_compute_pass(
+				[GpuStorageTextureReadWriteBinding(edge_texture)],
+				null,
+				(compute_pass) {
+				compute_pass.bind(pipeline_pre_edge)
+					.bind(
+						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
+						GpuTextureSamplerBinding(normal_texture, sampler_nearest),
+						GpuTextureSamplerBinding(entity_texture, sampler_nearest),
+					)
+					.push(0, uniform_view)
 					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
 				return;
 			}
@@ -299,43 +320,35 @@ class CubeDeferDemo : AppInterface
 				(compute_pass) {
 				compute_pass.bind(pipeline_compose)
 					.bind(
-						[
 						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
 						GpuTextureSamplerBinding(albedo_texture, sampler_smooth),
 						GpuTextureSamplerBinding(normal_texture, sampler_nearest),
 						GpuTextureSamplerBinding(color_texture, sampler_nearest),
 						GpuTextureSamplerBinding(material_texture, sampler_nearest),
 						GpuTextureSamplerBinding(entity_texture, sampler_nearest),
-
-					], 0
-				)
-					.push(UniformComposeConfig(0), 0)
+						GpuTextureSamplerBinding(edge_texture, sampler_nearest),
+					)
+					.push(0, UniformComposeConfig(0),)
 					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
 				return;
 			}
 			);
 
 			// post_edge
+			/+
 			command_buffer.with_compute_pass(
 				[GpuStorageTextureReadWriteBinding(render_texture)],
 				null,
 				(compute_pass) {
-				compute_pass.bind(pipeline_edge)
+				compute_pass.bind(pipeline_post_edge)
 					.bind(
-						[
-						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
-						GpuTextureSamplerBinding(albedo_texture, sampler_smooth),
-						GpuTextureSamplerBinding(normal_texture, sampler_nearest),
-						GpuTextureSamplerBinding(material_texture, sampler_nearest),
-						GpuTextureSamplerBinding(entity_texture, sampler_nearest),
-						
-					], 0
-				)
+						GpuTextureSamplerBinding(edge_texture, sampler_nearest,),
+					)
 					.push(uniform_view)
 					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
 				return;
 			}
-			);
+			);+/
 
 			// blit
 			command_buffer.blit_texture(

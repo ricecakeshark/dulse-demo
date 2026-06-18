@@ -266,9 +266,8 @@ class CubeDemo : AppInterface
 				depth_target_info,
 				(render_pass) {
 				// scene, view
-				render_pass.push_vertex(vertex_view, 1)
-					.push_fragment(fragment_scene, 0)
-					.push_fragment(fragment_view, 1u);
+				render_pass.push_vertex(1, vertex_view, 1)
+					.push_fragment(0, fragment_scene, fragment_view,);
 				// texture render
 				foreach (entity; entity_list)
 				{
@@ -282,9 +281,8 @@ class CubeDemo : AppInterface
 						], 0)
 						.bind([vertex_buffer])
 						.bind(index_buffer)
-						.push_vertex(vertex_model, 2)
-						.push_fragment(fragment_model, 2u)
-						.push_fragment(fragment_light, 3u)
+						.push_vertex(2u, vertex_model)
+						.push_fragment(2u, fragment_model, fragment_light,)
 						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 				}
 				// solid render
@@ -378,15 +376,15 @@ class TransformSystem : IObjectSystem
 					2.0f / manager.entity.count * PI) * index;
 				pos = Vec3(cos(rad) * 1.2f, 0f, sin(rad) * 1.2f);
 
-				pos = rotate_by(Vec3(0f,0f,1f),(Quaternion!float(
-					Vec3(1f, 0f, 0f), 0.0015 * timer.past_time
-				)
-				* Quaternion!float(
-					Vec3(0f, 1f, 0f), 0.0012 * timer.past_time
-				)
-				* Quaternion!float(
-					Vec3(0f, 0f, 1f), 0.001 * timer.past_time
-				)));
+				pos = rotate_by(Vec3(0f, 0f, 1f), (Quaternion!float(
+						Vec3(1f, 0f, 0f), 0.0015 * timer.past_time
+					)
+						* Quaternion!float(
+							Vec3(0f, 1f, 0f), 0.0012 * timer.past_time
+						)
+						* Quaternion!float(
+							Vec3(0f, 0f, 1f), 0.001 * timer.past_time
+						)));
 			}
 
 		}

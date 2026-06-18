@@ -57,10 +57,10 @@ class ShaderTest : AppInterface
 			primitive_type = GpuPrimitiveType.triangle_list;
 			target_info = GpuGraphicsPipelineTargetInfo(
 				[
-				GpuColorTargetDescription(
-					swapchain_texture.get_format()
-				)
-			]
+					GpuColorTargetDescription(
+						swapchain_texture.get_format()
+					)
+				]
 			);
 		}
 		graphics_pipeline.create(pipeline_create_info);
@@ -147,8 +147,7 @@ class ShaderTest : AppInterface
 				pass.bind(graphics_pipeline)
 					.bind([vertex_buffer])
 					.bind(index_buffer)
-					.push_vertex(view_mat, 0)
-					.push_vertex(object_mat, 1)
+					.push_vertex(0, view_mat, object_mat,)
 					.draw_indexed(ParamIndexedPrimitive(6, 1, 0, 0, 0));
 			},);
 		}

@@ -20,7 +20,7 @@ class ManyObject : AppInterface
 
 	GfxGeometry!(VertexPNU, uint) object_geometry;
 	GfxMesh object_mesh;
-	GpuGraphicsPipeline texture_pipeline,solid_pipeline;
+	GpuGraphicsPipeline texture_pipeline, solid_pipeline;
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
 	//GpuStorageBuffer storage_buffer;
@@ -280,9 +280,8 @@ class ManyObject : AppInterface
 					], 0)
 					.bind([vertex_buffer])
 					.bind(index_buffer)
-					.push_vertex(vert_view, 1)
-					.push_fragment(frag_view, 1,)
-					.push_fragment(frag_scene, 0,);
+					.push_vertex(1, vert_view,)
+					.push_fragment(0, frag_scene, frag_view,);
 				foreach (entity; entity_list)
 				{
 					vert_model.mat_model =
@@ -292,9 +291,8 @@ class ManyObject : AppInterface
 					vert_model.mat_model_normal = cast(Matrix!(4, 4, float))(cast(Matrix!(3, 3, float))(
 						vert_model.mat_model)).invert().transpose();
 
-					pass.push_vertex(vert_model, 2)
-						.push_fragment(frag_model, 2,)
-						.push_fragment(frag_light, 3,)
+					pass.push_vertex(2, vert_model,)
+						.push_fragment(2, frag_model, frag_light,)
 						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 				}
 			},);

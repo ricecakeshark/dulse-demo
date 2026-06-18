@@ -268,9 +268,8 @@ class CubeMulti : AppInterface
 				depth_target_info,
 				(render_pass) {
 				// scene, view
-				render_pass.push_vertex(vertex_view, 1)
-					.push_fragment(fragment_scene, 0)
-					.push_fragment(fragment_view, 1u);
+				render_pass.push_vertex(1, vertex_view)
+					.push_fragment(0, fragment_scene, fragment_view,);
 				// texture render
 				foreach (entity; entity_list)
 				{
@@ -314,7 +313,3 @@ class CubeMulti : AppInterface
 		return 0;
 	}
 }
-
-
-
-

@@ -95,9 +95,10 @@ class GuageDemo : AppInterface
 				[],
 				(compute_pass) {
 				compute_pass.bind(guage_pipeline)
-					.push(UniformGuageConst(), 0)
-					.push(UniformGuageParam(0.4 + cos(timer.past * 0.001) * 0.3, -sin(
-						timer.past * 0.001) * 0.1), 1)
+					.push(0, UniformGuageConst(),
+						UniformGuageParam(0.4 + cos(timer.past * 0.001) * 0.3, -sin(
+						timer.past * 0.001) * 0.1),
+					)
 					.dispatch(400 / 8, 400 / 8, 1);
 				return;
 			},);
