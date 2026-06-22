@@ -51,7 +51,7 @@ void main()
 		draw_color.a = 1.0;
 	}
 	draw_color.g = strength_normal(screen_pos);
-	draw_color.b = 1.0 - exp(slope_depth(screen_pos)*10.0);
+	draw_color.b = clamp(slope_depth(screen_pos) * 1000.0, 1.0, -1.0);
 	imageStore(edge_image, ivec2(screen_pos), draw_color);
 }
 
@@ -120,9 +120,15 @@ bool is_valid_normal(vec3 normal)
 // calc slope of texel (-1.0 ~ +1.0)
 float slope_depth(ivec2 screen_pos)
 {
+	ivec2 offset[4] = ivec2[](
+		ivec2(0,-1),
+		ivec2(-1,0),
+		ivec2(0,+1),
+		ivec2(+1,0)
+	);
 	float slope = 0.0;
 	float center_depth = texelFetch(depth_texture, screen_pos, 0)[0];
-
+	/*
 	slope += (screen_pos.x - 1 >= 0) ?
 		(center_depth - texelFetch(depth_texture, screen_pos + ivec2(-1, 0), 0)[0]) : 0.0 ;
 	slope += (screen_pos.y - 1 >= 0) ?
@@ -132,6 +138,22 @@ float slope_depth(ivec2 screen_pos)
 	slope += (screen_pos.y + 1 < textureSize(depth_texture, 0).y) ?
 		(texelFetch(depth_texture, screen_pos + ivec2(0, +1), 0)[0] - center_depth) : 0.0 ;
 	slope /= 4.0;
+	*/
+
+
+	for(int count; count < 4; ++ count)
+	{
+		ivec2 offset_pos = screen_pos + offset[count];
+		if( offset_pos.x < 0
+		 || offset_pos.x > textureSize(depth_texture, 0).x
+		 || offset_pos.y < 0
+		 || offset_pos.y > textureSize(depth_texture, 0).y
+		)
+		{
+			continue;
+		}
+		slope += texelFetch(depth_texture, offset_pos, 0)[0] - center_depth;
+	}
 	return slope;
 }
 

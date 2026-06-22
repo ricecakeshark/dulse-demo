@@ -322,14 +322,13 @@ class CubeDeferDemo : AppInterface
 						GpuTextureSamplerBinding(entity_texture, sampler_nearest),
 						GpuTextureSamplerBinding(edge_texture, sampler_nearest),
 					)
-					.push(0, UniformComposeConfig(5),)
+					.push(0, UniformComposeConfig(0),)
 					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
 				return;
 			}
 			);
 
 			// post_edge
-			/+
 			command_buffer.with_compute_pass(
 				[GpuStorageTextureReadWriteBinding(render_texture)],
 				null,
@@ -338,11 +337,15 @@ class CubeDeferDemo : AppInterface
 					.bind(
 						GpuTextureSamplerBinding(edge_texture, sampler_nearest,),
 					)
-					.push(uniform_view)
+					.push(
+						UniformPostEdge(
+							Vec4(1f,0.5f,0.0f,1.0f),Vec4(0.0f,1f,0.5f,1.0f),Vec4(0.7f,0.7f,0.7f,1.0f)
+						)
+					)
 					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
 				return;
 			}
-			);+/
+			);
 			// blit
 			command_buffer.blit_texture(
 				GpuBlitInfo(
