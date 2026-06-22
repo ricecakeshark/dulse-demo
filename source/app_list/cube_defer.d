@@ -2,14 +2,9 @@ module app_list.cube_defer;
 
 import app_list.app_interface;
 import app_list.uniform;
-
 import app_list.ecs;
-
 import app_list.pipeline;
 
-/+import app_list.pipeline.pre_phong;
-import app_list.pipeline.post_shade;
-import app_list.pipeline.post_edge;+/
 
 import kelp_core;
 import kelp_sdl;
@@ -24,13 +19,13 @@ class CubeDeferDemo : AppInterface
 
 	GpuGraphicsPipeline pipeline_defer_texture, pipeline_defer_solid;
 	GpuComputePipeline pipeline_compose, pipeline_phong, pipeline_pre_edge, pipeline_post_edge;
-	GfxMesh object_mesh;
-	GfxGeometry!(VertexPNU, uint) object_geometry;
 
 	GpuTexture render_texture, depth_texture;
 	GpuTexture albedo_texture, normal_texture, color_texture, material_texture, entity_texture, edge_texture;
 	GpuSampler sampler_nearest, sampler_smooth;
 
+	GfxMesh object_mesh;
+	GfxGeometry!(VertexPNU, uint) object_geometry;
 	GpuVertexBuffer vertex_buffer;
 	GpuIndexBuffer index_buffer;
 
@@ -198,8 +193,7 @@ class CubeDeferDemo : AppInterface
 
 	override void draw()
 	{
-
-		import std.math;
+		import std.math : PI_2;
 
 		GpuColorTargetInfo[] color_targets;
 		GpuDepthStencilTargetInfo depth_target_info;
@@ -267,7 +261,7 @@ class CubeDeferDemo : AppInterface
 						object_manager.component.get!TransformComponent(entity)
 						.model_matrix()
 					);
-					uniform_model_frag = UniformModelFrag(0.5f, 64.0f, 1);
+					uniform_model_frag = UniformModelFrag(0.5f, 64.0f, entity.index+1);
 
 					render_pass.bind(pipeline_defer_texture)
 						.bind([
@@ -328,7 +322,7 @@ class CubeDeferDemo : AppInterface
 						GpuTextureSamplerBinding(entity_texture, sampler_nearest),
 						GpuTextureSamplerBinding(edge_texture, sampler_nearest),
 					)
-					.push(0, UniformComposeConfig(0),)
+					.push(0, UniformComposeConfig(5),)
 					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
 				return;
 			}
@@ -349,7 +343,6 @@ class CubeDeferDemo : AppInterface
 				return;
 			}
 			);+/
-
 			// blit
 			command_buffer.blit_texture(
 				GpuBlitInfo(

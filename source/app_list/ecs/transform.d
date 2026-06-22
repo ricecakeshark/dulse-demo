@@ -58,7 +58,7 @@ class TransformSystem : IObjectSystem
 				rotate.y += cast(float) 1.5 * 0.001 * timer.delta_time;
 				rad = (0.001f * timer.past_time) + (
 					2.0f / manager.entity.count * PI) * index;
-				pos = Vec3(cos(rad) * 1.2f, 0f, sin(rad) * 1.2f);
+				pos = Vec3(cos(rad) * 1.5f, 0f, sin(rad) * 1.5f);
 			}
 
 		}

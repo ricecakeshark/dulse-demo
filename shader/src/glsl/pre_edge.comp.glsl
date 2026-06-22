@@ -23,8 +23,10 @@ layout(std430, set = 2, binding = 0) uniform View
 vec3 reconstruct_world_pos(vec2 uv, float depth);
 bool is_edge(ivec2 screen_pos);
 bool is_edge_entity(ivec2 screen_pos);
-bool is_edge_normal(ivec2 screen_pos);
-bool is_edge_depth(ivec2 screen_pos);
+float strength_normal(ivec2 screen_pos);
+bool is_edge_normal(float total_diff);
+float slope_depth(ivec2 screen_pos);
+bool is_edge_slope(float slope);
 bool is_valid_normal(vec3 normal);
 
 void main()
@@ -39,9 +41,6 @@ void main()
 		return;
 	}
 	vec2 uv = vec2((vec2(screen_pos)+0.5) / vec2(image_size));
-	// read texture (g-buffer)
-	//albedo_color = texture(albedo_texture, uv);
-	//normal_world = texture(normal_texture, uv).xyz;
 	
 	world_pos = reconstruct_world_pos(uv, texelFetch(depth_texture, screen_pos, 0).r);
 	vec4 draw_color;
@@ -51,22 +50,14 @@ void main()
 		draw_color.r = 1.0;
 		draw_color.a = 1.0;
 	}
-	if(is_edge_normal(screen_pos))
-	{
-		draw_color.g = 1.0;
-		draw_color.a = 1.0;
-	}
-	if(is_edge_depth(screen_pos))
-	{
-		draw_color.b = 1.0;
-		draw_color.a = 1.0;
-	}
+	draw_color.g = strength_normal(screen_pos);
+	draw_color.b = 1.0 - exp(slope_depth(screen_pos)*10.0);
 	imageStore(edge_image, ivec2(screen_pos), draw_color);
 }
 
 bool is_edge(ivec2 screen_pos)
 {
-	return is_edge_entity(screen_pos) || is_edge_normal(screen_pos);
+	return is_edge_entity(screen_pos) || is_edge_normal(strength_normal(screen_pos));
 }
 
 bool is_edge_entity(ivec2 screen_pos)
@@ -79,7 +70,7 @@ bool is_edge_entity(ivec2 screen_pos)
 	);
 
 	int entity_id = texelFetch(entity_texture, screen_pos, 0)[0];
-	for(int count; count < 4; ++count)
+	for(int count = 0; count < 4; ++count)
 	{
 		if(entity_id != texelFetch(entity_texture, screen_pos + offsets[count], 0)[0])
 		{
@@ -89,7 +80,7 @@ bool is_edge_entity(ivec2 screen_pos)
 	return false;
 }
 
-bool is_edge_normal(ivec2 screen_pos)
+float strength_normal(ivec2 screen_pos)
 {
 	const ivec2 offsets[4] = ivec2[](
 		ivec2(0, -1),
@@ -97,49 +88,58 @@ bool is_edge_normal(ivec2 screen_pos)
 		ivec2(-1, 0),
 		ivec2(+1, 0)
 	);
-	vec3 normal = texelFetch(normal_texture, screen_pos, 0).xyz;
-	if(!is_valid_normal(normal))
+	vec3 center_normal = texelFetch(normal_texture, screen_pos, 0).xyz;
+	if(!is_valid_normal(center_normal))
 	{
-		return false;
+		return 0.0;
 	}
 
-	for(int count; count < 4; ++count)
+	float total_diff = 0.0;
+
+	for(int count = 0; count < 4; ++count)
 	{
 		vec3 other_normal = texelFetch(normal_texture, screen_pos + offsets[count], 0).xyz;
 		if(!is_valid_normal(other_normal))
 		{
 			continue;
 		}
-		if(dot(normal, other_normal) < cos(30.0))
-		{
-			return true;
-		}
+		total_diff += (1.0 - dot(center_normal, other_normal));
 	}
-	return false;
+	return total_diff;
+}
+
+bool is_edge_normal(float total_diff)
+{
+	return (total_diff > 1.0 - cos(radians(30.0)));
 }
 
 bool is_valid_normal(vec3 normal)
 {
 	return dot(normal, normal) > 0.0001;
 }
-
-bool is_edge_depth(ivec2 screen_pos)
+// calc slope of texel (-1.0 ~ +1.0)
+float slope_depth(ivec2 screen_pos)
 {
-	const ivec2 offsets[4] = ivec2[](
-		ivec2(0, -1),
-		ivec2(0, +1),
-		ivec2(-1, 0),
-		ivec2(+1, 0)
-	);
-	float depth = texelFetch(depth_texture, screen_pos, 0)[0];
+	float slope = 0.0;
+	float center_depth = texelFetch(depth_texture, screen_pos, 0)[0];
 
-	for(int count; count < 4; ++count)
+	slope += (screen_pos.x - 1 >= 0) ?
+		(center_depth - texelFetch(depth_texture, screen_pos + ivec2(-1, 0), 0)[0]) : 0.0 ;
+	slope += (screen_pos.y - 1 >= 0) ?
+		(center_depth - texelFetch(depth_texture, screen_pos + ivec2(0, -1), 0)[0]) : 0.0 ;
+	slope += (screen_pos.x + 1 < textureSize(depth_texture, 0).x) ?
+		(texelFetch(depth_texture, screen_pos + ivec2(+1, 0), 0)[0] - center_depth) : 0.0 ;
+	slope += (screen_pos.y + 1 < textureSize(depth_texture, 0).y) ?
+		(texelFetch(depth_texture, screen_pos + ivec2(0, +1), 0)[0] - center_depth) : 0.0 ;
+	slope /= 4.0;
+	return slope;
+}
+
+bool is_edge_slope(float slope)
+{
+	if(abs(slope) > 0.005)
 	{
-		float other_depth = texelFetch(depth_texture, screen_pos + offsets[count], 0)[0];
-		if(abs(depth - other_depth) > 0.3)
-		{
-			return true;
-		}
+		return true;
 	}
 	return false;
 }
