@@ -339,7 +339,9 @@ class CubeDeferDemo : AppInterface
 					)
 					.push(
 						UniformPostEdge(
-							Vec4(1f,0.5f,0.0f,1.0f),Vec4(0.0f,1f,0.5f,1.0f),Vec4(0.7f,0.7f,0.7f,1.0f)
+							Vec4(1f,0.5f,0.0f,1.0f),
+							Vec4(0.0f,0f,0f,1.0f),
+							Vec4(1.0f,1.0f,1.0f,1.0f),
 						)
 					)
 					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);

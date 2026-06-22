@@ -27,22 +27,24 @@ void main()
 	vec4 edge_color = texelFetch(edge_texture, screen_pos, 0);
 	
 	vec4 draw_color = vec4(0.0, 0.0, 0.0, 0.0);
-	if(edge_color.a > 0.0)
-	{
-		draw_color = color.outline_entity;
-	}
-	else if(edge_color.g > 1.0 - cos(radians(30.0)))
-	{
-		draw_color = color.outline_normal;
-	}
-	else if(abs(edge_color.b) > 0.01)
+	
+	if(color.outline_depth != vec4(0.0, 0.0, 0.0, 0.0) && abs(edge_color.b) > 0.01)
 	{
 		draw_color = color.outline_depth;
 	}
+	else if(color.outline_normal != vec4(0.0, 0.0, 0.0, 0.0) && edge_color.g > radians(30.0))
+	{
+		draw_color = color.outline_normal;
+	}
+	else if(color.outline_entity != vec4(0.0, 0.0, 0.0, 0.0) && edge_color.r > 0.0)
+	{
+		draw_color = color.outline_entity;
+	}
+	
 
 	if(draw_color != vec4(0.0, 0.0, 0.0, 0.0))
 	{
-		imageStore(render_image, ivec2(screen_pos), draw_color);
+		imageStore(render_image, screen_pos, draw_color);
 	}
 	
 	return;

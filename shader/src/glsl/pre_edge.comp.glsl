@@ -26,7 +26,7 @@ bool is_edge_entity(ivec2 screen_pos);
 float strength_normal(ivec2 screen_pos);
 bool is_edge_normal(float total_diff);
 float slope_depth(ivec2 screen_pos);
-bool is_edge_slope(float slope);
+bool is_edge_depth(float slope);
 bool is_valid_normal(vec3 normal);
 
 void main()
@@ -44,15 +44,11 @@ void main()
 	
 	world_pos = reconstruct_world_pos(uv, texelFetch(depth_texture, screen_pos, 0).r);
 	vec4 draw_color;
-	draw_color = vec4(0.0, 0.0, 0.0, 0.0);
-	if(is_edge_entity(screen_pos))
-	{
-		draw_color.r = 1.0;
-		draw_color.a = 1.0;
-	}
-	draw_color.g = strength_normal(screen_pos);
-	draw_color.b = clamp(slope_depth(screen_pos) * 1000.0, 1.0, -1.0);
-	imageStore(edge_image, ivec2(screen_pos), draw_color);
+	draw_color = vec4(0.0, 0.0, 0.0, 1.0);
+	draw_color.r = is_edge_entity(screen_pos) ? 1.0 : 0.0;
+	draw_color.g = is_edge_normal(strength_normal(screen_pos)) ? 1.0 : 0.0;
+	draw_color.b = is_edge_depth(slope_depth(screen_pos)) ? 1.0 : 0.0;
+	imageStore(edge_image, screen_pos, draw_color);
 }
 
 bool is_edge(ivec2 screen_pos)
@@ -157,7 +153,7 @@ float slope_depth(ivec2 screen_pos)
 	return slope;
 }
 
-bool is_edge_slope(float slope)
+bool is_edge_depth(float slope)
 {
 	if(abs(slope) > 0.005)
 	{
