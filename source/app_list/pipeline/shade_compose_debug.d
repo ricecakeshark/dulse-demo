@@ -1,9 +1,9 @@
-module app_list.pipeline.shade_compose;
+module app_list.pipeline.shade_compose_debug;
 
 import kelp_sdl;
 import kelp_gfx;
 
-GfxGraphicsContext create_pipeline_compose(
+GfxGraphicsContext create_pipeline_compose_debug(
 	ref GfxGraphicsContext graphics_context,
 	out GpuComputePipeline compose_pipeline,
 )
@@ -16,9 +16,9 @@ GfxGraphicsContext create_pipeline_compose(
 	with (pipeline_create_info)
 	{
 		//num_readonly_storage_buffers = 0;
-		num_samplers = 3;
+		num_samplers = 7;
 		num_readwrite_storage_textures = 1;
-		num_uniform_buffers = 0;
+		num_uniform_buffers = 1;
 		threadcount_x = 8;
 		threadcount_y = 8;
 		threadcount_z = 1;

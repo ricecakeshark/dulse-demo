@@ -3,7 +3,7 @@ module app_list.pipeline.defer_solid_pipeline;
 import kelp_sdl;
 import kelp_gfx;
 
-void create_pipeline_defer_solid(
+GfxGraphicsContext create_pipeline_defer_solid(
 	ref GfxGraphicsContext graphics_context,
 	out GpuGraphicsPipeline defer_pipeline
 )
@@ -59,5 +59,5 @@ void create_pipeline_defer_solid(
 		);
 	}
 	defer_pipeline.create(defer_pipeline_info);
-	return;
+	return graphics_context;
 }

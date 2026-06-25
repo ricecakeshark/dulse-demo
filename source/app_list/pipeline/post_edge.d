@@ -3,7 +3,7 @@ module app_list.pipeline.post_edge;
 import kelp_sdl;
 import kelp_gfx;
 
-void create_pipeline_post_edge(
+GfxGraphicsContext create_pipeline_post_edge(
 	ref GfxGraphicsContext graphics_context,
 	out GpuComputePipeline post_edge_pipeline,
 )
@@ -26,5 +26,5 @@ void create_pipeline_post_edge(
 	post_edge_pipeline.create(
 		pipeline_create_info
 	);
-	return;
+	return graphics_context;
 }

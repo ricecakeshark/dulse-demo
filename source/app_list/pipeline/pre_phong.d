@@ -3,7 +3,7 @@ module app_list.pipeline.pre_phong;
 import kelp_sdl;
 import kelp_gfx;
 
-void create_pipeline_phong(
+GfxGraphicsContext create_pipeline_phong(
 	ref GfxGraphicsContext graphics_context,
 	out GpuComputePipeline pipeline,
 )
@@ -25,5 +25,5 @@ void create_pipeline_phong(
 	pipeline.create(
 		pipeline_create_info
 	);
-	return;
+	return graphics_context;
 }

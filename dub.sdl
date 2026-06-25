@@ -21,3 +21,13 @@ lflags "/LIBPATH:$PACKAGE_DIR\\..\\kelp_sdl\\build"
 // kelp_render
 //libs "kelp_render"
 lflags "/LIBPATH:$PACKAGE_DIR\\..\\kelp_gfx\\build"
+
+buildType "release" {
+	targetPath "release"
+	//buildOptions "optimize"
+}
+
+buildType "debug" {
+	targetPath "debug"
+	//buildOptions "debugInfo"
+}
