@@ -21,7 +21,7 @@ void main()
 	core.append_gio_subsystem();
 	core.initialize();
 	core.subsystem.query(device, timer, graphics);
-	graphics.context.initialize(960, 540, GpuBackend.vulkan);
+	graphics.context.initialize(960, 540, "Demo with Vulkan", GpuBackend.vulkan);
 
 	app_list = [
 		cast(AppInterface) new ManyObject(core),

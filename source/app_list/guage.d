@@ -87,12 +87,7 @@ class GuageDemo : AppInterface
 				ColorF(0.2f, 0.2f, 0.2f, 1.0f,),
 				GpuLoadOp.clear, GpuStoreOp.store,
 			);
-			command_buffer.with_render_pass(
-				[color_target_info],
-				(render_pass) { return; });
-			command_buffer.with_compute_pass(
-				[GpuStorageTextureReadWriteBinding(guage_dst_texture)],
-				[],
+			command_buffer.compute(
 				(compute_pass) {
 				compute_pass.bind(guage_pipeline)
 					.push(0, UniformGuageConst(),
@@ -101,7 +96,10 @@ class GuageDemo : AppInterface
 					)
 					.dispatch(400 / 8, 400 / 8, 1);
 				return;
-			},);
+			},
+				[GpuStorageTextureReadWriteBinding(guage_dst_texture)],
+				[],
+			);
 			// blit
 			command_buffer.blit_texture(
 				GpuBlitInfo(

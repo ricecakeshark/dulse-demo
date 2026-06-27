@@ -181,8 +181,9 @@ class CubeDemo : AppInterface
 			.map()
 			.set(object_image)
 			.unmap();
-		command_buffer.acquire_buffer()
-			.with_copy_pass(
+		command_buffer
+			.acquire_buffer()
+			.copy(
 				(copy_pass) {
 				copy_pass.upload(
 					buffer_transfer_buffer,
@@ -261,9 +262,7 @@ class CubeDemo : AppInterface
 				GpuLoadOp.clear,
 				GpuStoreOp.store,
 			);
-			command_buffer.with_render_pass(
-				[color_target_info],
-				depth_target_info,
+			command_buffer.render(
 				(render_pass) {
 				// scene, view
 				render_pass.push_vertex(1, vertex_view, 1)
@@ -301,7 +300,10 @@ class CubeDemo : AppInterface
 						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 				}
 				+/
-			},);
+			},
+				[color_target_info],
+				depth_target_info,
+			);
 		}
 		command_buffer.submit();
 		return;

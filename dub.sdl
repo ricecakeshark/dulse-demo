@@ -12,6 +12,9 @@ dependency "kelp-core" path="..\\kelp_core"
 dependency "kelp-sdl"  path="..\\kelp_sdl"
 dependency "kelp-gfx" path="..\\kelp_gfx"
 
+lflags "/LIBPATH:$PACKAGE_DIR\\lib\\win_x86-64" platform="windows-x86_64"
+copyFiles "lib\\win_x86-64\\*.dll" platform="windows-x86_64"
+
 lflags "/LIBPATH:$PACKAGE_DIR\\lib_st" "/LIBPATH:$PACKAGE_DIR\\lib_dy"
 //libs "kelp_sdl" "kelp_render"
 

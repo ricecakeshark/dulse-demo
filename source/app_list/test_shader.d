@@ -92,16 +92,18 @@ class ShaderTest : AppInterface
 			.set(object_geometry.vertices, object_geometry.offset_vertex)
 			.set(object_geometry.indices, object_geometry.offset_index)
 			.unmap();
-		command_buffer.with_copy_pass((ref GpuCopyPass copy_pass) {
-			copy_pass.upload(
-				GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),
-				GpuBufferRegion(vertex_buffer, 0u)
-			)
-				.upload(
-					GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_index),
-					GpuBufferRegion(index_buffer, 0u)
-				);
-		}).submit();
+		command_buffer
+			.copy((ref GpuCopyPass copy_pass) {
+				copy_pass.upload(
+					GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),
+					GpuBufferRegion(vertex_buffer, 0u)
+				)
+					.upload(
+						GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry
+						.offset_index),
+						GpuBufferRegion(index_buffer, 0u)
+					);
+			}).submit();
 		return;
 	}
 
@@ -137,8 +139,7 @@ class ShaderTest : AppInterface
 				swapchain_texture,
 				GpuLoadOp.clear, GpuStoreOp.store,
 			);
-			command_buffer.with_render_pass(
-				[color_target_info],
+			command_buffer.render(
 				(ref GpuRenderPass pass) {
 				object_mat = multiply_rtol(
 					transformer_rotate_x(0.0015 * timer.past),
@@ -149,7 +150,9 @@ class ShaderTest : AppInterface
 					.bind(index_buffer)
 					.push_vertex(0, view_mat, object_mat,)
 					.draw_indexed(ParamIndexedPrimitive(6, 1, 0, 0, 0));
-			},);
+			},
+				[color_target_info],
+			);
 		}
 		command_buffer.submit();
 		return;

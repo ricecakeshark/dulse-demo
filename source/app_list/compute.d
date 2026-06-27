@@ -173,8 +173,9 @@ class ComputeDemo : AppInterface
 			.set(object_image)
 			.unmap();
 
-		command_buffer.acquire_buffer()
-			.with_copy_pass((ref copy_pass) {
+		command_buffer
+			.acquire_buffer()
+			.copy((copy_pass) {
 				copy_pass.upload(
 					GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),
 					GpuBufferRegion(vertex_buffer, 0u)
@@ -253,9 +254,7 @@ class ComputeDemo : AppInterface
 				GpuStoreOp.dont_care,
 			);
 			// render
-			command_buffer.with_render_pass(
-				[color_target_info],
-				depth_target_info,
+			command_buffer.render(
 				(render_pass) {
 				vertex_model.mat_model = multiply_rtol(
 					transformer_rotate_y(0.0015 * timer.past),
@@ -279,11 +278,12 @@ class ComputeDemo : AppInterface
 					.push_vertex(1, vertex_view, vertex_model)
 					.push_fragment(0, fragment_scene, fragment_view, fragment_model, fragment_light,)
 					.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
-			},);
+			},
+				[color_target_info],
+				depth_target_info,
+			);
 			// compute
-			command_buffer.with_compute_pass(
-				[GpuStorageTextureReadWriteBinding(compute_dst_texture)],
-				null,
+			command_buffer.compute(
 				(compute_pass) {
 				compute_pass.bind(compute_pipeline)
 					.bind(
@@ -292,7 +292,9 @@ class ComputeDemo : AppInterface
 					.push(UniformCompute(960f, 540f))
 					.dispatch(960 / 8, 540 / 8, 1);
 				return;
-			}
+			},
+				[GpuStorageTextureReadWriteBinding(compute_dst_texture)],
+				null,
 			);
 			// blit
 			command_buffer.blit_texture(

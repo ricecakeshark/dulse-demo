@@ -181,8 +181,9 @@ class ManyObject : AppInterface
 			.map()
 			.set(object_image)
 			.unmap();
-		command_buffer.acquire_buffer()
-			.with_copy_pass((copy_pass) {
+		command_buffer
+			.acquire_buffer()
+			.copy((copy_pass) {
 				copy_pass.upload(
 					GpuTransferBufferLocation(tb_geometry, object_geometry.offset_vertex),
 					GpuBufferRegion(vertex_buffer, 0u)
@@ -270,9 +271,7 @@ class ManyObject : AppInterface
 				GpuLoadOp.clear,
 				GpuStoreOp.store,
 			);
-			command_buffer.with_render_pass(
-				[color_target_info],
-				depth_target_info,
+			command_buffer.render(
 				(ref GpuRenderPass pass) {
 				pass.bind(solid_pipeline)
 					.bind([
@@ -295,7 +294,10 @@ class ManyObject : AppInterface
 						.push_fragment(2, frag_model, frag_light,)
 						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 				}
-			},);
+			},
+				[color_target_info],
+				depth_target_info,
+			);
 		}
 		command_buffer.submit();
 		return;

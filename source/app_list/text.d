@@ -162,7 +162,7 @@ class TextApp : AppInterface
 		);
 		ub_model.model_matrix = multiply_rtol(
 			transformer_rotate_y(cast(float)(timer.past * 0.001f)),
-			transformer_scale(0.02f,0.02f,0.02f),
+			transformer_scale(0.02f, 0.02f, 0.02f),
 			transformer_translate([-tw / 2.0f, th / 2.0f, 0.0f]),
 		);
 		assert(!ub_view.view_matrix.contain_nan);
@@ -175,7 +175,7 @@ class TextApp : AppInterface
 
 		// upload
 		command_buffer.acquire_buffer()
-			.with_copy_pass((ref GpuCopyPass pass) {
+			.copy((pass) {
 				pass.upload(
 					buffer_transfer_buffer,
 					vertex_buffer,
@@ -194,8 +194,7 @@ class TextApp : AppInterface
 				GpuLoadOp.clear, GpuStoreOp.store,
 			);
 			color_target_info.clear_color = ColorF(0.1f, 0.1f, 0.1f, 1.0f);
-			command_buffer.with_render_pass(
-				[color_target_info],
+			command_buffer.render(
 				(ref GpuRenderPass pass) {
 				// swapchain texture
 
@@ -227,7 +226,8 @@ class TextApp : AppInterface
 					index_offset += temp_geometry.count_index;
 				}
 				return;
-			}
+			},
+				[color_target_info],
 			);
 
 		}
