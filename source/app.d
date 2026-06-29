@@ -4,8 +4,11 @@ import app_list;
 import kelp_core;
 import kelp_sdl;
 import kelp_gfx;
+
+//import std.stdio;
+import std.conv : text;
 import std.stdio;
-import core.memory;
+import core.memory : GC;
 
 void main()
 {
@@ -20,7 +23,7 @@ void main()
 	core = new Core();
 	core.append_gio_subsystem();
 	core.initialize();
-	core.subsystem.query(device, timer, graphics);
+	core.subsystem.query(device, timer, graphics, logger);
 	graphics.context.initialize(960, 540, "Demo with Vulkan", GpuBackend.vulkan);
 
 	app_list = [
@@ -42,7 +45,7 @@ void main()
 
 		if (device.keyboard.pressed_just(Scancode.escape))
 		{
-			writeln("pressed ESC");
+			//writeln("pressed ESC");
 			break;
 		}
 		if (device.keyboard.pressed_just(Scancode.left))
@@ -57,8 +60,6 @@ void main()
 		{
 			app_list[app_index].finalize();
 			timer.sleep(100);
-			//import std.conv;
-			//logger.log("cube_defer" ~ text(app_index_next));
 			app_list[app_index_next].initialize();
 			app_index = app_index_next;
 		}
@@ -70,6 +71,8 @@ void main()
 	graphics.context.finalize();
 	core.finalize();
 	GC.collect();
+	//logger.log("end",LogLevel.info);
 	writeln(GC.profileStats);
+
 	return;
 }

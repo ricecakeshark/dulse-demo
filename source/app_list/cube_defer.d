@@ -23,6 +23,7 @@ class CubeDeferDemo : AppInterface
 	GpuTexture render_texture, depth_texture;
 	GpuTexture albedo_texture, normal_texture, color_texture, material_texture, entity_texture, edge_texture;
 	GpuSampler sampler_nearest, sampler_smooth;
+	GpuFence fence;
 
 	GfxMesh object_mesh;
 	GfxGeometry!(VertexPNU, uint) object_geometry;
@@ -45,7 +46,7 @@ class CubeDeferDemo : AppInterface
 	override void initialize()
 	{
 		core.subsystem.query(timer, logger);
-		graphics_context.create(command_buffer, swapchain_texture);
+		graphics_context.create(command_buffer, swapchain_texture, fence);
 		// Entity
 		core.subsystem.query!ObjectSubsystem().create(object_manager);
 		object_manager.create(entity_list)
@@ -164,8 +165,10 @@ class CubeDeferDemo : AppInterface
 						GpuTextureRegion(object_texture),
 					);
 				return;
-			}).submit();
-
+			}).submit(fence);
+			logger.log("fence waiting...");
+			fence.wait();
+			logger.log("fence signaled");
 		return;
 	}
 
