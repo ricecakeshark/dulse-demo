@@ -1,4 +1,4 @@
-module app_list.cube_multi;
+module app_list.cube_forward;
 
 import app_list.app_interface;
 import app_list.uniform;
@@ -8,7 +8,7 @@ import kelp_core;
 import kelp_sdl;
 import kelp_gfx;
 
-class CubeMulti : AppInterface
+class CubeForward : AppInterface
 {
 	Core core;
 	TimerSubsystem timer;
@@ -174,15 +174,8 @@ class CubeMulti : AppInterface
 		scope GpuTextureTransferBuffer texture_transfer_buffer;
 
 		graphics_context.create(buffer_transfer_buffer, texture_transfer_buffer);
-		buffer_transfer_buffer.create(object_geometry.size)
-			.map()
-			.set(object_geometry.vertices, object_geometry.offset_vertex)
-			.set(object_geometry.indices, object_geometry.offset_index)
-			.unmap();
-		texture_transfer_buffer.create(object_image.size)
-			.map()
-			.set(object_image)
-			.unmap();
+		buffer_transfer_buffer.prepare(object_geometry);
+		texture_transfer_buffer.prepare(object_image);
 		command_buffer
 			.acquire_buffer()
 			.copy(

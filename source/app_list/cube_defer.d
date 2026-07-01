@@ -144,7 +144,8 @@ class CubeDeferDemo : AppInterface
 		scope GpuTextureTransferBuffer tb_texture;
 		graphics_context.create(buffer_transfer_buffer, tb_texture);
 		buffer_transfer_buffer.prepare(object_geometry);
-		tb_texture.create(object_texture.size)
+		tb_texture
+			.create(object_texture.size)
 			.map()
 			.set(object_image)
 			.unmap();
@@ -152,10 +153,11 @@ class CubeDeferDemo : AppInterface
 		command_buffer
 			.acquire_buffer()
 			.copy((copy_pass) {
-				copy_pass.upload(
-					GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),
-					GpuBufferRegion(vertex_buffer, 0u)
-				)
+				copy_pass
+					.upload(
+						GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),
+						GpuBufferRegion(vertex_buffer, 0u)
+					)
 					.upload(
 						GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_index),
 						GpuBufferRegion(index_buffer, 0u)
@@ -166,9 +168,8 @@ class CubeDeferDemo : AppInterface
 					);
 				return;
 			}).submit(fence);
-			logger.log("fence waiting...");
-			fence.wait();
-			logger.log("fence signaled");
+		fence.wait();
+
 		return;
 	}
 

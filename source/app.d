@@ -28,8 +28,7 @@ void main()
 
 	app_list = [
 		cast(AppInterface) new ManyObject(core),
-		cast(AppInterface) new CubeDemo(core),
-		cast(AppInterface) new CubeMulti(core),
+		cast(AppInterface) new CubeForward(core),
 		cast(AppInterface) new CubeDeferDemo(core),
 		//new ShaderTest(core, graphics_context),
 		new TextApp(core),

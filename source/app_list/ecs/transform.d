@@ -8,22 +8,22 @@ import kelp_core.math;
 struct TransformComponent
 {
 	Vec3 pos;
-	Vec3 rotate;
+	Quaternion!float rotate_quat;
 	Vec3 scale;
 
 	Matrix!(4, 4, float) model_matrix(float scale = 1.0f)
 	{
-		return multiply_rtol(
-			transformer_translate(this.pos),
-			transformer_rotate_y(this.rotate.y),
-			transformer_rotate_x(this.rotate.x),
-			transformer_scale(this.scale * scale),
-		);
+		return matrix_scale!3(this.scale * scale)
+			.multiply(rotate_quat.to_matrix)
+			.extend!(Matrix!(4, 4))
+			.multiply(transformer_translate(pos));
 	}
 }
 
 class TransformSystem : IObjectSystem
 {
+	immutable inverse_usecs = 0.001f * 0.001f;
+
 	void initialize(ObjectManager manager)
 	{
 		foreach (entity; manager.entity.list)
@@ -31,7 +31,7 @@ class TransformSystem : IObjectSystem
 			with (manager.component.get!TransformComponent(entity))
 			{
 				pos = Vec3(0f);
-				rotate = Vec3(0f);
+				rotate_quat = Quaternion!float(Vec3(1.0f, 0.0f, 0.0f), 0f);
 				scale = Vec3(0.6f);
 			}
 		}
@@ -50,13 +50,16 @@ class TransformSystem : IObjectSystem
 		foreach (index, entity; manager.entity.list)
 		{
 			float rad;
-			TimerResource timer;
+			scope TimerResource timer;
+
 			timer = manager.resource.refer!TimerResource();
 			with (manager.component.get!TransformComponent(entity))
 			{
-				rotate.x += cast(float) 0.5 * 0.001 * timer.delta_time;
-				rotate.y += cast(float) 1.5 * 0.001 * timer.delta_time;
-				rad = (0.001f * timer.past_time) + (
+				rotate_quat =
+					Quaternion!float(Vec3(1.0f, 1.0f, 0.0f), 0.5 * timer.past_time * inverse_usecs)
+					* Quaternion!float(
+						Vec3(0.0f, 1.0f, 1.0f), 1.5 * timer.past_time * inverse_usecs);
+				rad = (inverse_usecs * timer.past_time) + (
 					2.0f / manager.entity.count * PI) * index;
 				pos = Vec3(cos(rad) * 1.5f, 0f, sin(rad) * 1.5f);
 			}
