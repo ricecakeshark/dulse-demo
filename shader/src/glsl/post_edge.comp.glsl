@@ -28,7 +28,7 @@ void main()
 	
 	vec4 draw_color = vec4(0.0, 0.0, 0.0, 0.0);
 	
-	if(color.outline_depth != vec4(0.0, 0.0, 0.0, 0.0) && abs(edge_color.b) > 0.01)
+	if(color.outline_entity != vec4(0.0, 0.0, 0.0, 0.0) && edge_color.r > 0.0)
 	{
 		draw_color = color.outline_depth;
 	}
@@ -36,7 +36,7 @@ void main()
 	{
 		draw_color = color.outline_normal;
 	}
-	else if(color.outline_entity != vec4(0.0, 0.0, 0.0, 0.0) && edge_color.r > 0.0)
+	else if(color.outline_depth != vec4(0.0, 0.0, 0.0, 0.0) && abs(edge_color.b) > 0.01)
 	{
 		draw_color = color.outline_entity;
 	}

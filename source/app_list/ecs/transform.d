@@ -58,7 +58,7 @@ class TransformSystem : IObjectSystem
 				rotate_quat =
 					Quaternion!float(Vec3(1.0f, 1.0f, 0.0f), 0.5 * timer.past_time * inverse_usecs)
 					* Quaternion!float(
-						Vec3(0.0f, 1.0f, 1.0f), 1.5 * timer.past_time * inverse_usecs);
+						Vec3(0.0f, 1.0f, 1.0f), 0.8 * timer.past_time * inverse_usecs);
 				rad = (inverse_usecs * timer.past_time) + (
 					2.0f / manager.entity.count * PI) * index;
 				pos = Vec3(cos(rad) * 1.5f, 0f, sin(rad) * 1.5f);

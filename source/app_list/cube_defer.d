@@ -235,7 +235,7 @@ class CubeDeferDemo : AppInterface
 					material_texture, GpuLoadOp.clear, GpuStoreOp.store,
 				),
 				GpuColorTargetInfo(
-					entity_texture, GpuLoadOp.clear, GpuStoreOp.store,
+					entity_texture, 0,0,ColorF(0f,0f,0f,0f),GpuLoadOp.clear, GpuStoreOp.store,
 				),
 			];
 			depth_target_info = GpuDepthStencilTargetInfo(
@@ -247,7 +247,8 @@ class CubeDeferDemo : AppInterface
 			command_buffer.render(
 				(render_pass) {
 				// prepare pipeline_defer
-				render_pass.push_vertex(1, uniform_view)
+				render_pass
+					.push_vertex(1, uniform_view)
 					.push_fragment(1, uniform_view);
 				// foreach entity
 				foreach (entity; entity_list)
@@ -259,13 +260,14 @@ class CubeDeferDemo : AppInterface
 					);
 					uniform_model_frag = UniformModelFrag(0.5f, 64.0f, entity.index + 1);
 
-					render_pass.bind(
-						pipeline_defer_texture,
-						[
-							GpuTextureSamplerBinding(object_texture, sampler_smooth)
-						],
-						[vertex_buffer], index_buffer,
-					)
+					render_pass
+						.bind(
+							pipeline_defer_texture,
+							[
+								GpuTextureSamplerBinding(object_texture, sampler_smooth)
+							],
+							[vertex_buffer], index_buffer,
+						)
 						.push_vertex(2, uniform_model_vert)
 						.push_fragment(2, uniform_model_frag)
 						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
@@ -343,7 +345,7 @@ class CubeDeferDemo : AppInterface
 			);+/
 
 			// post_edge
-			/+command_buffer.compute(
+			command_buffer.compute(
 				(compute_pass) {
 				compute_pass.bind(pipeline_post_edge)
 					.bind(
@@ -351,8 +353,8 @@ class CubeDeferDemo : AppInterface
 					)
 					.push(
 						UniformPostEdge(
-						Vec4(1f, 0.5f, 0.0f, 1.0f),
-						Vec4(0.0f, 0f, 0f, 1.0f),
+						Vec4(1.0f, 1.0f, 1.0f, 1.0f),
+						Vec4(0.0f, 0.0f, 0.0f, 1.0f),
 						Vec4(1.0f, 1.0f, 1.0f, 1.0f),
 					)
 				)
@@ -361,7 +363,7 @@ class CubeDeferDemo : AppInterface
 			},
 				[GpuStorageTextureReadWriteBinding(render_texture)],
 				null,
-			);+/
+			);
 			// blit
 			command_buffer.blit(
 				GpuBlitInfo(

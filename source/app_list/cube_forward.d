@@ -106,11 +106,10 @@ class CubeForward : AppInterface
 			);
 			target_info = GpuGraphicsPipelineTargetInfo(
 				[
-				GpuColorTargetDescription(
-					//graphics_context.get_swapchain_texture_format()
-					swapchain_texture.get_format(),
-				)
-			], GpuTextureFormat.d32_float_s8_uint,
+					GpuColorTargetDescription(
+						swapchain_texture.get_format(),
+					)
+				], GpuTextureFormat.d32_float_s8_uint,
 			);
 		}
 		texture_pipeline.create(pipeline_create_info);
@@ -276,8 +275,7 @@ class CubeForward : AppInterface
 						.bind([vertex_buffer])
 						.bind(index_buffer)
 						.push_vertex(vertex_model, 2)
-						.push_fragment(fragment_model, 2u)
-						.push_fragment(fragment_light, 3u)
+						.push_fragment(2u, fragment_model, fragment_light)
 						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 				}
 				// solid render
@@ -290,8 +288,7 @@ class CubeForward : AppInterface
 						.bind([vertex_buffer])
 						.bind(index_buffer)
 						.push_vertex(vertex_model, 2)
-						.push_fragment(fragment_model, 2u)
-						.push_fragment(fragment_light, 3u)
+						.push_fragment(2u, fragment_model, fragment_light,)
 						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 				}
 			},

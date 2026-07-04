@@ -69,7 +69,6 @@ class ManyObject : AppInterface
 		pipeline_create_info.fragment_shader = texture_frag_shader.handle;
 		with (pipeline_create_info)
 		{
-
 			vertex_input_state = GpuVertexInputState(
 				[
 					vertex_buffer_description!(float[3], float[3], float[2])
@@ -140,19 +139,6 @@ class ManyObject : AppInterface
 		vertex_buffer.create(object_geometry.count_vertex, VertexPNU.sizeof);
 		index_buffer.create(object_geometry.count_index, GpuIndexElementSize._32bit);
 
-		// Mesh, Geometry
-		/+
-		object_geometry.vertices = [
-			VertexPNU(Vec3(-0.5f, -0.5f, 0.0f), Vec3(-0.5f, -0.5f, 0f), Vec2(0.0f, 0.0f,),),
-			VertexPNU(Vec3(+0.5f, -0.5f, 0.0f,), Vec3(+0.5f, -0.5f, 0f), Vec2(1.0f, 0.0f,),),
-			VertexPNU(Vec3(0.5f, +0.5f, 0.0f,), Vec3(+0.5f, +0.5f, 0f), Vec2(1.0f, 1.0f,),),
-			VertexPNU(Vec3(-0.5f, +0.5f, 0.0f,), Vec3(-0.5f, +0.5f, 0f), Vec2(0.0f, 1.0f,),),
-		];
-		object_geometry.indices = [0, 1, 2, 0, 2, 3];
-		object_mesh.initialize(VertexPNU.sizeof * 4, uint.sizeof * 6);
-		object_mesh.set([object_geometry,]);
-		+/
-
 		// texture, sampler
 		object_image = new Surface();
 		object_image.load("./image/test_texture.png");
@@ -172,15 +158,8 @@ class ManyObject : AppInterface
 		scope GpuBufferTransferBuffer tb_geometry, tb_storage;
 		scope GpuTextureTransferBuffer tb_texture;
 		graphics_context.create(tb_geometry, tb_storage, tb_texture);
-		tb_geometry.create(object_geometry.size)
-			.map()
-			.set(object_geometry.vertices, object_geometry.offset_vertex)
-			.set(object_geometry.indices, object_geometry.offset_index)
-			.unmap();
-		tb_texture.create(object_image.size)
-			.map()
-			.set(object_image)
-			.unmap();
+		tb_geometry.prepare(object_geometry);
+		tb_texture.prepare(object_image);
 		command_buffer
 			.acquire_buffer()
 			.copy((copy_pass) {
@@ -232,7 +211,7 @@ class ManyObject : AppInterface
 
 		GpuColorTargetInfo color_target_info;
 		GpuDepthStencilTargetInfo depth_target_info;
-		Matrix!(4, 4) view_mat, pos_mat;
+		//Matrix!(4, 4) view_mat, pos_mat;
 		//UniformVertexScene vert_scene;
 		UniformVertexView vert_view;
 		UniformVertexModel vert_model;

@@ -20,40 +20,31 @@ layout(std430, set = 2, binding = 0) uniform View
 	vec3 vec;
 } view;
 
-vec3 reconstruct_world_pos(vec2 uv, float depth);
-bool is_edge(ivec2 screen_pos);
 bool is_edge_entity(ivec2 screen_pos);
 float strength_normal(ivec2 screen_pos);
 bool is_edge_normal(float total_diff);
 float slope_depth(ivec2 screen_pos);
 bool is_edge_depth(float slope);
 bool is_valid_normal(vec3 normal);
+bool is_in_texture(ivec2 normal);
 
 void main()
 {
-	vec4 albedo_color;
-	vec3 normal_world;
-	vec3 world_pos;
+
 	vec2 image_size = imageSize(edge_image);
 	ivec2 screen_pos = ivec2(gl_GlobalInvocationID.xy);
-	if(screen_pos.x >= image_size.x || screen_pos.y >= image_size.y)
+	if(!is_in_texture(screen_pos))
 	{
 		return;
 	}
 	vec2 uv = vec2((vec2(screen_pos)+0.5) / vec2(image_size));
 	
-	world_pos = reconstruct_world_pos(uv, texelFetch(depth_texture, screen_pos, 0).r);
 	vec4 draw_color;
 	draw_color = vec4(0.0, 0.0, 0.0, 1.0);
 	draw_color.r = is_edge_entity(screen_pos) ? 1.0 : 0.0;
 	draw_color.g = is_edge_normal(strength_normal(screen_pos)) ? 1.0 : 0.0;
 	draw_color.b = is_edge_depth(slope_depth(screen_pos)) ? 1.0 : 0.0;
 	imageStore(edge_image, screen_pos, draw_color);
-}
-
-bool is_edge(ivec2 screen_pos)
-{
-	return is_edge_entity(screen_pos) || is_edge_normal(strength_normal(screen_pos));
 }
 
 bool is_edge_entity(ivec2 screen_pos)
@@ -68,7 +59,12 @@ bool is_edge_entity(ivec2 screen_pos)
 	int entity_id = texelFetch(entity_texture, screen_pos, 0)[0];
 	for(int count = 0; count < 4; ++count)
 	{
-		if(entity_id != texelFetch(entity_texture, screen_pos + offsets[count], 0)[0])
+		ivec2 neighbor_pos = screen_pos + offsets[count];
+		if(!is_in_texture(neighbor_pos))
+		{
+			continue;
+		}
+		if(entity_id != texelFetch(entity_texture, neighbor_pos, 0)[0])
 		{
 			return true;
 		}
@@ -94,6 +90,10 @@ float strength_normal(ivec2 screen_pos)
 
 	for(int count = 0; count < 4; ++count)
 	{
+		if(!is_in_texture(screen_pos + offsets[count]))
+		{
+			continue;
+		}
 		vec3 other_normal = texelFetch(normal_texture, screen_pos + offsets[count], 0).xyz;
 		if(!is_valid_normal(other_normal))
 		{
@@ -124,27 +124,11 @@ float slope_depth(ivec2 screen_pos)
 	);
 	float slope = 0.0;
 	float center_depth = texelFetch(depth_texture, screen_pos, 0)[0];
-	/*
-	slope += (screen_pos.x - 1 >= 0) ?
-		(center_depth - texelFetch(depth_texture, screen_pos + ivec2(-1, 0), 0)[0]) : 0.0 ;
-	slope += (screen_pos.y - 1 >= 0) ?
-		(center_depth - texelFetch(depth_texture, screen_pos + ivec2(0, -1), 0)[0]) : 0.0 ;
-	slope += (screen_pos.x + 1 < textureSize(depth_texture, 0).x) ?
-		(texelFetch(depth_texture, screen_pos + ivec2(+1, 0), 0)[0] - center_depth) : 0.0 ;
-	slope += (screen_pos.y + 1 < textureSize(depth_texture, 0).y) ?
-		(texelFetch(depth_texture, screen_pos + ivec2(0, +1), 0)[0] - center_depth) : 0.0 ;
-	slope /= 4.0;
-	*/
-
 
 	for(int count; count < 4; ++ count)
 	{
 		ivec2 offset_pos = screen_pos + offset[count];
-		if( offset_pos.x < 0
-		 || offset_pos.x > textureSize(depth_texture, 0).x
-		 || offset_pos.y < 0
-		 || offset_pos.y > textureSize(depth_texture, 0).y
-		)
+		if(!is_in_texture(offset_pos))
 		{
 			continue;
 		}
@@ -162,16 +146,15 @@ bool is_edge_depth(float slope)
 	return false;
 }
 
-vec3 reconstruct_world_pos(vec2 uv, float depth)
+bool is_in_texture(ivec2 pos)
 {
-	vec4 clip_pos;
-	clip_pos = vec4(
-		uv.x * 2.0 - 1.0,
-		uv.y * 2.0 - 1.0,
-		depth,
-		1.0
-	);
-	vec4 world_pos = clip_pos * view.mat_inv_view_proj;
-	world_pos.xyz /= world_pos.w;
-	return world_pos.xyz;
+	if(
+		pos.x < 0
+		|| pos.x >= imageSize(edge_image).x
+		|| pos.y < 0
+		|| pos.y >= imageSize(edge_image).y
+	){
+		return false;
+	}
+	return true;
 }
