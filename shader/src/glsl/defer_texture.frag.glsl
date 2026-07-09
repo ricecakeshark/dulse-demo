@@ -37,12 +37,9 @@ layout(std430, set = 3, binding = 0) uniform Scene
 // View
 layout(std430, set = 3, binding = 1) uniform View
 {
-	layout(row_major) mat4 mat_view;
-	layout(row_major) mat4 mat_proj;
 	layout(row_major) mat4 mat_view_proj;
 	layout(row_major) mat4 mat_inv_view_proj;
-	vec3 pos;
-	vec3 vec;
+	vec3 vec_pos;
 } view;
 // Model
 layout(std430, set = 3, binding = 2) uniform Model

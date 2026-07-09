@@ -20,12 +20,9 @@ layout(std430, set = 2, binding = 0) uniform Color
 
 layout(std430, set = 2, binding = 1) uniform View
 {
-	layout(row_major) mat4 mat_view;
-	layout(row_major) mat4 mat_proj;
 	layout(row_major) mat4 mat_view_proj;
 	layout(row_major) mat4 mat_inv_view_proj;
-	vec3 pos;
-	vec3 vec;
+	vec3 vec_pos;
 } view;
 
 vec3 reconstruct_world_pos(ivec2 pos, float depth);
@@ -62,7 +59,7 @@ void main()
 	}
 	blur_color /= weight_sum;
 
-	float fog_factor = smoothstep(config.fog_start, config.fog_end, length(world_pos - view.pos));
+	float fog_factor = smoothstep(config.fog_start, config.fog_end, length(world_pos - view.vec_pos));
 	vec4 fog_color = mix(albedo_color, config.fog_color, fog_factor);
 
 	imageStore(render_image, screen_pos, 

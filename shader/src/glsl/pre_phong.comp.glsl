@@ -25,12 +25,9 @@ layout(std430, set = 2, binding = 0) uniform Scene
 // View
 layout(std430, set = 2, binding = 1) uniform View
 {
-	layout(row_major) mat4 mat_view;
-	layout(row_major) mat4 mat_proj;
 	layout(row_major) mat4 mat_view_proj;
 	layout(row_major) mat4 mat_inv_view_proj;
-	vec3 pos;
-	vec3 vec;
+	vec3 vec_pos;
 } view;
 // Light
 layout(std430, set = 2, binding = 2) uniform Light
@@ -59,7 +56,7 @@ void main()
 	vec3 world_pos = reconstruct_world_pos(uv, texelFetch(depth_texture, screen_pos, 0).r);
 	// render
 	vec3 vec_light = normalize(light.light_point_list[0].pos.xyz - world_pos);
-	vec3 vec_view = normalize(view.vec - world_pos);
+	vec3 vec_view = normalize(view.vec_pos - world_pos);
 	vec3 vec_reflect = reflect(-vec_light, normal_world);
 
 	// ambient

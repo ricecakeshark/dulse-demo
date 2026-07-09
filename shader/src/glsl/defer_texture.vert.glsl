@@ -17,12 +17,9 @@ layout(std430, set = 1, binding = 0) uniform Scene
 // uniform Per-View: (Projective, Viewport) 
 layout(std430, set = 1, binding = 1) uniform View
 {
-	layout(row_major) mat4 mat_view;
-	layout(row_major) mat4 mat_proj;
 	layout(row_major) mat4 mat_view_proj;
 	layout(row_major) mat4 mat_inv_view_proj;
-	vec3 pos;
-	vec3 vec;
+	vec3 vec_pos;
 } view;
 // uniform Per-Object: (Model, View, Projection)
 layout(std430, set = 1, binding = 2) uniform Object

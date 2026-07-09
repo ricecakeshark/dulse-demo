@@ -214,7 +214,6 @@ class CubeDeferDemo : AppInterface
 			transformer_look_at(Vec3(0f, 0f, -3.0f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
 			transformer_perspective(PI_2),
 			Vec3(0f, 0f, -3.0f),
-			Vec3(0f, 0f, -3.0f),
 		);
 		with (uniform_light.light_point_list[0])
 		{

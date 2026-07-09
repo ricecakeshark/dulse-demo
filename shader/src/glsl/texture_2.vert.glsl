@@ -15,7 +15,7 @@ layout(std140, set = 1, binding = 0) uniform Scene
 // uniform Per-View: (Projective, Viewport) 
 layout(std140, set = 1, binding = 1) uniform View
 {
-	layout(row_major) mat4x4 matrix_view;
+	layout(row_major) mat4x4 matrix_view_proj;
 } view;
 // uniform Per-Object: (Model, View, Projection)
 layout(std140, set = 1, binding = 2) uniform Object
@@ -36,6 +36,6 @@ void main()
 	// position
 	vec4 world_pos = vec4(in_pos, 1.0f) * model.matrix_model;
 	out_pos = world_pos.xyz;
-	gl_Position = vec4(in_pos, 1.0f) * model.matrix_model * view.matrix_view;
+	gl_Position = vec4(in_pos, 1.0f) * model.matrix_model * view.matrix_view_proj;
 	return;
 }

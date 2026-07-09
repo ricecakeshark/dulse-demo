@@ -18,7 +18,7 @@ GfxGraphicsContext create_pipeline_pre_edge(
 		//num_readonly_storage_buffers = 0;
 		num_samplers = 3;
 		num_readwrite_storage_textures = 1;
-		num_uniform_buffers = 1;
+		num_uniform_buffers = 0;
 		threadcount_x = 8;
 		threadcount_y = 8;
 		threadcount_z = 1;

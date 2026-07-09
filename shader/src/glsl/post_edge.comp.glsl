@@ -40,7 +40,6 @@ void main()
 	{
 		draw_color = color.outline_entity;
 	}
-	
 
 	if(draw_color != vec4(0.0, 0.0, 0.0, 0.0))
 	{

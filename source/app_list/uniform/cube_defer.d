@@ -9,24 +9,17 @@ struct UniformScene
 
 struct UniformView
 {
-	Matrix!(4, 4, float) mat_view;
-	Matrix!(4, 4, float) mat_proj;
 	Matrix!(4, 4, float) mat_view_proj;
 	Matrix!(4, 4, float) mat_inv_view_proj;
-	align(16) Vec3 pos;
-	align(16) Vec3 vec;
+	align(16) Vec3 vec_pos;
 
 	this(
 		Matrix!(4, 4, float) mat_view,
 		Matrix!(4, 4, float) mat_proj,
-		Vec3 pos,
-		Vec3 vec,
+		Vec3 vec_pos,
 	)
 	{
-		this.mat_view = mat_view;
-		this.mat_proj = mat_proj;
-		this.pos = pos;
-		this.vec = vec;
+		this.vec_pos = vec_pos;
 		this.mat_view_proj = mat_view * mat_proj;
 		this.mat_inv_view_proj = (mat_view * mat_proj).invert;
 		return;

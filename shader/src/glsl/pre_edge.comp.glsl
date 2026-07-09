@@ -9,17 +9,6 @@ layout(set = 0, binding = 2) uniform isampler2D entity_texture;
 
 layout(set = 1, binding = 0, rgba8) uniform writeonly image2D edge_image;
 
-// View
-layout(std430, set = 2, binding = 0) uniform View
-{
-	layout(row_major) mat4 mat_view;
-	layout(row_major) mat4 mat_proj;
-	layout(row_major) mat4 mat_view_proj;
-	layout(row_major) mat4 mat_inv_view_proj;
-	vec3 pos;
-	vec3 vec;
-} view;
-
 bool is_edge_entity(ivec2 screen_pos);
 float strength_normal(ivec2 screen_pos);
 bool is_edge_normal(float total_diff);
@@ -30,14 +19,12 @@ bool is_in_texture(ivec2 normal);
 
 void main()
 {
-
 	vec2 image_size = imageSize(edge_image);
 	ivec2 screen_pos = ivec2(gl_GlobalInvocationID.xy);
 	if(!is_in_texture(screen_pos))
 	{
 		return;
 	}
-	vec2 uv = vec2((vec2(screen_pos)+0.5) / vec2(image_size));
 	
 	vec4 draw_color;
 	draw_color = vec4(0.0, 0.0, 0.0, 1.0);
@@ -125,7 +112,7 @@ float slope_depth(ivec2 screen_pos)
 	float slope = 0.0;
 	float center_depth = texelFetch(depth_texture, screen_pos, 0)[0];
 
-	for(int count; count < 4; ++ count)
+	for(int count = 0; count < 4; ++ count)
 	{
 		ivec2 offset_pos = screen_pos + offset[count];
 		if(!is_in_texture(offset_pos))
