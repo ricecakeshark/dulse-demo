@@ -48,6 +48,11 @@ class CubeDeferDemo : AppInterface
 	{
 		core.subsystem.query(timer, logger);
 		graphics_context.create(command_buffer, swapchain_texture, fence);
+		// config
+		swapchain_texture.set(
+			GpuSwapchainComposition.HDR_extended_linear,
+			GpuPresentMode.immediate,
+		);
 		// Entity
 		core.subsystem.query!ObjectSubsystem().create(object_manager);
 		object_manager.create(entity_list)

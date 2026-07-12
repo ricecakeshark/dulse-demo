@@ -14,6 +14,10 @@ layout(std430, set = 2, binding = 0) uniform Config
 void main()
 {
 	ivec2 screen_pos = ivec2(gl_GlobalInvocationID.xy);
-	imageStore(dest_texture, screen_pos, texelFetch(source_texture, screen_pos, 0));
+	vec4 texel_color = texelFetch(source_texture, screen_pos, 0);
+	// exposure
+	color *= exp2(config.exposure)
+
+	imageStore(dest_texture, screen_pos, );
 	return;
 }

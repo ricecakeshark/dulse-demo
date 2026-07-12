@@ -193,6 +193,16 @@ class CubeForward : AppInterface
 				return;
 			}
 			).submit();
+		import std.stdio : writefln;
+
+		writefln("SDR composition: %s", swapchain_texture.get_composition(
+				GpuSwapchainComposition.SDR));
+		writefln("SDR composition: %s", swapchain_texture.get_composition(
+				GpuSwapchainComposition.SDR_linear));
+		writefln("SDR composition: %s", swapchain_texture.get_composition(
+				GpuSwapchainComposition.HDR_extended_linear));
+		writefln("SDR composition: %s", swapchain_texture.get_composition(
+				GpuSwapchainComposition.HDR10_ST2084));
 		return;
 	}
 
