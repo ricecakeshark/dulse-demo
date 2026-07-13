@@ -14,8 +14,11 @@ layout(std430, set = 2, binding = 0) uniform Config
 layout(std430, set = 2, binding = 1) uniform Color
 {
 	float exposure;
-	float gamma;
-	float lift;
+	float contrast;
+	float saturation;
+	float temperature;
+
+	//float lift;
 } config_color;
 
 layout(std430, set = 2, binding = 2) uniform Tone
@@ -28,6 +31,8 @@ layout(std430, set = 2, binding = 2) uniform Tone
 
 const float epsilon = 1.0e-6;
 
+vec3 adjust_exposure(const vec3);
+vec3 adjust_contrast(const vec3, const float);
 vec4 gamma_correct(const vec4);
 vec3 tonemap(const vec3);
 vec3 tonemap_invert(const vec3);
@@ -45,7 +50,10 @@ void main()
 	vec4 texel_color = texelFetch(source_texture, screen_pos, 0);
 	vec4 output_color;
 
-	output_color = vec4(tonemap_3zone(texel_color.rgb), texel_color.a);
+	output_color = vec4(
+		tonemap_3zone(adjust_contrast(adjust_exposure(texel_color.rgb), 0.3)),
+		texel_color.a
+	);
 	/*switch(config_mode.output_mode)
 	{
 		case 0:
@@ -63,16 +71,20 @@ void main()
 	return;
 }
 // correct damma (only SDR) 
-vec4 gamma_correct(const vec4 color)
+/*vec4 gamma_correct(const vec4 color)
 {
 	return vec4(pow(color.rgb, vec3(1.0 / config_color.gamma)), color.a);
+}*/
+
+vec3 adjust_exposure(const vec3 color)
+{
+	return color * exp2(config_color.exposure);
 }
 
-/*vec4 apply_exposure(vec4 color)
+vec3 adjust_contrast(const vec3 color, const float pivot)
 {
-	color *= exp2(mode.exposure);
-	return color;
-}*/
+	return color.rgb - vec3(pivot) * config_color.contrast + vec3(pivot);
+}
 
 // tone map
 vec3 tonemap(const vec3 color)
@@ -104,27 +116,21 @@ vec3 tonemap_3zone(const vec3 color)
 
 float tonemap_3zone_scalar(const float color_elem)
 {
-	if(color_elem < config_tone.peak_low)
+	if (color_elem < config_tone.peak_low)
 	{
 		return config_tone.peak_low;
 	}
-	else if (color_elem < config_tone.mid_low)
+
+	if (color_elem < config_tone.mid_low)
 	{
 		// compress into peak_low and mid_low
-		//color_elem = color_elem * rcp(config_tone.mid_low - color_elem);
-
 		float t = clamp(
-			(color_elem - config_tone.peak_low) / max(config_tone.mid_low-config_tone.peak_low, epsilon),
+			(color_elem - config_tone.peak_low) / max(config_tone.mid_low - config_tone.peak_low, epsilon),
 			0.0, 1.0
 		);
 		return mix(config_tone.peak_low, config_tone.mid_low, t * t * (2.0 - t));
 	}
-	else if (color_elem < config_tone.mid_high)
-	{
-		// do nothing;
-		return color_elem;
-	}
-	else if (color_elem < config_tone.peak_high)
+	else if (color_elem > config_tone.mid_high)
 	{
 		// compress into mid_high and peak_high
 		//color_elem = color_elem * rcp(color_elem + config_tone.peak_high);
@@ -132,10 +138,8 @@ float tonemap_3zone_scalar(const float color_elem)
 		float over = color_elem - config_tone.mid_high;
 		return config_tone.mid_high + range * (1.0 - exp(-over / range));
 	}
-	else
-	{
-		return config_tone.peak_high;
-	}
+	// do nothing;
+	return color_elem;
 }
 // reciprocal
 float rcp(const float x)

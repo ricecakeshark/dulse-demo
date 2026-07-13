@@ -78,7 +78,7 @@ class CubeDeferDemo : AppInterface
 
 		// texture, sampler
 		object_image = new Surface();
-		object_image.load("./image/test_texture.png");
+		object_image.load("./image/grid.png");
 		graphics_context.create(object_texture);
 		object_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d, GpuTextureFormat.r8g8b8a8_unorm,
@@ -213,6 +213,7 @@ class CubeDeferDemo : AppInterface
 		UniformModelVert uniform_model_vert;
 		UniformModelFrag uniform_model_frag;
 		UniformLight uniform_light;
+		UniformColor uniform_color;
 		// prepare uniform buffer object
 		uniform_scene = UniformScene(Vec4(1f, 1f, 1f, 0.1f));
 		uniform_view = UniformView(
@@ -390,7 +391,10 @@ class CubeDeferDemo : AppInterface
 				[GpuStorageTextureReadWriteBinding(post_color_texture)],
 				null,
 			);+/
-			// tonemap
+			// color_process
+			uniform_color.mode.output_mode = 1;
+			uniform_color.color = UniformColorColor(+1.0, 2.0);
+			uniform_color.tone = UniformColorTone(0.1, 1.0, 0.0, 12.5);
 			command_buffer.compute(
 				(compute_pass) {
 				compute_pass.bind(pipeline_post_color)
@@ -399,9 +403,9 @@ class CubeDeferDemo : AppInterface
 					)
 					.push(
 						0,
-						UniformColorMode(1),
-						UniformColor(),
-						UniformTone(0.4, 0.6, 0.3, 0.7),
+						uniform_color.mode,
+						uniform_color.color,
+						uniform_color.tone,
 					)
 					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
 				return;
