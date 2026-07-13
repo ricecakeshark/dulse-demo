@@ -1,0 +1,154 @@
+#version 460
+#extension GL_EXT_scalar_block_layout : enable
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) uniform sampler2D source_texture;
+layout(set = 1, binding = 0, rgba16f) uniform writeonly image2D dest_texture;
+
+layout(std430, set = 2, binding = 0) uniform Config
+{
+	int output_mode;
+} config_mode;
+
+layout(std430, set = 2, binding = 1) uniform Color
+{
+	float exposure;
+	float gamma;
+	float lift;
+} config_color;
+
+layout(std430, set = 2, binding = 2) uniform Tone
+{
+	float mid_low;
+	float mid_high;
+	float peak_low;
+	float peak_high;
+} config_tone;
+
+const float epsilon = 1.0e-6;
+
+vec4 gamma_correct(const vec4);
+vec3 tonemap(const vec3);
+vec3 tonemap_invert(const vec3);
+vec3 tonemap_weight(const vec3, const float);
+vec3 tonemap_HDR(const vec3, const float, const float);
+vec3 tonemap_3zone(const vec3);
+float tonemap_3zone_scalar(const float);
+float rcp(const float);
+float max3_user(const float, const float, const float);
+float max3_user(const vec3);
+
+void main()
+{
+	ivec2 screen_pos = ivec2(gl_GlobalInvocationID.xy);
+	vec4 texel_color = texelFetch(source_texture, screen_pos, 0);
+	vec4 output_color;
+
+	output_color = vec4(tonemap_3zone(texel_color.rgb), texel_color.a);
+	/*switch(config_mode.output_mode)
+	{
+		case 0:
+			output_color = gamma_correct(texel_color);
+			break;
+		case 1:
+			output_color = vec4(tonemap_3zone(texel_color.rgb), texel_color.a);
+			break;
+		case 2:
+			output_color = vec4(1.0, 0.0, 1.0, 0.0);
+			break;
+	}*/
+
+	imageStore(dest_texture, screen_pos, output_color);
+	return;
+}
+// correct damma (only SDR) 
+vec4 gamma_correct(const vec4 color)
+{
+	return vec4(pow(color.rgb, vec3(1.0 / config_color.gamma)), color.a);
+}
+
+/*vec4 apply_exposure(vec4 color)
+{
+	color *= exp2(mode.exposure);
+	return color;
+}*/
+
+// tone map
+vec3 tonemap(const vec3 color)
+{
+	return color.rgb * rcp(max3_user(color.r, color.g, color.b) + 1.0);
+}
+
+vec3 tonemap_invert(const vec3 color)
+{
+	return color.rgb * rcp(1.0 - max3_user(color.r, color.g, color.b));
+}
+// tone map with weight
+// AMD GPUOpen (https://gpuopen.com/learn/optimized-reversible-tonemapper-for-resolve/)
+vec3 tonemap_weight(const vec3 color, const float weight)
+{
+	return color.rgb * (weight * rcp(max3_user(color.r, color.g, color.b) + 1.0));
+}
+
+vec3 tonemap_3zone(const vec3 color)
+{
+	float maximum = max3_user(color);
+	float mapped_elem = tonemap_3zone_scalar(maximum);
+	if(maximum <= epsilon)
+	{
+		return vec3(mapped_elem);
+	}
+	return color * (mapped_elem / maximum);
+}
+
+float tonemap_3zone_scalar(const float color_elem)
+{
+	if(color_elem < config_tone.peak_low)
+	{
+		return config_tone.peak_low;
+	}
+	else if (color_elem < config_tone.mid_low)
+	{
+		// compress into peak_low and mid_low
+		//color_elem = color_elem * rcp(config_tone.mid_low - color_elem);
+
+		float t = clamp(
+			(color_elem - config_tone.peak_low) / max(config_tone.mid_low-config_tone.peak_low, epsilon),
+			0.0, 1.0
+		);
+		return mix(config_tone.peak_low, config_tone.mid_low, t * t * (2.0 - t));
+	}
+	else if (color_elem < config_tone.mid_high)
+	{
+		// do nothing;
+		return color_elem;
+	}
+	else if (color_elem < config_tone.peak_high)
+	{
+		// compress into mid_high and peak_high
+		//color_elem = color_elem * rcp(color_elem + config_tone.peak_high);
+		float range = max(config_tone.peak_high - config_tone.mid_high, epsilon);
+		float over = color_elem - config_tone.mid_high;
+		return config_tone.mid_high + range * (1.0 - exp(-over / range));
+	}
+	else
+	{
+		return config_tone.peak_high;
+	}
+}
+// reciprocal
+float rcp(const float x)
+{
+	return 1.0 / x;
+}
+
+float max3_user(const float x, const float y, const float z)
+{
+	return max(x, max(y, z));
+}
+
+float max3_user(const vec3 vec)
+{
+	return max(vec[0], max(vec[1], vec[2]));
+}
