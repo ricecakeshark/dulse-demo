@@ -14,6 +14,8 @@ dependency "kelp-gfx" path="..\\kelp_gfx"
 
 lflags "/LIBPATH:$PACKAGE_DIR\\lib\\win_x86-64" platform="windows-x86_64"
 copyFiles "lib\\win_x86-64\\*.dll" platform="windows-x86_64"
+copyFiles "..\\shader_build\\build\\shader_builder.exe"
+copyFiles "..\\shader_build\\bin\\glslang.exe"
 
 lflags "/LIBPATH:$PACKAGE_DIR\\lib_st" "/LIBPATH:$PACKAGE_DIR\\lib_dy"
 //libs "kelp_sdl" "kelp_render"

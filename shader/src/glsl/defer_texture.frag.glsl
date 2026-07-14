@@ -64,7 +64,7 @@ void main()
 	vec3 normal_world = normalize(in_normal);
 	out_normal = vec4(normal_world, 0.0);
 	// out_material
-	out_material = ivec4(model.specular_strength, model.shininess, float(model.entity_id), 0.0) + 1;
+	out_material = vec4(model.specular_strength, model.shininess, 0.0, 0.0);
 	// out_entity
 	out_entity = ivec2(model.entity_id, 0);
 	return;

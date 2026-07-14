@@ -20,6 +20,14 @@ void main()
 	scope AppInterface[] app_list;
 	scope LoopedInt!(6) app_index, app_index_next;
 
+	import std.process;
+
+	auto pid = spawnProcess(
+		["../shader_build/build/shader_builder.exe","--verbose"],
+		stdin,stdout,stderr,
+	);
+	wait(pid);
+
 	core = new Core();
 	core.append_gio_subsystem();
 	core.initialize();

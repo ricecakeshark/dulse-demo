@@ -178,7 +178,6 @@ class CubeDeferDemo : AppInterface
 				return;
 			}).submit(fence);
 		fence.wait();
-
 		return;
 	}
 
@@ -297,7 +296,9 @@ class CubeDeferDemo : AppInterface
 							GpuTextureSamplerBinding(material_texture, sampler_nearest),
 						)
 						.push(0, uniform_scene, uniform_view, uniform_light,)
-						.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
+						.dispatch(
+							pipeline_phong.dispatch_size(graphics_context.client_size)
+						);
 					return;
 				}, [GpuStorageTextureReadWriteBinding(color_texture)],
 				);
@@ -312,7 +313,9 @@ class CubeDeferDemo : AppInterface
 							GpuTextureSamplerBinding(entity_texture, sampler_nearest),
 						)
 						.push(0, uniform_view)
-						.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
+						.dispatch(
+							pipeline_pre_edge.dispatch_size(graphics_context.client_size)
+						);
 					return;
 				},
 					[GpuStorageTextureReadWriteBinding(edge_texture)],
@@ -327,13 +330,15 @@ class CubeDeferDemo : AppInterface
 							GpuTextureSamplerBinding(albedo_texture, sampler_smooth),
 							GpuTextureSamplerBinding(color_texture, sampler_nearest),
 						)
-						.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
+						.dispatch(
+							pipeline_compose.dispatch_size(graphics_context.client_size)
+						);
 					return;
 				}, [GpuStorageTextureReadWriteBinding(temp_alpha_texture)],
 				);
 			// compose_debug
-			/+
-			command_buffer.compute(
+
+			/+command_buffer.compute(
 				(compute_pass) {
 				compute_pass.bind(pipeline_compose_debug)
 					.bind(
@@ -345,14 +350,15 @@ class CubeDeferDemo : AppInterface
 						GpuTextureSamplerBinding(entity_texture, sampler_nearest),
 						GpuTextureSamplerBinding(edge_texture, sampler_nearest),
 					)
-					.push(0, UniformComposeConfig(0),)
-					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
+					.push(0, UniformComposeConfig(2),)
+					.dispatch(pipeline_compose_debug.dispatch_size(graphics_context.client_size));
 				return;
 			},
-				[GpuStorageTextureReadWriteBinding(render_texture)],
+				[GpuStorageTextureReadWriteBinding(temp_alpha_texture)],
 				null,
 			);+/
 			// post_blur_fog
+
 			command_buffer.compute(
 				(compute_pass) {
 				compute_pass.bind(pipeline_post_blur_fog)
@@ -365,14 +371,16 @@ class CubeDeferDemo : AppInterface
 						UniformPostBlurFog(0.1, 5.0, 0.1, 5.0, ColorF(0.5, 0.7, 0.9, 1.0)),
 						uniform_view,
 					)
-					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
+					.dispatch(
+						pipeline_post_blur_fog.dispatch_size(graphics_context.client_size),
+					);
 				return;
 			},
 				[GpuStorageTextureReadWriteBinding(temp_beta_texture)],
 				null,
 			);
 			// post_edge
-			/+command_buffer.compute(
+			command_buffer.compute(
 				(compute_pass) {
 				compute_pass.bind(pipeline_post_edge)
 					.bind(
@@ -385,16 +393,19 @@ class CubeDeferDemo : AppInterface
 						Vec4(1.0f, 1.0f, 1.0f, 1.0f),
 					)
 				)
-					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
+					.dispatch(
+						pipeline_post_edge.dispatch_size(graphics_context.client_size),
+					);
 				return;
 			},
-				[GpuStorageTextureReadWriteBinding(post_color_texture)],
+				[GpuStorageTextureReadWriteBinding(temp_beta_texture)],
 				null,
-			);+/
+			);
 			// color_process
 			uniform_color.mode.output_mode = 1;
 			uniform_color.color = UniformColorColor(+1.0, 2.0);
 			uniform_color.tone = UniformColorTone(0.1, 1.0, 0.0, 12.5);
+
 			command_buffer.compute(
 				(compute_pass) {
 				compute_pass.bind(pipeline_post_color)
@@ -407,7 +418,9 @@ class CubeDeferDemo : AppInterface
 						uniform_color.color,
 						uniform_color.tone,
 					)
-					.dispatch(graphics_context.client_width / 8, graphics_context.client_height / 8, 1);
+					.dispatch(
+						pipeline_post_color.dispatch_size(graphics_context.client_size),
+					);
 				return;
 			},
 				[GpuStorageTextureReadWriteBinding(temp_alpha_texture)],
