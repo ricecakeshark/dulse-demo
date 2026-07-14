@@ -28,15 +28,15 @@ void main()
 	
 	vec4 draw_color = vec4(0.0, 0.0, 0.0, 0.0);
 	
-	if(color.outline_entity != vec4(0.0, 0.0, 0.0, 0.0) && edge_color.r > 0.0)
+	if(color.outline_entity.a > 0.01 && edge_color.r > 0.0)
 	{
 		draw_color = color.outline_depth;
 	}
-	else if(color.outline_normal != vec4(0.0, 0.0, 0.0, 0.0) && edge_color.g > radians(30.0))
+	else if(color.outline_normal.a > 0.01 && edge_color.g > radians(30.0))
 	{
 		draw_color = color.outline_normal;
 	}
-	else if(color.outline_depth != vec4(0.0, 0.0, 0.0, 0.0) && abs(edge_color.b) > 0.01)
+	else if(color.outline_depth.a > 0.01 && abs(edge_color.b) > 0.01)
 	{
 		draw_color = color.outline_entity;
 	}

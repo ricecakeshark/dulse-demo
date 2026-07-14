@@ -37,8 +37,8 @@ layout(std430, set = 2, binding = 2) uniform Light
 	uint count_light_point;
 } light;
 
-vec4 calc_light(ivec2 screen_pos);
-vec3 reconstruct_world_pos(vec2 uv, float depth);
+//vec4 calc_light(const ivec2 screen_pos);
+vec3 reconstruct_world_pos(const vec2 uv, const float depth);
 
 void main()
 {
@@ -78,7 +78,7 @@ void main()
 	return;
 }
 
-vec3 reconstruct_world_pos(vec2 uv, float depth)
+vec3 reconstruct_world_pos(const vec2 uv, const float depth)
 {
 	vec4 clip_pos;
 	clip_pos = vec4(

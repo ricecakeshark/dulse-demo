@@ -25,8 +25,8 @@ layout(std430, set = 2, binding = 1) uniform View
 	vec3 vec_pos;
 } view;
 
-vec3 reconstruct_world_pos(ivec2 pos, float depth);
-bool is_in_texture(ivec2 pos);
+vec3 reconstruct_world_pos(const ivec2 pos, const float depth);
+bool is_in_texture(const ivec2 pos);
 
 void main()
 {
@@ -71,7 +71,7 @@ void main()
 	return;
 }
 
-vec3 reconstruct_world_pos(ivec2 screen_pos, float depth)
+vec3 reconstruct_world_pos(const in ivec2 screen_pos, const in float depth)
 {
 	vec4 clip_pos;
 	vec2 uv = vec2((vec2(screen_pos)+0.5) / vec2(imageSize(render_image)));
@@ -86,7 +86,7 @@ vec3 reconstruct_world_pos(ivec2 screen_pos, float depth)
 	return world_pos.xyz;
 }
 
-bool is_in_texture(ivec2 pos)
+bool is_in_texture(const in ivec2 pos)
 {
 	if(
 		pos.x < 0

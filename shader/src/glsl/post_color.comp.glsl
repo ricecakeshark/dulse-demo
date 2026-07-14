@@ -76,34 +76,34 @@ void main()
 	return vec4(pow(color.rgb, vec3(1.0 / config_color.gamma)), color.a);
 }*/
 
-vec3 adjust_exposure(const vec3 color)
+vec3 adjust_exposure(const in vec3 color)
 {
 	return color * exp2(config_color.exposure);
 }
 
-vec3 adjust_contrast(const vec3 color, const float pivot)
+vec3 adjust_contrast(const in vec3 color, const in float pivot)
 {
 	return color.rgb - vec3(pivot) * config_color.contrast + vec3(pivot);
 }
 
 // tone map
-vec3 tonemap(const vec3 color)
+vec3 tonemap(const in vec3 color)
 {
 	return color.rgb * rcp(max3_user(color.r, color.g, color.b) + 1.0);
 }
 
-vec3 tonemap_invert(const vec3 color)
+vec3 tonemap_invert(const in vec3 color)
 {
 	return color.rgb * rcp(1.0 - max3_user(color.r, color.g, color.b));
 }
 // tone map with weight
 // AMD GPUOpen (https://gpuopen.com/learn/optimized-reversible-tonemapper-for-resolve/)
-vec3 tonemap_weight(const vec3 color, const float weight)
+vec3 tonemap_weight(const in vec3 color, const in float weight)
 {
 	return color.rgb * (weight * rcp(max3_user(color.r, color.g, color.b) + 1.0));
 }
 
-vec3 tonemap_3zone(const vec3 color)
+vec3 tonemap_3zone(const in vec3 color)
 {
 	float maximum = max3_user(color);
 	float mapped_elem = tonemap_3zone_scalar(maximum);
@@ -114,7 +114,7 @@ vec3 tonemap_3zone(const vec3 color)
 	return color * (mapped_elem / maximum);
 }
 
-float tonemap_3zone_scalar(const float color_elem)
+float tonemap_3zone_scalar(const in float color_elem)
 {
 	if (color_elem < config_tone.peak_low)
 	{
@@ -142,17 +142,17 @@ float tonemap_3zone_scalar(const float color_elem)
 	return color_elem;
 }
 // reciprocal
-float rcp(const float x)
+float rcp(const in float x)
 {
 	return 1.0 / x;
 }
 
-float max3_user(const float x, const float y, const float z)
+float max3_user(const in float x, const in float y, const in float z)
 {
 	return max(x, max(y, z));
 }
 
-float max3_user(const vec3 vec)
+float max3_user(const in vec3 vec)
 {
 	return max(vec[0], max(vec[1], vec[2]));
 }
