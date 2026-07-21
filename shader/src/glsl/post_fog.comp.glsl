@@ -42,12 +42,8 @@ void main()
 	vec3 world_pos = reconstruct_world_pos(screen_pos, depth);
 
 	float fog_factor = smoothstep(config.fog_start, config.fog_end, length(world_pos - view.vec_pos));
-	vec4 fog_color = mix(input_color, config.fog_color, fog_factor);
 
-	imageStore(output_image, screen_pos, 
-		mix(input_color, config.fog_color, fog_factor)
-	);
-	
+	imageStore(output_image, screen_pos, mix(input_color, config.fog_color, fog_factor));
 	return;
 }
 

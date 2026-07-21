@@ -1,17 +1,17 @@
-module app_list.pipeline.post_blur_fog;
+module app_list.pipeline.post_blur;
 
 import kelp_sdl;
 import kelp_gfx;
 
-GfxGraphicsContext create_pipeline_post_blur_fog(
+GfxGraphicsContext create_pipeline_post_blur(
 	ref GfxGraphicsContext graphics_context,
-	out GpuComputePipeline post_edge_pipeline,
+	out GpuComputePipeline post_blur_pipeline,
 )
 {
-	graphics_context.create(post_edge_pipeline);
+	graphics_context.create(post_blur_pipeline);
 	//GpuComputePipelineCreateInfo pipeline_create_info;
 	auto pipeline_create_info = GpuComputePipelineCreateInfo(
-		ShaderFile("post_blur_fog.comp", GpuShaderFormat.spirv)
+		ShaderFile("post_blur.comp", GpuShaderFormat.spirv)
 	);
 	with (pipeline_create_info)
 	{
@@ -23,7 +23,7 @@ GfxGraphicsContext create_pipeline_post_blur_fog(
 		threadcount_y = 8;
 		threadcount_z = 1;
 	}
-	post_edge_pipeline.create(
+	post_blur_pipeline.create(
 		pipeline_create_info
 	);
 	return graphics_context;

@@ -4,18 +4,15 @@
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) uniform sampler2D depth_texture;
-layout(set = 0, binding = 1) uniform sampler2D albedo_texture;
+layout(set = 0, binding = 1) uniform sampler2D input_texture;
 
 layout(set = 1, binding = 0, rgba16f) uniform writeonly image2D render_image;
 
 // Uniform
 layout(std430, set = 2, binding = 0) uniform Color
 {
-	float fog_start;
-	float fog_end;
 	float blur_start;
 	float blur_end;
-	vec4 fog_color;
 } config;
 
 layout(std430, set = 2, binding = 1) uniform View
@@ -38,7 +35,7 @@ void main()
 	}
 	// read texture
 	float depth = texelFetch(depth_texture, screen_pos, 0)[0];
-	vec4 albedo_color = texelFetch(albedo_texture, screen_pos, 0);
+	vec4 input_color = texelFetch(input_texture, screen_pos, 0);
 	
 	vec3 world_pos = reconstruct_world_pos(screen_pos,depth);
 	float blur_factor = smoothstep(config.blur_start, config.blur_end, world_pos.z);
@@ -54,20 +51,12 @@ void main()
 				continue;
 			}
 			weight_sum += 1.0;
-			blur_color += texelFetch(albedo_texture, screen_pos + ivec2(x, y), 0);
+			blur_color += texelFetch(input_texture, screen_pos + ivec2(x, y), 0);
 		}
 	}
 	blur_color /= weight_sum;
 
-	float fog_factor = smoothstep(config.fog_start, config.fog_end, length(world_pos - view.vec_pos));
-	vec4 fog_color = mix(albedo_color, config.fog_color, fog_factor);
-
-	imageStore(render_image, screen_pos, 
-		mix(
-			mix(albedo_color, blur_color, blur_factor),
-		config.fog_color, fog_factor)
-	);
-	
+	imageStore(render_image, screen_pos, mix(input_color, blur_color, blur_factor));
 	return;
 }
 
