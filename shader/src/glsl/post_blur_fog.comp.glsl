@@ -25,8 +25,8 @@ layout(std430, set = 2, binding = 1) uniform View
 	vec3 vec_pos;
 } view;
 
-vec3 reconstruct_world_pos(const ivec2 pos, const float depth);
-bool is_in_texture(const ivec2 pos);
+vec3 reconstruct_world_pos(const in ivec2 pos, const in float depth);
+bool is_in_texture(const in ivec2 pos);
 
 void main()
 {
@@ -45,16 +45,16 @@ void main()
 
 	vec4 blur_color = vec4(0.0, 0.0, 0.0, 0.0);
 	float weight_sum = 0.0;
-	for(int y = -2;y <= +2; ++y)
+	for(int y = -2; y <= +2; ++y)
 	{
-		for(int x = -2;x <= +2; ++x)
+		for(int x = -2; x <= +2; ++x)
 		{
-			if(!is_in_texture(screen_pos + ivec2(x,y)))
+			if(!is_in_texture(screen_pos + ivec2(x, y)))
 			{
 				continue;
 			}
 			weight_sum += 1.0;
-			blur_color += texelFetch(albedo_texture, screen_pos + ivec2(x,y), 0);
+			blur_color += texelFetch(albedo_texture, screen_pos + ivec2(x, y), 0);
 		}
 	}
 	blur_color /= weight_sum;

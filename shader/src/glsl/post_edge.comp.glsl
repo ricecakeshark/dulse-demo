@@ -45,6 +45,5 @@ void main()
 	{
 		imageStore(render_image, screen_pos, draw_color);
 	}
-	
 	return;
 }

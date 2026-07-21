@@ -31,18 +31,18 @@ layout(std430, set = 2, binding = 2) uniform Tone
 
 const float epsilon = 1.0e-6;
 
-vec3 adjust_exposure(const vec3);
-vec3 adjust_contrast(const vec3, const float);
-vec4 gamma_correct(const vec4);
-vec3 tonemap(const vec3);
-vec3 tonemap_invert(const vec3);
-vec3 tonemap_weight(const vec3, const float);
-vec3 tonemap_HDR(const vec3, const float, const float);
-vec3 tonemap_3zone(const vec3);
-float tonemap_3zone_scalar(const float);
-float rcp(const float);
-float max3_user(const float, const float, const float);
-float max3_user(const vec3);
+vec3 adjust_exposure(const in vec3);
+vec3 adjust_contrast(const in vec3, const in float);
+vec4 gamma_correct(const in vec4);
+vec3 tonemap(const in vec3);
+vec3 tonemap_invert(const in vec3);
+vec3 tonemap_weight(const in vec3, const in float);
+vec3 tonemap_HDR(const in vec3, const in float, const in float);
+vec3 tonemap_3zone(const in vec3);
+float tonemap_3zone_scalar(const in float);
+float rcp(const in float);
+float max3_user(const in float, const in float, const in float);
+float max3_user(const in vec3);
 
 void main()
 {

@@ -9,13 +9,13 @@ layout(set = 0, binding = 2) uniform isampler2D entity_texture;
 
 layout(set = 1, binding = 0, rgba8) uniform writeonly image2D edge_image;
 
-bool is_edge_entity(const ivec2 screen_pos);
-float strength_normal(const ivec2 screen_pos);
-bool is_edge_normal(const float total_diff);
-float slope_depth(const ivec2 screen_pos);
-bool is_edge_depth(const float slope);
-bool is_valid_normal(const vec3 normal);
-bool is_in_texture(const ivec2 normal);
+bool is_edge_entity(const in ivec2 screen_pos);
+float strength_normal(const in ivec2 screen_pos);
+bool is_edge_normal(const in float total_diff);
+float slope_depth(const in ivec2 screen_pos);
+bool is_edge_depth(const in float slope);
+bool is_valid_normal(const in vec3 normal);
+bool is_in_texture(const in ivec2 normal);
 
 void main()
 {
@@ -34,7 +34,7 @@ void main()
 	imageStore(edge_image, screen_pos, draw_color);
 }
 
-bool is_edge_entity(const ivec2 screen_pos)
+bool is_edge_entity(const in ivec2 screen_pos)
 {
 	const ivec2 offsets[4] = ivec2[](
 		ivec2(0, -1),
@@ -59,7 +59,7 @@ bool is_edge_entity(const ivec2 screen_pos)
 	return false;
 }
 
-float strength_normal(const ivec2 screen_pos)
+float strength_normal(const in ivec2 screen_pos)
 {
 	const ivec2 offsets[4] = ivec2[](
 		ivec2(0, -1),
@@ -91,17 +91,17 @@ float strength_normal(const ivec2 screen_pos)
 	return total_diff;
 }
 
-bool is_edge_normal(const float total_diff)
+bool is_edge_normal(const in float total_diff)
 {
 	return (total_diff > 1.0 - cos(radians(30.0)));
 }
 
-bool is_valid_normal(const vec3 normal)
+bool is_valid_normal(const in vec3 normal)
 {
 	return dot(normal, normal) > 0.0001;
 }
 // calc slope of texel (-1.0 ~ +1.0)
-float slope_depth(const ivec2 screen_pos)
+float slope_depth(const in ivec2 screen_pos)
 {
 	ivec2 offset[4] = ivec2[](
 		ivec2(0,-1),
@@ -124,7 +124,7 @@ float slope_depth(const ivec2 screen_pos)
 	return slope;
 }
 
-bool is_edge_depth(const float slope)
+bool is_edge_depth(const in float slope)
 {
 	if(abs(slope) > 0.005)
 	{
@@ -133,7 +133,7 @@ bool is_edge_depth(const float slope)
 	return false;
 }
 
-bool is_in_texture(const ivec2 pos)
+bool is_in_texture(const in ivec2 pos)
 {
 	if(
 		pos.x < 0
