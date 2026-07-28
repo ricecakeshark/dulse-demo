@@ -23,7 +23,6 @@ class CubeDeferDemo : AppInterface
 
 	GpuTexture depth_texture;
 	GpuTexture albedo_texture, normal_texture, color_texture, material_texture, entity_texture, edge_texture;
-	GpuTexture temp_alpha_texture, temp_beta_texture;
 	GfxTextureAlternate alt_texture;
 	GpuSampler sampler_nearest, sampler_smooth;
 	GpuFence fence;
@@ -103,15 +102,12 @@ class CubeDeferDemo : AppInterface
 		graphics_context.create(
 			sampler_smooth, sampler_nearest,
 			albedo_texture, normal_texture, color_texture, material_texture, entity_texture, edge_texture,
-			temp_alpha_texture, temp_beta_texture,
 		);
 		tci = GpuTextureCreateInfo(
 			GpuTextureType._2d, GpuTextureFormat.r16g16b16a16_float,
 			tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.compute_storage_write,
 			graphics_context.client_width, graphics_context.client_height, 1, 1,
 		);
-		temp_alpha_texture.create(tci);
-		temp_beta_texture.create(tci);
 		tci.format = GpuTextureFormat.r8g8b8a8_unorm;
 		tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target
 			| GpuTextureUsageFlags.compute_storage_read;
@@ -132,9 +128,9 @@ class CubeDeferDemo : AppInterface
 		// alt texture
 		graphics_context.create(alt_texture);
 		alt_texture.create(GpuTextureCreateInfo(
-			GpuTextureType._2d, GpuTextureFormat.r16g16b16a16_float,
-			tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.compute_storage_write,
-			graphics_context.client_width, graphics_context.client_height, 1, 1,
+				GpuTextureType._2d, GpuTextureFormat.r16g16b16a16_float,
+				tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.compute_storage_write,
+				graphics_context.client_width, graphics_context.client_height, 1, 1,
 		));
 
 		// sampler
@@ -144,7 +140,6 @@ class CubeDeferDemo : AppInterface
 		sampler_nearest.create(GpuSamplerCreateInfo(
 				GpuFilter.nearest, GpuFilter.nearest,
 		));
-
 
 		// Geometry
 		FileHandler("cube.obj").load_obj(object_geometry);
@@ -350,27 +345,6 @@ class CubeDeferDemo : AppInterface
 					return;
 				}, [GpuStorageTextureReadWriteBinding(alt_texture.dest)],
 				);
-			// compose_debug
-
-			/+command_buffer.compute(
-				(compute_pass) {
-				compute_pass.bind(pipeline_compose_debug)
-					.bind(
-						GpuTextureSamplerBinding(depth_texture, sampler_nearest),
-						GpuTextureSamplerBinding(albedo_texture, sampler_smooth),
-						GpuTextureSamplerBinding(normal_texture, sampler_nearest),
-						GpuTextureSamplerBinding(color_texture, sampler_nearest),
-						GpuTextureSamplerBinding(material_texture, sampler_nearest),
-						GpuTextureSamplerBinding(entity_texture, sampler_nearest),
-						GpuTextureSamplerBinding(edge_texture, sampler_nearest),
-					)
-					.push(0, UniformComposeConfig(2),)
-					.dispatch(pipeline_compose_debug.dispatch_size(graphics_context.client_size));
-				return;
-			},
-				[GpuStorageTextureReadWriteBinding(temp_alpha_texture)],
-				null,
-			);+/
 			// post_blur
 			alt_texture.swap();
 			command_buffer.compute(
