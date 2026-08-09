@@ -23,7 +23,7 @@ void main()
 	import std.process;
 
 	auto pid = spawnProcess(
-		["../shader_build/build/shader_builder.exe","--verbose"],
+		["../build_shader/build/shader_builder.exe","--verbose"],
 		stdin,stdout,stderr,
 	);
 	wait(pid);
@@ -32,7 +32,7 @@ void main()
 	core.append_gio_subsystem();
 	core.initialize();
 	core.subsystem.query(device, timer, graphics, logger);
-	graphics.context.initialize(960, 540, "D-lang app with SDL3 GPU_API (Vulkan backend)", GpuBackend.vulkan);
+	graphics.context.initialize(1920, 1080, "D-lang app with SDL3 GPU_API (Vulkan backend)", GpuBackend.vulkan);
 
 	app_list = [
 		cast(AppInterface) new ManyObject(core),

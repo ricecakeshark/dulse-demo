@@ -9,6 +9,8 @@ import kelp_core;
 import kelp_sdl;
 import kelp_gfx;
 
+import std.math : PI_2;
+
 class CubeDeferDemo : AppInterface
 {
 	Core core;
@@ -37,6 +39,17 @@ class CubeDeferDemo : AppInterface
 
 	Entity[4] entity_list;
 	ObjectManager object_manager;
+
+	UniformScene uniform_scene = UniformScene(Vec4(1f, 1f, 1f, 0.1f));
+	UniformView uniform_view = UniformView(
+		transformer_look_at(Vec3(0f, 0f, -3.0f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
+		transformer_perspective(PI_2),
+		Vec3(0f, 0f, -3.0f),
+	);
+	UniformModelVert uniform_model_vert;
+	UniformModelFrag uniform_model_frag;
+	UniformLight uniform_light;
+	UniformColor uniform_color;
 
 	this(Core core)
 	{
@@ -103,27 +116,24 @@ class CubeDeferDemo : AppInterface
 			sampler_smooth, sampler_nearest,
 			albedo_texture, normal_texture, color_texture, material_texture, entity_texture, edge_texture,
 		);
+		// g-buffer texture
 		tci = GpuTextureCreateInfo(
-			GpuTextureType._2d, GpuTextureFormat.r16g16b16a16_float,
-			tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.compute_storage_write,
+			GpuTextureType._2d, GpuTextureFormat.r8g8b8a8_unorm,
+			GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target,
 			graphics_context.client_width, graphics_context.client_height, 1, 1,
 		);
-		tci.format = GpuTextureFormat.r8g8b8a8_unorm;
-		tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target
-			| GpuTextureUsageFlags.compute_storage_read;
 		albedo_texture.create(tci);
 		tci.format = GpuTextureFormat.r16g16b16a16_float;
 		normal_texture.create(tci);
 		material_texture.create(tci);
-		tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target
-			| GpuTextureUsageFlags.compute_storage_simultaneous_read_write;
+		tci.format = GpuTextureFormat.r32g32_int;
+		entity_texture.create(tci);
+		// post_effect texture
+		tci.format = GpuTextureFormat.r16g16b16a16_float;
+		tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.compute_storage_write;
 		color_texture.create(tci);
 		tci.format = GpuTextureFormat.r8g8b8a8_unorm;
 		edge_texture.create(tci);
-		tci.format = GpuTextureFormat.r32g32_int;
-		tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target
-			| GpuTextureUsageFlags.compute_storage_read;
-		entity_texture.create(tci);
 
 		// alt texture
 		graphics_context.create(alt_texture);
@@ -161,11 +171,7 @@ class CubeDeferDemo : AppInterface
 		scope GpuTextureTransferBuffer tb_texture;
 		graphics_context.create(buffer_transfer_buffer, tb_texture);
 		buffer_transfer_buffer.prepare(object_geometry);
-		tb_texture
-			.create(object_texture.size)
-			.map()
-			.set(object_image)
-			.unmap();
+		tb_texture.prepare(object_image);
 
 		command_buffer
 			.acquire_buffer()
@@ -202,6 +208,7 @@ class CubeDeferDemo : AppInterface
 			past_time = timer.past;
 			delta_time = timer.delta;
 		}
+
 		return;
 	}
 
@@ -210,24 +217,7 @@ class CubeDeferDemo : AppInterface
 
 	override void draw()
 	{
-		import std.math : PI_2;
-
-		GpuColorTargetInfo[] color_targets;
-		GpuDepthStencilTargetInfo depth_target_info;
-
-		UniformScene uniform_scene;
-		UniformView uniform_view;
-		UniformModelVert uniform_model_vert;
-		UniformModelFrag uniform_model_frag;
-		UniformLight uniform_light;
-		UniformColor uniform_color;
 		// prepare uniform buffer object
-		uniform_scene = UniformScene(Vec4(1f, 1f, 1f, 0.1f));
-		uniform_view = UniformView(
-			transformer_look_at(Vec3(0f, 0f, -3.0f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
-			transformer_perspective(PI_2),
-			Vec3(0f, 0f, -3.0f),
-		);
 		with (uniform_light.light_point_list[0])
 		{
 			pos = Vec4(0f, +0.5f, -3f, 1.0f);
@@ -240,25 +230,6 @@ class CubeDeferDemo : AppInterface
 			.acquire_texture(swapchain_texture);
 		if (swapchain_texture.handle !is null)
 		{
-			color_targets = [
-				GpuColorTargetInfo(
-					albedo_texture, GpuLoadOp.clear, GpuStoreOp.store,
-				),
-				GpuColorTargetInfo(
-					normal_texture, GpuLoadOp.clear, GpuStoreOp.store,
-				),
-				GpuColorTargetInfo(
-					material_texture, GpuLoadOp.clear, GpuStoreOp.store,
-				),
-				GpuColorTargetInfo(
-					entity_texture, 0, 0, ColorF(0f, 0f, 0f, 0f), GpuLoadOp.clear, GpuStoreOp.store,
-				),
-			];
-			depth_target_info = GpuDepthStencilTargetInfo(
-				depth_texture.handle,
-				1.0f,
-				GpuLoadOp.clear, GpuStoreOp.dont_care,
-			);
 			// g-buffer
 			command_buffer.render(
 				(render_pass) {
@@ -289,8 +260,25 @@ class CubeDeferDemo : AppInterface
 						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 				}
 			},
-				color_targets,
-				depth_target_info,
+				[
+					GpuColorTargetInfo(
+						albedo_texture, GpuLoadOp.clear, GpuStoreOp.store,
+					),
+					GpuColorTargetInfo(
+						normal_texture, GpuLoadOp.clear, GpuStoreOp.store,
+					),
+					GpuColorTargetInfo(
+						material_texture, GpuLoadOp.clear, GpuStoreOp.store,
+					),
+					GpuColorTargetInfo(
+						entity_texture, 0, 0, ColorF(0f, 0f, 0f, 0f), GpuLoadOp.clear, GpuStoreOp.store,
+					),
+				],
+				GpuDepthStencilTargetInfo(
+					depth_texture.handle,
+					1.0f,
+					GpuLoadOp.clear, GpuStoreOp.dont_care,
+			),
 			);
 			// phong
 			command_buffer
@@ -397,10 +385,11 @@ class CubeDeferDemo : AppInterface
 						GpuTextureSamplerBinding(edge_texture, sampler_nearest,),
 					)
 					.push(
+						0,
 						UniformPostEdge(
-						Vec4(1.0f, 1.0f, 1.0f, 1.0f),
+						Vec4(1.0f, 1.0f, 0.0f, 1.0f),
 						Vec4(0.0f, 0.0f, 0.0f, 1.0f),
-						Vec4(1.0f, 1.0f, 1.0f, 1.0f),
+						Vec4(0.0f, 1.0f, 1.0f, 1.0f),
 					)
 				)
 					.dispatch(
