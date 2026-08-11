@@ -14,7 +14,6 @@ dependency "kelp-gfx" path="..\\kelp_gfx"
 
 lflags "/LIBPATH:$PACKAGE_DIR\\lib\\win_x86-64" platform="windows-x86_64"
 copyFiles "lib\\win_x86-64\\*.dll" platform="windows-x86_64"
-copyFiles "bin\\win_x86-64\\*.dll" platform="windows-x86_64"
 copyFiles "..\\build_shader\\build\\shader_builder.exe"
 copyFiles "..\\build_shader\\build\\glslang.exe"
 
@@ -24,16 +23,14 @@ lflags "/LIBPATH:$PACKAGE_DIR\\lib_st" "/LIBPATH:$PACKAGE_DIR\\lib_dy"
 // SDL3 with kelp-sdl
 lflags "/LIBPATH:$PACKAGE_DIR\\..\\kelp_sdl\\build"
 
-// kelp_render
+// kelp_gfx
 //libs "kelp_render"
 lflags "/LIBPATH:$PACKAGE_DIR\\..\\kelp_gfx\\build"
 
 buildType "release" {
 	targetPath "release"
-	buildOptions "releaseMode" "optimize" "inline"
 }
 
 buildType "debug" {
 	targetPath "debug"
-	//buildOptions "debugInfo"
 }
