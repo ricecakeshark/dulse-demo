@@ -17,22 +17,24 @@ void main()
 	scope DeviceSubsystem device;
 	scope TimerSubsystem timer;
 	scope LoggerSubsystem logger;
+	scope InputSubsystem input;
 	scope AppInterface[] app_list;
 	scope LoopedInt!(6) app_index, app_index_next;
 
 	import std.process;
 
 	auto pid = spawnProcess(
-		["../build_shader/build/shader_builder.exe","--verbose"],
-		stdin,stdout,stderr,
+		["../build_shader/build/shader_builder.exe", "--verbose"],
+		stdin, stdout, stderr,
 	);
 	wait(pid);
 
 	core = new Core();
 	core.append_gio_subsystem();
 	core.initialize();
-	core.subsystem.query(device, timer, graphics, logger);
-	graphics.context.initialize(1920, 1080, "D-lang app with SDL3 GPU_API (Vulkan backend)", GpuBackend.vulkan);
+	core.subsystem.query(device, timer, graphics, logger, input);
+	graphics.context.initialize(1920, 1080, "D-lang app with SDL3 GPU_API (Vulkan backend)", GpuBackend
+			.vulkan);
 
 	app_list = [
 		cast(AppInterface) new ManyObject(core),
@@ -50,16 +52,17 @@ void main()
 	{
 		core.process();
 
-		if (device.keyboard.pressed_just(Scancode.escape))
+		if (input.keyboard.pressed_just(Scancode.escape))
 		{
 			//writeln("pressed ESC");
 			break;
 		}
-		if (device.keyboard.pressed_just(Scancode.left))
+		if (input.keyboard.pressed_just(Scancode.left))
 		{
 			app_index_next = app_index - 1;
 		}
-		if (device.keyboard.pressed_just(Scancode.right))
+		//if (device.keyboard.pressed_just(Scancode.right))
+		if (input.keyboard.pressed(Scancode.right))
 		{
 			app_index_next = app_index + 1;
 		}
@@ -78,7 +81,6 @@ void main()
 	graphics.context.finalize();
 	core.finalize();
 	GC.collect();
-	//logger.log("end",LogLevel.info);
 	writeln(GC.profileStats);
 
 	return;
