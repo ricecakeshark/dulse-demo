@@ -27,10 +27,10 @@ lflags "/LIBPATH:$PACKAGE_DIR\\..\\kelp_sdl\\build"
 //libs "kelp_render"
 lflags "/LIBPATH:$PACKAGE_DIR\\..\\kelp_gfx\\build"
 
-buildType "release" {
+/*buildType "release" {
 	targetPath "release"
 }
 
 buildType "debug" {
 	targetPath "debug"
-}
+}*/

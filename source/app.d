@@ -14,7 +14,6 @@ void main()
 {
 	scope Core core;
 	scope GfxGraphicsSubsystem graphics;
-	scope DeviceSubsystem device;
 	scope TimerSubsystem timer;
 	scope LoggerSubsystem logger;
 	scope InputSubsystem input;
@@ -32,7 +31,7 @@ void main()
 	core = new Core();
 	core.append_gio_subsystem();
 	core.initialize();
-	core.subsystem.query(device, timer, graphics, logger, input);
+	core.subsystem.query(timer, graphics, logger, input);
 	graphics.context.initialize(1920, 1080, "D-lang app with SDL3 GPU_API (Vulkan backend)", GpuBackend
 			.vulkan);
 
@@ -57,6 +56,11 @@ void main()
 			//writeln("pressed ESC");
 			break;
 		}
+		if (input.mouse.pressed_just(MouseButtonType.left))
+		{
+			writeln("pressed_just", input.mouse.state_list.tail);
+		}
+
 		if (input.keyboard.pressed_just(Scancode.left))
 		{
 			app_index_next = app_index - 1;
