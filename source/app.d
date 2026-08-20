@@ -17,6 +17,7 @@ void main()
 	scope TimerSubsystem timer;
 	scope LoggerSubsystem logger;
 	scope InputSubsystem input;
+	scope GfxInputSubsystem input2;
 	scope AppInterface[] app_list;
 	scope LoopedInt!(6) app_index, app_index_next;
 
@@ -31,14 +32,14 @@ void main()
 	core = new Core();
 	core.append_gio_subsystem();
 	core.initialize();
-	core.subsystem.query(timer, graphics, logger, input);
+	core.subsystem.query(timer, graphics, logger, input,input2);
 	graphics.context.initialize(1920, 1080, "D-lang app with SDL3 GPU_API (Vulkan backend)", GpuBackend
 			.vulkan);
 
 	app_list = [
-		cast(AppInterface) new ManyObject(core),
-		cast(AppInterface) new CubeForward(core),
-		cast(AppInterface) new CubeDeferDemo(core),
+		cast(AppInterface)new ManyObject(core),
+		new CubeForward(core),
+		new CubeDeferDemo(core),
 		//new ShaderTest(core, graphics_context),
 		new TextApp(core),
 		new ComputeDemo(core),
@@ -56,9 +57,9 @@ void main()
 			//writeln("pressed ESC");
 			break;
 		}
-		if (input.mouse.pressed_just(MouseButtonType.left))
+		if (input2.gamepad.gamepad.pressed_just(GamepadButton.south))
 		{
-			writeln("pressed_just", input.mouse.state_list.tail);
+			writeln("pressed_just", /+input.mouse.state_list.tail+/);
 		}
 
 		if (input.keyboard.pressed_just(Scancode.left))
