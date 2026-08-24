@@ -16,7 +16,7 @@ void main()
 	scope GfxGraphicsSubsystem graphics;
 	scope TimerSubsystem timer;
 	scope LoggerSubsystem logger;
-	scope GfxInputSubsystem input2;
+	scope GfxInputSubsystem input;
 	scope AppInterface[] app_list;
 	scope LoopedInt!(6) app_index, app_index_next;
 
@@ -31,12 +31,12 @@ void main()
 	core = new Core();
 	core.append_gio_subsystem();
 	core.initialize();
-	core.subsystem.query(timer, graphics, logger, input2);
+	core.subsystem.query(timer, graphics, logger, input);
 	graphics.context.initialize(1920, 1080, "D-lang app with SDL3 GPU_API (Vulkan backend)", GpuBackend
 			.vulkan);
 
 	app_list = [
-		cast(AppInterface)new ManyObject(core),
+		cast(AppInterface) new ManyObject(core),
 		new CubeForward(core),
 		new CubeDeferDemo(core),
 		//new ShaderTest(core, graphics_context),
@@ -51,25 +51,22 @@ void main()
 	{
 		core.process();
 
-		if (input2.keyboard.pressed_just(Scancode.escape))
+		if (input.keyboard.pressed_just(Scancode.escape))
 		{
-			//writeln("pressed ESC");
-			break;
-		}
-		if (input2.gamepad[0].pressed_just(GamepadButton.south))
-		{
-			writeln("pressed_just", /+input.mouse.state_list.tail+/);
+			writeln("pressed ESC");
+			core.bus.send(new QuitMessage());
 		}
 
-		if (input2.keyboard.pressed_just(Scancode.left))
+		if (input.keyboard.pressed_just(Scancode.left))
 		{
 			app_index_next = app_index - 1;
 		}
-		//if (device.keyboard.pressed_just(Scancode.right))
-		if (input2.keyboard.pressed(Scancode.right))
+
+		if (input.keyboard.pressed_just(Scancode.right))
 		{
 			app_index_next = app_index + 1;
 		}
+		
 		if (app_index_next != app_index)
 		{
 			app_list[app_index].finalize();
