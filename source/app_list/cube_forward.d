@@ -228,10 +228,9 @@ class CubeForward : AppInterface
 		UniformFragmentModel fragment_model;
 		UniformFragmentLight fragment_light;
 		// View
-		vertex_view.mat_view = multiply_ltor(
-			transformer_look_at(Vec3(0f, 0f, -2.5f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
-			transformer_perspective(PI_2),
-		);
+		vertex_view.mat_view =
+			transformer_look_at(Vec3(0f, 0f, -2.5f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f))
+			* transformer_perspective(PI_2);
 		// Light
 		fragment_scene.ambient_light = ColorF(1.0f, 1.0f, 1.0f, 0.1f);
 		fragment_view.vec_view = Vec3(0f, 0f, -2.5f);
@@ -268,13 +267,16 @@ class CubeForward : AppInterface
 						.model_matrix();
 					vertex_model.mat_model_normal = vertex_model.mat_model.to_normal();
 
-					render_pass.bind(texture_pipeline)
-						.bind([
-							GpuTextureSamplerBinding(object_texture, object_sampler)
-						], 0)
-						.bind([vertex_buffer])
-						.bind(index_buffer)
-						.push_vertex(vertex_model, 2)
+					render_pass
+						.bind(
+							texture_pipeline,
+							[
+								GpuTextureSamplerBinding(object_texture, object_sampler)
+							],
+							[vertex_buffer],
+							index_buffer,
+						)
+						.push_vertex(2u, vertex_model)
 						.push_fragment(2u, fragment_model, fragment_light)
 						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 				}
@@ -284,10 +286,13 @@ class CubeForward : AppInterface
 					vertex_model.mat_model = object_manager.component.get!TransformComponent(entity)
 						.model_matrix(1.01f);
 					vertex_model.mat_model_normal = vertex_model.mat_model.to_normal();
-					render_pass.bind(solid_pipeline)
-						.bind([vertex_buffer])
-						.bind(index_buffer)
-						.push_vertex(vertex_model, 2)
+					render_pass
+						.bind(
+							solid_pipeline,
+							[vertex_buffer],
+							index_buffer,
+						)
+						.push_vertex(2, vertex_model)
 						.push_fragment(2u, fragment_model, fragment_light,)
 						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 				}

@@ -15,7 +15,6 @@ layout(set = 2, binding = 0) uniform Params
 	float level;
 } params;
 
-
 shared vec4 texel_color;
 
 vec4 quantize(vec4 arg_color,float level)
@@ -25,10 +24,11 @@ vec4 quantize(vec4 arg_color,float level)
 
 void main()
 {
-	uvec2 global_pos = gl_GlobalInvocationID.xy;
-	uvec2 local_pos = gl_LocalInvocationID.xy;
+	const uvec2 global_pos = gl_GlobalInvocationID.xy;
+	const uvec2 local_pos = gl_LocalInvocationID.xy;
+	const ivec2 image_size = imageSize(dst_texture);
 
-	if(global_pos.x >= params.width || global_pos.y >= params.height)
+	if(global_pos.x >= image_size.x || global_pos.y >= image_size.y)
 	{
 		return;
 	}

@@ -52,7 +52,7 @@ class GuageDemo : AppInterface
 		graphics_context.create(guage_dst_texture);
 		guage_dst_texture.create(
 			GpuTextureCreateInfo(
-				GpuTextureType._2d, GpuTextureFormat.r32g32b32a32_float,
+				GpuTextureType._2d, GpuTextureFormat.r16g16b16a16_float,
 				GpuTextureUsageFlags.compute_storage_write | GpuTextureUsageFlags.sampler,
 				300, 300, 1, 1,
 		)
@@ -75,7 +75,7 @@ class GuageDemo : AppInterface
 	{
 		import std.math;
 
-		GpuColorTargetInfo color_target_info;
+		scope GpuColorTargetInfo color_target_info;
 
 		command_buffer.acquire_buffer()
 			.acquire_texture(swapchain_texture);
@@ -90,7 +90,8 @@ class GuageDemo : AppInterface
 			command_buffer.compute(
 				(compute_pass) {
 				compute_pass.bind(guage_pipeline)
-					.push(0, UniformGuageConst(),
+					.push(
+						0, UniformGuageConst(),
 						UniformGuageParam(0.4 + cos(timer.past * 0.001) * 0.3, -sin(
 						timer.past * 0.001) * 0.1),
 					)

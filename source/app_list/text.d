@@ -2,13 +2,17 @@ module app_list.text;
 
 import app_list.app_interface;
 
-import kelp_core, kelp_sdl, kelp_gfx;
+import kelp_core;
+import kelp_sdl.graphics;
+import kelp_sdl.text;
+import kelp_gfx;
 
-import std.math;
-import std.format;
+import std.math : PI_2;
+import std.format : format;
 
 immutable max_vertex_count = 4000;
 immutable max_index_count = 6000;
+immutable inverse_usecs = 0.001f * 0.001f;
 
 class TextApp : AppInterface
 {
@@ -139,15 +143,15 @@ class TextApp : AppInterface
 
 	void draw()
 	{
-		GpuColorTargetInfo color_target_info;
-		uint vertex_offset;
-		uint index_offset;
+		scope GpuColorTargetInfo color_target_info;
+		scope uint vertex_offset;
+		scope uint index_offset;
 		vertex_offset = 0;
 		index_offset = 0;
-		int tw, th;
+		scope int tw, th;
 
-		UniformVertexView ub_view;
-		UniformVertexModel ub_model;
+		scope UniformVertexView ub_view;
+		scope UniformVertexModel ub_model;
 
 		// text
 		string test_str = format("ABCDE 12345\n縁取り文字\n%s ms", timer.past);
@@ -155,16 +159,17 @@ class TextApp : AppInterface
 			.get_text_size(tw, th)
 			.get_draw_data!(TextureGeometry)(text_mesh, text_texture);
 
-		// matrix
-		ub_view.view_matrix = multiply_rtol(
-			transformer_perspective(PI_2,),
-			transformer_look_at(Vec3(0f, 0f, -3f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
-		);
-		ub_model.model_matrix = multiply_rtol(
-			transformer_rotate_y(cast(float)(timer.past * 0.001f)),
-			transformer_scale(0.02f, 0.02f, 0.02f),
-			transformer_translate([-tw / 2.0f, th / 2.0f, 0.0f]),
-		);
+		// view_matrix
+		ub_view.view_matrix =
+			transformer_look_at(Vec3(0f, 0f, -3f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f))
+			* transformer_perspective(PI_2,);
+		// model_matrix 2nd
+		ub_model.model_matrix =
+			transformer_translate([-tw / 2.0f, th / 2.0f, 0.0f])
+			* transformer_scale([0.02f, 0.02f, 0.02f])
+			* Quaternion!float(Vec3(0.0f, 1.0f, 0.0f), cast(float) timer.past * inverse_usecs)
+			.to_matrix.resize!(4, 4);
+
 		assert(!ub_view.view_matrix.contain_nan);
 		assert(!ub_model.model_matrix.contain_nan);
 		// transfer
@@ -184,7 +189,7 @@ class TextApp : AppInterface
 				return;
 			})
 			.submit();
-
+		// render
 		command_buffer.acquire_buffer()
 			.acquire_texture(swapchain_texture);
 		if (swapchain_texture.handle !is null)
@@ -196,21 +201,18 @@ class TextApp : AppInterface
 			color_target_info.clear_color = ColorF(0.1f, 0.1f, 0.1f, 1.0f);
 			command_buffer.render(
 				(ref GpuRenderPass pass) {
-				// swapchain texture
-
 				pass.bind(pipeline)
 					.bind([vertex_buffer])
 					.bind(index_buffer);
-				pass.push_vertex(ub_view, 0)
-					.push_vertex(ub_model, 1)
-					.push_fragment(
+				pass.push_vert(0, ub_view, ub_model,)
+					.push_frag(
+						0,
 						UniformFragmentConfig(
 						ColorF(1.0f, 1.0f, 1.0f, 1.0f),
 						ColorF(0.0f, 0.0f, 0.0f, 1.0f),
 						ColorF(0.5f, 0.5f, 1.0f, 1.0f),
 						0.50f, 0.1f, 0.4f, 0.2f,
 					),
-					0,
 				);
 				foreach (count; 0 .. text_mesh.count!(TextureGeometry))
 				{
@@ -232,11 +234,6 @@ class TextApp : AppInterface
 
 		}
 		command_buffer.submit();
-		/+foreach (texture; text_texture)
-		{
-			SDL_ReleaseGPUTexture(graphics.device.handle, texture.handle);
-		}+/
-
 		return;
 	}
 }

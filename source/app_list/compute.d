@@ -163,15 +163,8 @@ class ComputeDemo : AppInterface
 		scope GpuBufferTransferBuffer buffer_transfer_buffer;
 		scope GpuTextureTransferBuffer tb_texture;
 		graphics_context.create(buffer_transfer_buffer, tb_texture);
-		buffer_transfer_buffer.create(object_geometry.size)
-			.map()
-			.set(object_geometry.vertices, object_geometry.offset_vertex)
-			.set(object_geometry.indices, object_geometry.offset_index)
-			.unmap();
-		tb_texture.create(object_texture.size)
-			.map()
-			.set(object_image)
-			.unmap();
+		buffer_transfer_buffer.prepare(object_geometry);
+		tb_texture.prepare(object_image);
 
 		command_buffer
 			.acquire_buffer()
@@ -224,10 +217,9 @@ class ComputeDemo : AppInterface
 		UniformFragmentModel fragment_model;
 		UniformFragmentLight fragment_light;
 
-		vertex_view.mat_view = multiply_ltor(
-			transformer_look_at(Vec3(0f, 0f, -2.5f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
-			transformer_perspective(PI_2),
-		);
+		vertex_view.mat_view =
+			transformer_look_at(Vec3(0f, 0f, -2.5f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f))
+			* transformer_perspective(PI_2);
 		fragment_scene.ambient_light = ColorF(1.0f, 1.0f, 1.0f, 0.1f);
 		fragment_view.vec_view = Vec3(0f, 0f, -2.5f);
 		with (fragment_light.list[0])
@@ -256,47 +248,51 @@ class ComputeDemo : AppInterface
 			// render
 			command_buffer.render(
 				(render_pass) {
-				vertex_model.mat_model = multiply_rtol(
-					transformer_rotate_y(0.0015 * timer.past),
-					transformer_rotate_x(0.0005 * timer.past),
-					transformer_scale([1.0f, 1.0f, 1.0f]),
-				);
-				vertex_model.mat_model_normal = cast(Matrix!(4, 4, float))(cast(Matrix!(3, 3, float))(
-					vertex_model.mat_model)).invert()
+				vertex_model.mat_model =
+					transformer_rotate_y(0.0015 * timer.past)
+					* transformer_rotate_x(
+						0.0005 * timer.past)
+					* transformer_scale([1.0f, 1.0f, 1.0f]);
+				vertex_model.mat_model_normal = cast(Matrix!(4, 4, float))(
+					cast(Matrix!(3, 3, float))(
+					vertex_model.mat_model)
+				).invert()
 					.transpose();
 				with (fragment_model)
 				{
 					specular_strength = 1.0;
 					shininess = 32.0f;
 				}
-				render_pass.bind(render_pipeline)
-					.bind([
-						GpuTextureSamplerBinding(object_texture, object_sampler)
-					])
-					.bind([vertex_buffer])
-					.bind(index_buffer)
+				render_pass
+					.bind(
+						render_pipeline,
+						[
+							GpuTextureSamplerBinding(object_texture, object_sampler)
+						],
+						[vertex_buffer], index_buffer,
+					)
 					.push_vertex(1, vertex_view, vertex_model)
 					.push_fragment(0, fragment_scene, fragment_view, fragment_model, fragment_light,)
 					.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 			},
 				[color_target_info],
 				depth_target_info,
-			);
-			// compute
+			); // compute
 			command_buffer.compute(
 				(compute_pass) {
-				compute_pass.bind(compute_pipeline)
+				compute_pass
 					.bind(
-						GpuTextureSamplerBinding(compute_src_texture, sampler)
+						compute_pipeline,
+						[GpuTextureSamplerBinding(compute_src_texture, sampler)],
 					)
 					.push(UniformCompute(960f, 540f))
-					.dispatch(960 / 8, 540 / 8, 1);
+					.dispatch(
+						compute_pipeline.dispatch_size(graphics_context.client_size),);
 				return;
 			},
 				[GpuStorageTextureReadWriteBinding(compute_dst_texture)],
 				null,
-			);
-			// blit
+			); // blit
 			command_buffer.blit_texture(
 				GpuBlitInfo(
 					GpuBlitRegion(compute_dst_texture),

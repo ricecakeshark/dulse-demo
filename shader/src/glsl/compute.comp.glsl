@@ -17,19 +17,16 @@ void main()
 {
 	vec4 color;
 	vec4 out_color;
-	vec2 image_size = imageSize(output_image);
-	uvec2 pos = gl_GlobalInvocationID.xy;
+	const ivec2 image_size = imageSize(output_image);
+	const uvec2 pos = gl_GlobalInvocationID.xy;
 
-	if(pos.x >= params.width|| pos.y >= params.height)
+	if(pos.x >= image_size.x || pos.y >= image_size.y)
 	{
 		return;
 	}
 
-	vec2 uv = vec2((vec2(pos)+0.5)/vec2(image_size));
+	const vec2 uv = vec2( (vec2(pos)+0.5) / vec2(image_size));
 	color = texture(input_texture, uv);
-
-	//float param_x = mod(pos.x, 16.0*8);
-	//float param_y = mod(pos.y, 9.0*8);
 
 	if( pos.x%12 >= 0 && pos.x%12 < 4 )
 	{
@@ -44,10 +41,5 @@ void main()
 		out_color = vec4(0.2, 0.2, color.b, 1.0);
 	}
 
-
-	//color = vec4(param_x/(16.0*4),param_y/(9.0*4),0.2,1.0);
-	
-	//uint index = pos.y * params.width + pos.x;
-	//vec4 color = input_data.pixels[index]; 
 	imageStore(output_image, ivec2(pos), out_color);
 }

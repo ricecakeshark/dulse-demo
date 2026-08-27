@@ -39,7 +39,6 @@ void main()
 		cast(AppInterface) new ManyObject(core),
 		new CubeForward(core),
 		new CubeDeferDemo(core),
-		//new ShaderTest(core, graphics_context),
 		new TextApp(core),
 		new ComputeDemo(core),
 		new GuageDemo(core),

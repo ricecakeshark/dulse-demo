@@ -308,7 +308,7 @@ struct TransformComponent
 
 		return matrix_scale!3(0.25f)
 			.multiply(rotate_quat.to_matrix)
-			.extend!(Matrix!(4, 4))
+			.resize!(4, 4)
 			.multiply(transformer_translate(pos));
 	}
 }
@@ -330,11 +330,12 @@ class PositionSystem : IObjectSystem
 				rotate_quat = Quaternion!float(Vec3(1.0f, 0.0f, 0.0f), 0f);
 				_body = Body(Shape(Sphere(0.3f)), pos, 1.0f);
 				_body.pos = pos;
-				_body.vel = Quaternion!float(Vec3(1.0f, 0.0f, 0.0f), uniform(0f, PI * 2))
-					.multiply(Quaternion!float(Vec3(0.0f, 1.0f, 0.0f), uniform(0f, PI * 2)))
+				_body.vel = (Quaternion!float(Vec3(1.0f, 0.0f, 0.0f), uniform(0f, PI * 2))
+						* Quaternion!float(
+							Vec3(0.0f, 1.0f, 0.0f), uniform(0f, PI * 2)))
 					.to_vec * 0.03;
 			}
-			import std.exception;
+			import std.exception : enforce;
 
 			enforce(!object_manager.component.get!TransformComponent(entity)
 					._body.position.contain_nan);
@@ -349,22 +350,18 @@ class PositionSystem : IObjectSystem
 
 	void process(ObjectManager object_manager)
 	{
-		import std.stdio;
-
-		/+writeln(object_manager.component.get!TransformComponent(object_manager.entity.list[0])
-				._body);+/
-		foreach (entity; object_manager.entity.list)
+		foreach (ref entity; object_manager.entity.list)
 		{
 			with (object_manager.component.get!TransformComponent(entity))
 			{
 				_body.pos += _body.vel;
 			}
 		}
-		foreach (entity_1; object_manager.entity.list)
+		foreach (ref entity_1; object_manager.entity.list)
 		{
 			ref Body body_1 = object_manager.component.get!TransformComponent(entity_1)._body;
 
-			foreach (entity_2; object_manager.entity.list)
+			foreach (ref entity_2; object_manager.entity.list)
 			{
 
 				if (entity_1.index >= entity_2.index)
@@ -372,9 +369,7 @@ class PositionSystem : IObjectSystem
 					continue;
 				}
 				ref Body body_2 = object_manager.component.get!TransformComponent(entity_2)._body;
-				//writeln("e1:", entity_1.index, body_1);
-				//writeln("e2: ", entity_2.index, body_2);
-				CollideManifold manifold = detect_collision(body_1, body_2);
+				scope CollideManifold manifold = detect_collision(body_1, body_2);
 				if (manifold.hit)
 				{
 					resolve_collision(body_1, body_2, manifold);
@@ -383,18 +378,15 @@ class PositionSystem : IObjectSystem
 			}
 		}
 
-		foreach (entity; object_manager.entity.list)
+		foreach (ref entity; object_manager.entity.list)
 		{
 			with (object_manager.component.get!TransformComponent(entity))
 			{
-				//if (distance(_body.pos, Vec3(0f, 0f, 0f)) > 5f)
-
 				resolve_collision(_body);
-
 			}
 		}
 
-		foreach (entity; object_manager.entity.list)
+		foreach (ref entity; object_manager.entity.list)
 		{
 			with (object_manager.component.get!TransformComponent(entity))
 			{
