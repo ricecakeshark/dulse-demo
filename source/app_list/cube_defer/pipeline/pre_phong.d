@@ -1,29 +1,28 @@
-module app_list.pipeline.defer.shade_compose_debug;
+module app_list.cube_defer.pipeline.pre_phong;
 
 import kelp_sdl;
 import kelp_gfx;
 
-GfxGraphicsContext create_pipeline_compose_debug(
+GfxGraphicsContext create_pipeline_phong(
 	ref GfxGraphicsContext graphics_context,
-	out GpuComputePipeline compose_pipeline,
+	out GpuComputePipeline pipeline,
 )
 {
-	graphics_context.create(compose_pipeline);
-	//GpuComputePipelineCreateInfo pipeline_create_info;
+	graphics_context.create(pipeline);
 	auto pipeline_create_info = GpuComputePipelineCreateInfo(
-		ShaderFile("shade_compose.comp", GpuShaderFormat.spirv)
+		ShaderFile("pre_phong.comp", GpuShaderFormat.spirv)
 	);
 	with (pipeline_create_info)
 	{
 		//num_readonly_storage_buffers = 0;
-		num_samplers = 7;
+		num_samplers = 4;
 		num_readwrite_storage_textures = 1;
-		num_uniform_buffers = 1;
+		num_uniform_buffers = 3;
 		threadcount_x = 8;
 		threadcount_y = 8;
 		threadcount_z = 1;
 	}
-	compose_pipeline.create(
+	pipeline.create(
 		pipeline_create_info
 	);
 	return graphics_context;

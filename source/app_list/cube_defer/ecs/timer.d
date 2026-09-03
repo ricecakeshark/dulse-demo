@@ -1,4 +1,4 @@
-module app_list.ecs.timer;
+module app_list.cube_defer.ecs.timer;
 
 struct TimerResource
 {

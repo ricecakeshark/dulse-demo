@@ -1,8 +1,8 @@
 module app_list.cube_forward;
-
+/+
 import app_list.app_interface;
 import app_list.uniform;
-import app_list.ecs;
+//import app_list.ecs;
 
 import kelp_core;
 import kelp_sdl;
@@ -310,3 +310,4 @@ class CubeForward : AppInterface
 		return 0;
 	}
 }
++/

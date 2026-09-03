@@ -1,4 +1,4 @@
-module app_list.uniform.uniform_post_blur;
+module app_list.cube_defer.uniform.uniform_post_blur;
 
 import kelp_core;
 

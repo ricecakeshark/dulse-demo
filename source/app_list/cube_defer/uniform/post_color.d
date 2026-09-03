@@ -1,4 +1,4 @@
-module app_list.uniform.post_color;
+module app_list.cube_defer.uniform.post_color;
 
 struct UniformColor
 {

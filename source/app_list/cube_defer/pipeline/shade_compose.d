@@ -1,17 +1,17 @@
-module app_list.pipeline.defer.pre_edge;
+module app_list.cube_defer.pipeline.shade_compose;
 
 import kelp_sdl;
 import kelp_gfx;
 
-GfxGraphicsContext create_pipeline_pre_edge(
+GfxGraphicsContext create_pipeline_compose(
 	ref GfxGraphicsContext graphics_context,
-	out GpuComputePipeline pre_edge_pipeline,
+	out GpuComputePipeline compose_pipeline,
 )
 {
-	graphics_context.create(pre_edge_pipeline);
+	graphics_context.create(compose_pipeline);
 	//GpuComputePipelineCreateInfo pipeline_create_info;
 	auto pipeline_create_info = GpuComputePipelineCreateInfo(
-		ShaderFile("pre_edge.comp", GpuShaderFormat.spirv)
+		ShaderFile("shade_compose.comp", GpuShaderFormat.spirv)
 	);
 	with (pipeline_create_info)
 	{
@@ -23,7 +23,7 @@ GfxGraphicsContext create_pipeline_pre_edge(
 		threadcount_y = 8;
 		threadcount_z = 1;
 	}
-	pre_edge_pipeline.create(
+	compose_pipeline.create(
 		pipeline_create_info
 	);
 	return graphics_context;

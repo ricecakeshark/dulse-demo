@@ -1,4 +1,4 @@
-module app_list.pipeline.text.text;
+module app_list.text.pipeline.text;
 
 import kelp_sdl;
 import kelp_gfx;

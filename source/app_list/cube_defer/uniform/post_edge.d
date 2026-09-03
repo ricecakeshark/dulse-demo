@@ -1,4 +1,4 @@
-module app_list.uniform.post_edge;
+module app_list.cube_defer.uniform.post_edge;
 
 import kelp_core.math;
 

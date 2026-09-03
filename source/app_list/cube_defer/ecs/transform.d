@@ -1,6 +1,6 @@
-module app_list.ecs.transform;
+module app_list.cube_defer.ecs.transform;
 
-import app_list.ecs;
+import app_list.cube_defer.ecs;
 
 import kelp_core.object;
 import kelp_core.math;

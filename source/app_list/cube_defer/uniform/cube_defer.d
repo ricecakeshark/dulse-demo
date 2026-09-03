@@ -1,4 +1,4 @@
-module app_list.uniform.cube_defer;
+module app_list.cube_defer.uniform.cube_defer;
 
 import kelp_core.math;
 

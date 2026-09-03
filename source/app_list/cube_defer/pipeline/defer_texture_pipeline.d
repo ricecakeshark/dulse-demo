@@ -1,9 +1,9 @@
-module app_list.pipeline.defer.defer_solid_pipeline;
+module app_list.cube_defer.pipeline.defer_texture_pipeline;
 
 import kelp_sdl;
 import kelp_gfx;
 
-GfxGraphicsContext create_pipeline_defer_solid(
+GfxGraphicsContext create_pipeline_defer_texture(
 	ref GfxGraphicsContext graphics_context,
 	out GpuGraphicsPipeline defer_pipeline
 )
@@ -12,12 +12,12 @@ GfxGraphicsContext create_pipeline_defer_solid(
 	scope GpuFragmentShader fragment_shader;
 	graphics_context.create(defer_pipeline, vertex_shader, fragment_shader);
 	vertex_shader.create(
-		ShaderFile("defer_solid.vert", graphics_context.get_shader_format()),
+		ShaderFile("defer_texture.vert", graphics_context.get_shader_format()),
 		GpuShaderArguments(0, 3, 0, 0),
 	);
 	fragment_shader.create(
-		ShaderFile("defer_solid.frag", graphics_context.get_shader_format()),
-		GpuShaderArguments(0, 4, 0, 0),
+		ShaderFile("defer_texture.frag", graphics_context.get_shader_format()),
+		GpuShaderArguments(1, 4, 0, 0),
 	);
 	// Defer Pipeline
 	scope GpuGraphicsPipelineCreateInfo defer_pipeline_info;
@@ -27,9 +27,9 @@ GfxGraphicsContext create_pipeline_defer_solid(
 	{
 		vertex_input_state = GpuVertexInputState(
 			[
-				vertex_buffer_description!(float[3], float[3], float[4])
+				vertex_buffer_description!(float[3], float[3], float[2])
 			],
-			vertex_attributes!(float[3], float[3], float[4])(0),
+			vertex_attributes!(float[3], float[3], float[2])(0),
 		);
 		primitive_type = GpuPrimitiveType.triangle_list;
 		rasterizer_state = GpuRasterizerState(

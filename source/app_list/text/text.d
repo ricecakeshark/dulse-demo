@@ -1,7 +1,7 @@
-module app_list.text;
+module app_list.text.text;
 
 import app_list.app_interface;
-import app_list.pipeline.text;
+import app_list.text;
 
 import kelp_core;
 import kelp_sdl.graphics;

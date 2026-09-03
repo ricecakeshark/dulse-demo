@@ -37,7 +37,7 @@ void main()
 
 	app_list = [
 		cast(AppInterface) new ManyObject(core),
-		new CubeForward(core),
+		//new CubeForward(core),
 		new CubeDeferDemo(core),
 		new TextApp(core),
 		new ComputeDemo(core),
