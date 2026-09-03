@@ -1,7 +1,8 @@
-module app_list.compute;
+module app_list.compute.compute;
 
 import app_list.app_interface;
-import app_list.uniform;
+import app_list.compute.uniform.compute;
+import app_list.cube_defer.uniform;
 
 import kelp_core;
 import kelp_sdl;

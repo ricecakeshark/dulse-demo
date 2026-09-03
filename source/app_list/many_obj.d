@@ -1,5 +1,5 @@
 module app_list.many_obj;
-
+/+
 import app_list.app_interface;
 import app_list.uniform;
 import kelp_core;
@@ -396,4 +396,4 @@ class PositionSystem : IObjectSystem
 
 		return;
 	}
-}
+}+/

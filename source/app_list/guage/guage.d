@@ -1,7 +1,7 @@
-module app_list.guage;
+module app_list.guage.guage;
 
 import app_list.app_interface;
-import app_list.uniform;
+import app_list.guage.uniform.guage;
 import kelp_core;
 import kelp_sdl;
 import kelp_gfx;

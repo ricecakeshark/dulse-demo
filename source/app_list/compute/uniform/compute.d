@@ -1,7 +1,15 @@
-module app_list.uniform.texture;
+module app_list.compute.uniform.compute;
 
 import kelp_core.core;
 import kelp_core.math;
+
+struct UniformCompute
+{
+	float width;
+	float height;
+	float delta = 0.0f;
+	float level = 8.0f;
+}
 
 struct UniformVertexScene
 {

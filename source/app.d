@@ -36,13 +36,10 @@ void main()
 			.vulkan);
 
 	app_list = [
-		cast(AppInterface) new ManyObject(core),
-		//new CubeForward(core),
-		new CubeDeferDemo(core),
+		cast(AppInterface) new CubeDeferDemo(core),
 		new TextApp(core),
 		new ComputeDemo(core),
 		new GuageDemo(core),
-		//new KeyboardApp(core, graphics_context),
 	];
 	app_list[app_index].initialize();
 

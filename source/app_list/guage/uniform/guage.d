@@ -1,4 +1,4 @@
-module app_list.uniform.guage;
+module app_list.guage.uniform.guage;
 
 import kelp_core.core;
 import kelp_core.math;
