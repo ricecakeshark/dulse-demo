@@ -3,7 +3,7 @@ module app_list.cube_defer;
 import app_list.app_interface;
 import app_list.uniform;
 import app_list.ecs;
-import app_list.pipeline;
+import app_list.pipeline.defer;
 
 import kelp_core;
 import kelp_sdl;

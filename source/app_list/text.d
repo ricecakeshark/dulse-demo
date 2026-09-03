@@ -1,6 +1,7 @@
 module app_list.text;
 
 import app_list.app_interface;
+import app_list.pipeline.text;
 
 import kelp_core;
 import kelp_sdl.graphics;
@@ -50,49 +51,7 @@ class TextApp : AppInterface
 		core.subsystem.query(timer);
 		graphics.create(command_buffer, swapchain_texture);
 		// pipeline, vertex shader, fragment shader
-		scope GpuVertexShader vertex_shader;
-		scope GpuFragmentShader fragment_shader;
-		graphics.create(pipeline, vertex_shader, fragment_shader);
-		vertex_shader.create(
-			ShaderFile("text.vert", graphics.device.get_shader_format()), //ShaderFile("const_position.vert", graphics.device.get_shader_format()),
-			GpuShaderArguments(0, 2, 0, 0),
-		);
-		fragment_shader.create(
-			ShaderFile("text.frag", graphics.device.get_shader_format()),
-			GpuShaderArguments(1, 1, 0, 0),
-		);
-		scope GpuGraphicsPipelineCreateInfo pipeline_create_info;
-		pipeline_create_info.vertex_shader = vertex_shader.handle;
-		pipeline_create_info.fragment_shader = fragment_shader.handle;
-		with (pipeline_create_info)
-		{
-			vertex_input_state = GpuVertexInputState(
-				[
-					vertex_buffer_description!(float[3], float[2])
-				],
-				vertex_attributes!(float[3], float[2])(0),
-			);
-			primitive_type = GpuPrimitiveType.triangle_list;
-			target_info = GpuGraphicsPipelineTargetInfo(
-				[
-				GpuColorTargetDescription(
-					swapchain_texture.get_format(),
-					GpuColorTargetBlendState(
-						GpuBlendFactor.src_alpha,
-						GpuBlendFactor.one_minus_src_alpha,
-						GpuBlendOp.add,
-						GpuBlendFactor.src_alpha,
-						GpuBlendFactor.dst_alpha,
-						GpuBlendOp.add,
-						cast(GpuColorComponentFlags) 0xF,
-						true,
-				)
-				)
-			]
-			);
-			rasterizer_state.cull_mode = GpuCullMode.none;
-		}
-		pipeline.create(pipeline_create_info);
+		graphics.create_pipeline_text(pipeline);
 
 		// geometry
 		text_mesh.initialize(
@@ -152,6 +111,7 @@ class TextApp : AppInterface
 
 		scope UniformVertexView ub_view;
 		scope UniformVertexModel ub_model;
+		scope UniformVertexModel ub_model_shadow;
 
 		// text
 		string test_str = format("ABCDE 12345\n縁取り文字\n%s ms", timer.past);
@@ -169,6 +129,13 @@ class TextApp : AppInterface
 			* transformer_scale([0.02f, 0.02f, 0.02f])
 			* Quaternion!float(Vec3(0.0f, 1.0f, 0.0f), cast(float) timer.past * inverse_usecs)
 			.to_matrix.resize!(4, 4);
+
+		ub_model_shadow.model_matrix =
+			transformer_translate([-tw / 2.0f, th / 2.0f, 0.0f])
+			* transformer_scale([0.02f, 0.02f, 0.02f])
+			* Quaternion!float(Vec3(0.0f, 1.0f, 0.0f), cast(float) timer.past * inverse_usecs)
+			.to_matrix.resize!(4, 4)
+			* transformer_translate([0f, 0.0f, +0.1f]);
 
 		assert(!ub_view.view_matrix.contain_nan);
 		assert(!ub_model.model_matrix.contain_nan);
@@ -201,10 +168,9 @@ class TextApp : AppInterface
 			color_target_info.clear_color = ColorF(0.1f, 0.1f, 0.1f, 1.0f);
 			command_buffer.render(
 				(ref GpuRenderPass pass) {
-				pass.bind(pipeline)
-					.bind([vertex_buffer])
-					.bind(index_buffer);
-				pass.push_vert(0, ub_view, ub_model,)
+				pass
+					.bind(pipeline, [vertex_buffer], index_buffer,)
+					.push_vert(0, ub_view, ub_model,)
 					.push_frag(
 						0,
 						UniformFragmentConfig(
@@ -214,12 +180,20 @@ class TextApp : AppInterface
 						0.50f, 0.1f, 0.4f, 0.2f,
 					),
 				);
+				pass.render_text(
+					text_mesh.geometries!TextureGeometry(),
+					text_texture,
+					sampler,
+				);
+				/+
 				foreach (count; 0 .. text_mesh.count!(TextureGeometry))
 				{
-					TextureGeometry temp_geometry = text_mesh.geometries!(TextureGeometry)[count];
-					pass.bind([
-						GpuTextureSamplerBinding(text_texture[count].handle, sampler.handle)
-					])
+					scope TextureGeometry temp_geometry = text_mesh.geometries!(
+						TextureGeometry)[count];
+					pass
+						.bind([
+							GpuTextureSamplerBinding(text_texture[count].handle, sampler.handle)
+						])
 						.draw_indexed(ParamIndexedPrimitive(
 							cast(uint) temp_geometry.count_index,
 							1u, index_offset, vertex_offset, 0u
@@ -227,11 +201,27 @@ class TextApp : AppInterface
 					vertex_offset += temp_geometry.count_vertex;
 					index_offset += temp_geometry.count_index;
 				}
+				+/
+				pass
+					.bind(pipeline, [vertex_buffer], index_buffer,)
+					.push_vert(1, ub_model_shadow)
+					.push_frag(
+						0,
+						UniformFragmentConfig(
+						ColorF(0.0f, 0.0f, 0.0f, 1.0f),
+						ColorF(0.0f, 0.0f, 0.0f, 1.0f),
+						ColorF(0.5f, 0.5f, 0.5f, 1.0f),
+						0.50f, 0.1f, 0.4f, 0.0f,
+					));
+				pass.render_text(
+					text_mesh.geometries!TextureGeometry(),
+					text_texture,
+					sampler,
+				);
 				return;
 			},
 				[color_target_info],
 			);
-
 		}
 		command_buffer.submit();
 		return;

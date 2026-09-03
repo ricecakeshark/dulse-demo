@@ -1,4 +1,4 @@
-module app_list.pipeline.shade_compose;
+module app_list.pipeline.defer.shade_compose;
 
 import kelp_sdl;
 import kelp_gfx;

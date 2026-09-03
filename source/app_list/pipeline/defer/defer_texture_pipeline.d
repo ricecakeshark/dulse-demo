@@ -1,4 +1,4 @@
-module app_list.pipeline.defer_texture_pipeline;
+module app_list.pipeline.defer.defer_texture_pipeline;
 
 import kelp_sdl;
 import kelp_gfx;

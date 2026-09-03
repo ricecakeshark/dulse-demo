@@ -1,29 +1,28 @@
-module app_list.pipeline.post_color;
+module app_list.pipeline.defer.pre_phong;
 
 import kelp_sdl;
 import kelp_gfx;
 
-GfxGraphicsContext create_pipeline_post_color(
+GfxGraphicsContext create_pipeline_phong(
 	ref GfxGraphicsContext graphics_context,
-	out GpuComputePipeline post_color_pipeline,
+	out GpuComputePipeline pipeline,
 )
 {
-	graphics_context.create(post_color_pipeline);
-	//GpuComputePipelineCreateInfo pipeline_create_info;
+	graphics_context.create(pipeline);
 	auto pipeline_create_info = GpuComputePipelineCreateInfo(
-		ShaderFile("post_color.comp", GpuShaderFormat.spirv)
+		ShaderFile("pre_phong.comp", GpuShaderFormat.spirv)
 	);
 	with (pipeline_create_info)
 	{
 		//num_readonly_storage_buffers = 0;
-		num_samplers = 1;
+		num_samplers = 4;
 		num_readwrite_storage_textures = 1;
 		num_uniform_buffers = 3;
 		threadcount_x = 8;
 		threadcount_y = 8;
 		threadcount_z = 1;
 	}
-	post_color_pipeline.create(
+	pipeline.create(
 		pipeline_create_info
 	);
 	return graphics_context;

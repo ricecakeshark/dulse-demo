@@ -1,4 +1,4 @@
-module app_list.pipeline.defer_solid_pipeline;
+module app_list.pipeline.defer.defer_solid_pipeline;
 
 import kelp_sdl;
 import kelp_gfx;
