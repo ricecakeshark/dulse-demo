@@ -1,7 +1,7 @@
 module app_list.cube_defer.pipeline.defer_solid_pipeline;
 
-import kelp_sdl;
-import kelp_gfx;
+import dulse_sdl;
+import dulse_gfx;
 
 GfxGraphicsContext create_pipeline_defer_solid(
 	ref GfxGraphicsContext graphics_context,

@@ -1,7 +1,7 @@
 module app_list.cube_defer.pipeline.pre_phong;
 
-import kelp_sdl;
-import kelp_gfx;
+import dulse_sdl;
+import dulse_gfx;
 
 GfxGraphicsContext create_pipeline_phong(
 	ref GfxGraphicsContext graphics_context,

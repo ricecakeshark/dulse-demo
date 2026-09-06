@@ -1,9 +1,9 @@
 module myapp;
 
 import app_list;
-import kelp_core;
-import kelp_sdl;
-import kelp_gfx;
+import dulse;
+import dulse_sdl;
+import dulse_gfx;
 
 //import std.stdio;
 import std.conv : text;

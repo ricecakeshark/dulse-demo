@@ -1,6 +1,6 @@
 module app_list.cube_defer.uniform.post_edge;
 
-import kelp_core.math;
+import dulse.math;
 
 struct UniformPostEdge
 {

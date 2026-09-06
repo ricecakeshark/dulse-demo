@@ -3,9 +3,9 @@ module app_list.cube_defer.cube_defer;
 import app_list.app_interface;
 import app_list.cube_defer;
 
-import kelp_core;
-import kelp_sdl;
-import kelp_gfx;
+import dulse;
+import dulse_sdl;
+import dulse_gfx;
 
 import std.math : PI_2;
 

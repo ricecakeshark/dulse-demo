@@ -1,7 +1,7 @@
 module app_list.cube_defer.pipeline.shade_compose;
 
-import kelp_sdl;
-import kelp_gfx;
+import dulse_sdl;
+import dulse_gfx;
 
 GfxGraphicsContext create_pipeline_compose(
 	ref GfxGraphicsContext graphics_context,

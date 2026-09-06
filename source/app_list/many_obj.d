@@ -2,9 +2,9 @@ module app_list.many_obj;
 /+
 import app_list.app_interface;
 import app_list.uniform;
-import kelp_core;
-import kelp_sdl;
-import kelp_gfx;
+import dulse;
+import dulse_sdl;
+import dulse_gfx;
 import std.math;
 
 class ManyObject : AppInterface

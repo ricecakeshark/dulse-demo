@@ -1,7 +1,7 @@
 module app_list.compute.uniform.compute;
 
-import kelp_core.core;
-import kelp_core.math;
+import dulse.core;
+import dulse.math;
 
 struct UniformCompute
 {

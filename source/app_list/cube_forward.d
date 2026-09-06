@@ -4,9 +4,9 @@ import app_list.app_interface;
 import app_list.uniform;
 //import app_list.ecs;
 
-import kelp_core;
-import kelp_sdl;
-import kelp_gfx;
+import dulse;
+import dulse_sdl;
+import dulse_gfx;
 
 class CubeForward : AppInterface
 {

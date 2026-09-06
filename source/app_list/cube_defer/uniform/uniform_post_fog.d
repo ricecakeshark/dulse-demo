@@ -1,6 +1,6 @@
 module app_list.cube_defer.uniform.uniform_post_fog;
 
-import kelp_core;
+import dulse;
 
 struct UniformPostFog
 {

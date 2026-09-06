@@ -4,9 +4,9 @@ import app_list.app_interface;
 import app_list.compute.uniform.compute;
 import app_list.cube_defer.uniform;
 
-import kelp_core;
-import kelp_sdl;
-import kelp_gfx;
+import dulse;
+import dulse_sdl;
+import dulse_gfx;
 
 class ComputeDemo : AppInterface
 {

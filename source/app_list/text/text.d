@@ -3,10 +3,10 @@ module app_list.text.text;
 import app_list.app_interface;
 import app_list.text;
 
-import kelp_core;
-import kelp_sdl.graphics;
-import kelp_sdl.text;
-import kelp_gfx;
+import dulse;
+import dulse_sdl.graphics;
+import dulse_sdl.text;
+import dulse_gfx;
 
 import std.math : PI_2;
 import std.format : format;

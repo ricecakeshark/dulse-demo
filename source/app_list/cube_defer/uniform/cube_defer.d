@@ -1,6 +1,6 @@
 module app_list.cube_defer.uniform.cube_defer;
 
-import kelp_core.math;
+import dulse.math;
 
 struct UniformScene
 {

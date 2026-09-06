@@ -5,10 +5,10 @@
 		"bindbc-loader": "1.1.5",
 		"bindbc-sdl": "2.4.2",
 		"kelp-api": {"path":"../kelp_api"},
-		"kelp-core": {"path":"../kelp_core"},
-		"kelp-gfx": {"path":"../kelp_gfx"},
+		"kelp-core": {"path":"../dulse"},
+		"kelp-gfx": {"path":"../dulse_gfx"},
 		"kelp-loader": {"path":"../kelp_loader"},
 		"kelp-render": {"path":"../kelp_render"},
-		"kelp-sdl": {"path":"../kelp_sdl"}
+		"kelp-sdl": {"path":"../dulse_sdl"}
 	}
 }

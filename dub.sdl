@@ -1,16 +1,16 @@
-name "kelp-dev"
+name "dulse-dev"
 description "test app for kelp"
 authors "RiceShark"
 copyright "Copyright © 2025, RiceShark"
 license "proprietary"
 
 targetType "executable"
-targetName "kelp-dev"
+targetName "dulse-dev"
 targetPath "build"
 
-dependency "kelp-core" path="..\\kelp_core"
-dependency "kelp-sdl"  path="..\\kelp_sdl"
-dependency "kelp-gfx" path="..\\kelp_gfx"
+dependency "dulse" path="..\\dulse"
+dependency "dulse-sdl" path="..\\dulse_sdl"
+dependency "dulse-gfx" path="..\\dulse_gfx"
 
 lflags "/LIBPATH:$PACKAGE_DIR\\lib\\win_x86-64" platform="windows-x86_64"
 copyFiles "lib\\win_x86-64\\*.dll" platform="windows-x86_64"
@@ -18,14 +18,14 @@ copyFiles "..\\build_shader\\build\\shader_builder.exe"
 copyFiles "..\\build_shader\\build\\glslang.exe"
 
 lflags "/LIBPATH:$PACKAGE_DIR\\lib_st" "/LIBPATH:$PACKAGE_DIR\\lib_dy"
-//libs "kelp_sdl" "kelp_render"
+//libs "dulse_sdl" "dulse_render"
 
-// SDL3 with kelp-sdl
-lflags "/LIBPATH:$PACKAGE_DIR\\..\\kelp_sdl\\build"
+// SDL3 with dulse-sdl
+lflags "/LIBPATH:$PACKAGE_DIR\\..\\dulse_sdl\\build"
 
-// kelp_gfx
-//libs "kelp_render"
-lflags "/LIBPATH:$PACKAGE_DIR\\..\\kelp_gfx\\build"
+// dulse_gfx
+//libs "dulse_render"
+lflags "/LIBPATH:$PACKAGE_DIR\\..\\dulse_gfx\\build"
 
 /*buildType "release" {
 	targetPath "release"
