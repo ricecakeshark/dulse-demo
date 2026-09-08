@@ -5,7 +5,6 @@ import dulse;
 import dulse_sdl;
 import dulse_gfx;
 
-//import std.stdio;
 import std.conv : text;
 import std.stdio;
 import core.memory : GC;

@@ -1,16 +1,16 @@
 name "dulse-dev"
 description "test app for kelp"
 authors "RiceShark"
-copyright "Copyright © 2025, RiceShark"
-license "proprietary"
+copyright "Copyright © 2025-2026, RiceShark"
+license "Mozilla Public License Version 2.0"
 
 targetType "executable"
 targetName "dulse-dev"
 targetPath "build"
 
-dependency "dulse" path="..\\dulse"
-dependency "dulse-sdl" path="..\\dulse_sdl"
-dependency "dulse-gfx" path="..\\dulse_gfx"
+dependency "dulse" version=">=0.0.0"
+dependency "dulse-sdl" version=">=0.0.0"
+dependency "dulse-gfx" version=">=0.0.0"
 
 lflags "/LIBPATH:$PACKAGE_DIR\\lib\\win_x86-64" platform="windows-x86_64"
 copyFiles "lib\\win_x86-64\\*.dll" platform="windows-x86_64"
@@ -19,13 +19,6 @@ copyFiles "..\\build_shader\\build\\glslang.exe"
 
 lflags "/LIBPATH:$PACKAGE_DIR\\lib_st" "/LIBPATH:$PACKAGE_DIR\\lib_dy"
 //libs "dulse_sdl" "dulse_render"
-
-// SDL3 with dulse-sdl
-lflags "/LIBPATH:$PACKAGE_DIR\\..\\dulse_sdl\\build"
-
-// dulse_gfx
-//libs "dulse_render"
-lflags "/LIBPATH:$PACKAGE_DIR\\..\\dulse_gfx\\build"
 
 /*buildType "release" {
 	targetPath "release"

@@ -8,26 +8,20 @@ shader/compiled
 image/
 se/
 
-# D
+.dub/
+dub.selections.json
+
+*.[oa]
+*.exp
+*.obj
+*.pdb
+
 *.exe
+*.so
+*.so.*
 *.dylib
 *.dll
 *.lib
-*.pdb
-*.exp
-*.o
-*.obj
-*.so
-*.a
-.dub/
-
-# shader
-!*.hlsl
-!*.glsl
-
-# font
-*.ttf
-*.otf
 
 # VSCode
 .vscode/*
@@ -36,6 +30,6 @@ se/
 !.vscode/extensions.json
 
 # OS
+desktop.ini
 .DS_Store
 Thumbs.db
-desktop.ini
