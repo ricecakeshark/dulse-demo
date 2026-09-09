@@ -1,4 +1,5 @@
 
+lib/
 lib_st/
 lib_dy/
 include/
@@ -22,6 +23,9 @@ dub.selections.json
 *.dylib
 *.dll
 *.lib
+
+*.ttf
+*.otf
 
 # VSCode
 .vscode/*
