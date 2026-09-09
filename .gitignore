@@ -1,13 +1,12 @@
 
+bin/
 lib/
-lib_st/
-lib_dy/
-include/
 build/
 
 shader/compiled
 image/
 se/
+font/
 
 .dub/
 dub.selections.json
@@ -24,8 +23,12 @@ dub.selections.json
 *.dll
 *.lib
 
+# font
 *.ttf
 *.otf
+# model
+*.obj
+*.gltf
 
 # VSCode
 .vscode/*

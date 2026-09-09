@@ -1,11 +1,11 @@
-name "dulse-dev"
-description "test app for kelp"
+name "dulse-demo"
+description "demo application for dulse"
 authors "RiceShark"
 copyright "Copyright © 2025-2026, RiceShark"
 license "Mozilla Public License Version 2.0"
 
 targetType "executable"
-targetName "dulse-dev"
+targetName "dulse-demo"
 targetPath "build"
 
 dependency "dulse" version=">=0.0.0"
@@ -17,13 +17,3 @@ copyFiles "lib\\win_x86-64\\*.dll" platform="windows-x86_64"
 copyFiles "..\\build_shader\\build\\shader_builder.exe"
 copyFiles "..\\build_shader\\build\\glslang.exe"
 
-lflags "/LIBPATH:$PACKAGE_DIR\\lib_st" "/LIBPATH:$PACKAGE_DIR\\lib_dy"
-//libs "dulse_sdl" "dulse_render"
-
-/*buildType "release" {
-	targetPath "release"
-}
-
-buildType "debug" {
-	targetPath "debug"
-}*/
