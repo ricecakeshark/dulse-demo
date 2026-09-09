@@ -37,8 +37,8 @@ void main()
 	app_list = [
 		cast(AppInterface) new CubeDeferDemo(core),
 		new TextApp(core),
-		new ComputeDemo(core),
-		new GuageDemo(core),
+		//new ComputeDemo(core),
+		//new GuageDemo(core),
 	];
 	app_list[app_index].initialize();
 
