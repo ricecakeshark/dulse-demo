@@ -29,6 +29,8 @@ dub.selections.json
 # model
 *.obj
 *.gltf
+#
+*.mp3
 
 # VSCode
 .vscode/*

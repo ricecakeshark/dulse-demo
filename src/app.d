@@ -31,7 +31,7 @@ void main()
 	core.append_gio_subsystem();
 	core.initialize();
 	core.subsystem.query(timer, graphics, logger, input);
-	graphics.context.initialize(1920, 1080, "D-lang app with SDL3 GPU_API (Vulkan backend)", GpuBackend
+	graphics.context.initialize(1920, 1080, "Dulse-demo with SDL3 GPU_API (Vulkan backend)", GpuBackend
 			.vulkan);
 
 	app_list = [
