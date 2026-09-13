@@ -35,7 +35,11 @@ void main()
 	graphics.context.initialize(1920, 1080, "Dulse-demo with SDL3 GPU_API (Vulkan backend)", GpuBackend
 			.vulkan);
 
-	mixer.open("./bgm/sunnyday.mp3").set(0).play();
+	Track bgm_track;
+	Audio bgm_1;
+	mixer.create(bgm_track, bgm_1);
+	bgm_1.load("./bgm/sunnyday.mp3")
+		.play(bgm_track);
 
 	app_list = [
 		cast(AppInterface) new CubeDeferDemo(core),
