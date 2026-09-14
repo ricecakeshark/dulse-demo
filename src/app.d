@@ -38,8 +38,8 @@ void main()
 	Track bgm_track;
 	Audio bgm_1;
 	mixer.create(bgm_track, bgm_1);
-	bgm_1.load("./bgm/sunnyday.mp3")
-		.play(bgm_track);
+	bgm_1.load("./bgm/sunnyday.mp3");
+	bgm_track.set(bgm_1).play();
 
 	app_list = [
 		cast(AppInterface) new CubeDeferDemo(core),
