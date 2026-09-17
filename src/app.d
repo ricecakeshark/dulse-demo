@@ -12,10 +12,10 @@ import core.memory : GC;
 void main()
 {
 	scope Core core;
-	scope GfxGraphicsSubsystem graphics;
+	scope GraphicsSubsystem graphics;
 	scope TimerSubsystem timer;
 	scope LoggerSubsystem logger;
-	scope GfxInputSubsystem input;
+	scope InputSubsystem input;
 	scope MixerSubsystem mixer;
 	scope AppInterface[] app_list;
 	scope LoopedInt!(6) app_index, app_index_next;
@@ -29,7 +29,7 @@ void main()
 	wait(pid);
 
 	core = new Core();
-	core.append_gio_subsystem();
+	core.subsystem.append!(GfxSubsystemList)();
 	core.initialize();
 	core.subsystem.query(timer, graphics, logger, input, mixer);
 	graphics.context.initialize(1920, 1080, "Dulse-demo with SDL3 GPU_API (Vulkan backend)", GpuBackend

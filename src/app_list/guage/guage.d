@@ -22,7 +22,7 @@ class GuageDemo : AppInterface
 	this(Core core)
 	{
 		this.core = core;
-		this.graphics_context = core.subsystem.query!GfxGraphicsSubsystem().context;
+		this.graphics_context = core.subsystem.query!GraphicsSubsystem().context;
 		return;
 	}
 

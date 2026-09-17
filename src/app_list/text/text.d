@@ -42,7 +42,7 @@ class TextApp : AppInterface
 	this(Core core)
 	{
 		this.core = core;
-		this.graphics = core.subsystem.query!GfxGraphicsSubsystem().context;
+		this.graphics = core.subsystem.query!GraphicsSubsystem().context;
 		return;
 	}
 
