@@ -22,11 +22,16 @@ void main()
 
 	import std.process;
 
-	auto pid = spawnProcess(
-		["../build_shader/build/shader_builder.exe", "--verbose"],
-		stdin, stdout, stderr,
-	);
-	wait(pid);
+	/+auto builder = dulse.file.file.FileHandler("shader_builder.exe");
+
+	if (builder.exsist)
+	{
+		auto pid = spawnProcess(
+			["shader_builder.exe", "--verbose"],
+			stdin, stdout, stderr,
+		);
+		wait(pid);
+	}+/
 
 	core = new Core();
 	core.subsystem.append!(GfxSubsystemList)();
