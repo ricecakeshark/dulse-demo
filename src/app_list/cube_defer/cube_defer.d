@@ -91,7 +91,7 @@ class CubeDeferDemo : AppInterface
 
 		// texture, sampler
 		object_image = new Surface();
-		object_image.load("./image/grid.png");
+		object_image.load("./image/test_texture.png");
 		graphics_context.create(object_texture);
 		object_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d, GpuTextureFormat.r8g8b8a8_unorm,
@@ -150,7 +150,7 @@ class CubeDeferDemo : AppInterface
 		));
 
 		// Geometry
-		FileHandler("cube.obj").load_obj(object_geometry);
+		FileHandler("./model/cube.obj").load_obj(object_geometry);
 
 		// Mesh
 		object_mesh.initialize(

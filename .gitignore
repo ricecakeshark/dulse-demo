@@ -4,11 +4,6 @@ lib/
 build/
 bgm/
 
-shader/compiled
-image/
-se/
-font/
-
 .dub/
 dub.selections.json
 
@@ -24,14 +19,15 @@ dub.selections.json
 *.dll
 *.lib
 
-# font
-*.ttf
-*.otf
+# shader
+shader/compiled
+shader/src
+se/
 # model
-*.obj
-*.gltf
-#
-*.mp3
+!/model/*.obj
+# iamge
+!image/test_texture.png
+
 
 # VSCode
 .vscode/*

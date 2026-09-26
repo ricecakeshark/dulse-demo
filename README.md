@@ -8,6 +8,8 @@ feature overview application with Dulse.
 
 Mozilla Public License Version 2.0
 
+(included 'HackGen' is 'SIL OPEN FONT LICENSE Version 1.1')
+
 ## build
 
 run command in PowerShell.
