@@ -8,14 +8,15 @@ feature overview application with Dulse.
 
 Mozilla Public License Version 2.0
 
-(included 'HackGen' is 'SIL OPEN FONT LICENSE Version 1.1')
+* font 'HackGen'  is licensed 'SIL OPEN FONT LICENSE Version 1.1'
+* audio file is licensed individual, see below /bgm/. 
 
 ## build
 
-run command in PowerShell.
-'''PowerShell
+run command in terminal.
+```PowerShell
 dub run
-'''
+```
 
 ## Copyright
 
