@@ -21,7 +21,7 @@ dub.selections.json
 
 # shader
 shader/compiled
-shader/src
+!shader/src
 se/
 # model
 !/model/*.obj

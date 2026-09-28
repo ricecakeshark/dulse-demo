@@ -22,7 +22,7 @@ void main()
 
 	import std.process;
 
-	/+auto builder = dulse.file.file.FileHandler("shader_builder.exe");
+	auto builder = dulse.file.file.FileHandler("bin/win_x86-64/shader_builder.exe");
 
 	if (builder.exsist)
 	{
@@ -31,7 +31,7 @@ void main()
 			stdin, stdout, stderr,
 		);
 		wait(pid);
-	}+/
+	}
 
 	core = new Core();
 	core.subsystem.append!(GfxSubsystemList)();
@@ -49,6 +49,7 @@ void main()
 	app_list = [
 		cast(AppInterface) new CubeDeferDemo(core),
 		new TextApp(core),
+		new Particle(core),
 		//new ComputeDemo(core),
 		//new GuageDemo(core),
 	];

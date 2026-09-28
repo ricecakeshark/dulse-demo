@@ -3,6 +3,7 @@ module app_list;
 public import app_list.compute;
 public import app_list.cube_defer;
 public import app_list.guage;
+public import app_list.particle;
 public import app_list.text;
 
 public import app_list.app_interface;

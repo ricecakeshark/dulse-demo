@@ -73,7 +73,7 @@ class TextApp : AppInterface
 		);
 		// text
 		graphics.create(text_context);
-		text_context.load_font("font/HackGen-Bold.ttf", 50.0f)
+		text_context.load_font("./font/HackGen/HackGen-Bold.ttf", 50.0f)
 			.set_SDF(true)
 			.set(TextAlign.center)
 			.create_engine()
