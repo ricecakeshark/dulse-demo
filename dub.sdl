@@ -7,12 +7,13 @@ license "Mozilla Public License Version 2.0"
 targetType "executable"
 targetName "dulse-demo"
 targetPath "build"
+workingDirectory "build"
 
 dependency "dulse" version=">=0.0.0"
 dependency "dulse-sdl" version=">=0.0.0"
 dependency "dulse-gfx" version=">=0.0.0"
 
+copyFiles "bin/" "bgm/" "font/" "image/" "model/"
 lflags "/LIBPATH:$PACKAGE_DIR\\lib\\win_x86-64" platform="windows-x86_64"
 //copyFiles "lib\\win_x86-64\\*.dll" platform="windows-x86_64"
 copyFiles "bin\\win_x86-64\\*.exe" platform="windows-x86_64"
-

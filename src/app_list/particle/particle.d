@@ -104,7 +104,7 @@ class Particle : AppInterface
 					.bind(
 						pipeline_particle,
 					)
-					.draw(ParamPrimitive(100, 1, 0, 0,));
+					.draw(ParamPrimitive(20, 1, 0, 0,));
 			},
 				[
 					GpuColorTargetInfo(

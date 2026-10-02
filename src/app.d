@@ -37,8 +37,10 @@ void main()
 	core.subsystem.append!(GfxSubsystemList)();
 	core.initialize();
 	core.subsystem.query(timer, graphics, logger, input, mixer);
-	graphics.context.initialize(1920, 1080, "Dulse-demo with SDL3 GPU_API (Vulkan backend)", GpuBackend
-			.vulkan);
+	graphics.context.initialize(
+		1920, 1080, "Dulse-demo with SDL3 GPU_API (Vulkan backend)",
+		GpuBackend.vulkan
+	);
 
 	Track bgm_track;
 	Audio bgm_1;
