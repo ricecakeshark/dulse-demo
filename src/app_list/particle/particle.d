@@ -29,7 +29,7 @@ class Particle : AppInterface
 	this(Core core)
 	{
 		this.core = core;
-		this.graphics_context = core.subsystem.query!GraphicsSubsystem().context;
+		this.graphics_context = core.subsystem.query!GraphicsSubsystem()[0].context;
 		return;
 	}
 
@@ -44,7 +44,7 @@ class Particle : AppInterface
 		);+/
 		// Entity
 
-		core.subsystem.query!ObjectSubsystem().create(object_manager);
+		core.subsystem.query!ObjectSubsystem()[0].create(object_manager);
 		/+foreach (entity; entity_list)
 		{
 			object_manager.attach!TransformComponent(entity);
@@ -77,7 +77,7 @@ class Particle : AppInterface
 
 	override void process()
 	{
-		with (object_manager.resource_store.refer!TimerResource())
+		with (object_manager.resource.query!TimerResource())
 		{
 			elapsed_time = cast(uint) timer.past;
 		}

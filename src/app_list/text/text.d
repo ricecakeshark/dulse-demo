@@ -42,7 +42,7 @@ class TextApp : AppInterface
 	this(Core core)
 	{
 		this.core = core;
-		this.graphics = core.subsystem.query!GraphicsSubsystem().context;
+		this.graphics = core.subsystem.query!GraphicsSubsystem()[0].context;
 		return;
 	}
 
@@ -125,17 +125,17 @@ class TextApp : AppInterface
 			* transformer_perspective(PI_2,);
 		// model_matrix 2nd
 		ub_model.model_matrix =
-			transformer_translate([-tw / 2.0f, th / 2.0f, 0.0f])
-			* transformer_scale([0.02f, 0.02f, 0.02f])
+			matrix_translate([-tw / 2.0f, th / 2.0f, 0.0f])
+			* matrix_scaling!true(Vec3(0.02f, 0.02f, 0.02f))
 			* Quaternion!float(Vec3(0.0f, 1.0f, 0.0f), cast(float) timer.past * inverse_usecs)
 			.to_matrix.resize!(4, 4);
 
 		ub_model_shadow.model_matrix =
-			transformer_translate([-tw / 2.0f, th / 2.0f, 0.0f])
-			* transformer_scale([0.02f, 0.02f, 0.02f])
+			matrix_translate([-tw / 2.0f, th / 2.0f, 0.0f])
+			* matrix_scaling!true(Vec3(0.02f, 0.02f, 0.02f))
 			* Quaternion!float(Vec3(0.0f, 1.0f, 0.0f), cast(float) timer.past * inverse_usecs)
 			.to_matrix.resize!(4, 4)
-			* transformer_translate([0f, 0.0f, +0.1f]);
+			* matrix_translate([0f, 0.0f, +0.1f]);
 
 		assert(!ub_view.view_matrix.contain_nan);
 		assert(!ub_model.model_matrix.contain_nan);

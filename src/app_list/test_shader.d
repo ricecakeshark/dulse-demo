@@ -22,7 +22,7 @@ class ShaderTest : AppInterface
 	this(Core core)
 	{
 		this.core = core;
-		this.graphics_context = core.subsystem.query!GraphicsSubsystem().context;
+		this.graphics_context = core.subsystem.query!GraphicsSubsystem()[0].context;
 		return;
 	}
 
@@ -126,10 +126,9 @@ class ShaderTest : AppInterface
 		GpuColorTargetInfo color_target_info;
 		Matrix!(4, 4) view_mat, object_mat;
 
-		view_mat = multiply_ltor(
-			transformer_look_at(Vec3(0f, 0f, -20f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f)),
-			transformer_perspective(PI_2),
-		);
+		view_mat =
+			transformer_look_at(Vec3(0f, 0f, -20f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f))
+			* transformer_perspective(PI_2);
 
 		command_buffer.acquire_buffer()
 			.acquire_texture(swapchain_texture);
@@ -141,10 +140,10 @@ class ShaderTest : AppInterface
 			);
 			command_buffer.render(
 				(ref GpuRenderPass pass) {
-				object_mat = multiply_rtol(
-					transformer_rotate_x(0.0015 * timer.past),
-					transformer_scale([10.0f, 10.0f, 10.0f]),
-				);
+				object_mat =
+					matrix_scaling!true(10.0f, 10.0f, 10.0f)
+					* matrix_rotate_x(0.0015 * timer.past);
+
 				pass.bind(graphics_pipeline)
 					.bind([vertex_buffer])
 					.bind(index_buffer)

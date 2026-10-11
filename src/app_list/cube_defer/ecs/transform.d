@@ -13,9 +13,9 @@ struct TransformComponent
 
 	Matrix!(4, 4, float) model_matrix(float scale = 1.0f)
 	{
-		return matrix_scale!3(this.scale * scale).resize!(4, 4)
+		return matrix_scaling!true(this.scale * scale)
 			* rotate_quat.to_matrix.resize!(4, 4)
-			* transformer_translate(pos);
+			* matrix_translate(pos);
 	}
 }
 
@@ -51,7 +51,7 @@ class TransformSystem : IObjectSystem
 			scope float rad;
 			scope TimerResource timer;
 
-			timer = manager.resource.refer!TimerResource();
+			timer = manager.resource.query!TimerResource();
 			with (manager.component.get!TransformComponent(entity))
 			{
 				rotate_quat =

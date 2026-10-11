@@ -263,9 +263,9 @@ import std.stdio;
 				foreach (entity; entity_list)
 				{
 					pos_mat = multiply_ltor(
-						transformer_scale([10.0f, 10.0f, 10.0f]),
+						matrix_scaling([10.0f, 10.0f, 10.0f]),
 						transformer_rotate_z(timer.past * 0.002f * entity[0]),
-						transformer_translate([
+						matrix_translate([
 							cos((0.0012f * timer.past) * entity[0]) * 10.0f,
 							sin((0.0013f * timer.past) * entity[1]) * 10.0f,
 							cos((0.0015f * timer.past) * entity[0]) * 10.0f

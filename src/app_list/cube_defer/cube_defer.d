@@ -2,6 +2,7 @@ module app_list.cube_defer.cube_defer;
 
 import app_list.app_interface;
 import app_list.cube_defer;
+import dulse_gfx.shader;
 
 import dulse;
 import dulse_sdl;
@@ -52,7 +53,7 @@ class CubeDeferDemo : AppInterface
 	this(Core core)
 	{
 		this.core = core;
-		this.graphics_context = core.subsystem.query!GraphicsSubsystem().context;
+		this.graphics_context = core.subsystem.query!GraphicsSubsystem()[0].context;
 		return;
 	}
 
@@ -66,7 +67,7 @@ class CubeDeferDemo : AppInterface
 			GpuPresentMode.immediate,
 		);
 		// Entity
-		core.subsystem.query!ObjectSubsystem().create(object_manager);
+		core.subsystem.query!ObjectSubsystem()[0].create(object_manager);
 		object_manager.create(entity_list)
 			.append_component!TransformComponent();
 		foreach (entity; entity_list)
@@ -201,7 +202,7 @@ class CubeDeferDemo : AppInterface
 
 	override void process()
 	{
-		with (object_manager.resource_store.refer!TimerResource())
+		with (object_manager.resource.query!TimerResource())
 		{
 			past_time = timer.past;
 			delta_time = timer.delta;

@@ -2,7 +2,7 @@ module app_list.compute.compute;
 
 import app_list.app_interface;
 import app_list.compute.uniform.compute;
-import app_list.cube_defer.uniform;
+import dulse_gfx.shader.uniform;
 
 import dulse;
 import dulse_sdl;
@@ -32,7 +32,7 @@ class ComputeDemo : AppInterface
 	this(Core core)
 	{
 		this.core = core;
-		this.graphics_context = core.subsystem.query!GraphicsSubsystem().context;
+		this.graphics_context = core.subsystem.query!GraphicsSubsystem()[0].context;
 		return;
 	}
 
@@ -250,10 +250,10 @@ class ComputeDemo : AppInterface
 			command_buffer.render(
 				(render_pass) {
 				vertex_model.mat_model =
-					transformer_rotate_y(0.0015 * timer.past)
-					* transformer_rotate_x(
+					matrix_rotate_y(0.0015 * timer.past)
+					* matrix_rotate_x(
 						0.0005 * timer.past)
-					* transformer_scale([1.0f, 1.0f, 1.0f]);
+					* matrix_scaling!true(Vec3(1.0f, 1.0f, 1.0f));
 				vertex_model.mat_model_normal = cast(Matrix!(4, 4, float))(
 					cast(Matrix!(3, 3, float))(
 					vertex_model.mat_model)

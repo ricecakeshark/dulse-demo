@@ -309,7 +309,7 @@ struct TransformComponent
 		return matrix_scale!3(0.25f)
 			.multiply(rotate_quat.to_matrix)
 			.resize!(4, 4)
-			.multiply(transformer_translate(pos));
+			.multiply(matrix_translate(pos));
 	}
 }
 
