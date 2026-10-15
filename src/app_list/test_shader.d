@@ -9,15 +9,15 @@ class ShaderTest : AppInterface
 {
 	Core core;
 	TimerSubsystem timer;
-	GfxGraphicsContext graphics_context;
+	GraphicsContext graphics_context;
 
 	GpuCommandBuffer command_buffer;
 	GpuSwapchainTexture swapchain_texture;
 	GfxMesh object_mesh;
 	GfxGeometry!(VertexPC, uint) object_geometry;
-	GpuGraphicsPipeline graphics_pipeline;
-	GpuVertexBuffer vertex_buffer;
-	GpuIndexBuffer index_buffer;
+	GraphicsPipeline graphics_pipeline;
+	VertexBuffer vertex_buffer;
+	IndexBuffer index_buffer;
 
 	this(Core core)
 	{
@@ -43,7 +43,7 @@ class ShaderTest : AppInterface
 			GpuShaderArguments(0, 0, 0, 0),
 		);
 		// Pipeline
-		scope GpuGraphicsPipelineCreateInfo pipeline_create_info;
+		scope GraphicsPipelineCreateInfo pipeline_create_info;
 		pipeline_create_info.vertex_shader = vertex_shader.handle;
 		pipeline_create_info.fragment_shader = fragment_shader.handle;
 		with (pipeline_create_info)
@@ -55,7 +55,7 @@ class ShaderTest : AppInterface
 				vertex_attributes!(float[3], float[4])(0),
 			);
 			primitive_type = GpuPrimitiveType.triangle_list;
-			target_info = GpuGraphicsPipelineTargetInfo(
+			target_info = GraphicsPipelineTargetInfo(
 				[
 					GpuColorTargetDescription(
 						swapchain_texture.get_format()

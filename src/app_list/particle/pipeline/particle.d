@@ -3,9 +3,9 @@ module app_list.particle.pipeline.particle;
 import dulse_sdl;
 import dulse_gfx;
 
-GfxGraphicsContext create_pipeline_particle(
-	ref GfxGraphicsContext graphics_context,
-	out GpuGraphicsPipeline particle_pipeline
+GraphicsContext create_pipeline_particle(
+	ref GraphicsContext graphics_context,
+	out GraphicsPipeline particle_pipeline
 )
 {
 	scope GpuVertexShader vertex_shader;
@@ -20,7 +20,7 @@ GfxGraphicsContext create_pipeline_particle(
 		GpuShaderArguments(0, 0, 0, 0),
 	);
 	// Defer Pipeline
-	scope GpuGraphicsPipelineCreateInfo particle_pipeline_info;
+	scope GraphicsPipelineCreateInfo particle_pipeline_info;
 	particle_pipeline_info.vertex_shader = vertex_shader.handle;
 	particle_pipeline_info.fragment_shader = fragment_shader.handle;
 	with (particle_pipeline_info)
@@ -38,7 +38,7 @@ GfxGraphicsContext create_pipeline_particle(
 			0u, 0u,
 			true, false, false,
 		);
-		target_info = GpuGraphicsPipelineTargetInfo(
+		target_info = GraphicsPipelineTargetInfo(
 			[
 			GpuColorTargetDescription(
 				GpuTextureFormat.r16g16b16a16_float,

@@ -14,10 +14,10 @@ class Particle : AppInterface
 	Core core;
 	TimerSubsystem timer;
 	LoggerSubsystem logger;
-	GfxGraphicsContext graphics_context;
+	GraphicsContext graphics_context;
 
-	GpuGraphicsPipeline pipeline_particle;
-	GpuTexture depth_texture;
+	GraphicsPipeline pipeline_particle;
+	Texture depth_texture;
 	ObjectManager object_manager;
 
 	UniformScene uniform_scene;

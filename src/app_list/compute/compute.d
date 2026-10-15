@@ -12,20 +12,20 @@ class ComputeDemo : AppInterface
 {
 	Core core;
 	TimerSubsystem timer;
-	GfxGraphicsContext graphics_context;
+	GraphicsContext graphics_context;
 
-	GpuGraphicsPipeline render_pipeline;
-	GpuComputePipeline compute_pipeline;
+	GraphicsPipeline render_pipeline;
+	ComputePipeline compute_pipeline;
 	GfxMesh object_mesh;
 	GfxGeometry!(VertexPNU, uint) object_geometry;
 
-	GpuVertexBuffer vertex_buffer;
-	GpuIndexBuffer index_buffer;
+	VertexBuffer vertex_buffer;
+	IndexBuffer index_buffer;
 
-	GpuTexture object_texture;
+	Texture object_texture;
 	GpuSampler object_sampler;
-	GpuTexture depth_texture;
-	GpuTexture compute_src_texture, compute_dst_texture;
+	Texture depth_texture;
+	Texture compute_src_texture, compute_dst_texture;
 	GpuSampler sampler;
 	Surface object_image;
 
@@ -53,7 +53,7 @@ class ComputeDemo : AppInterface
 			GpuShaderArguments(1, 4, 0, 0),
 		);
 		// Render Pipeline
-		scope GpuGraphicsPipelineCreateInfo render_pipeline_info;
+		scope GraphicsPipelineCreateInfo render_pipeline_info;
 		render_pipeline_info.vertex_shader = vertex_shader.handle;
 		render_pipeline_info.fragment_shader = fragment_shader.handle;
 		with (render_pipeline_info)
@@ -77,7 +77,7 @@ class ComputeDemo : AppInterface
 				0u, 0u,
 				true, true, false,
 			);
-			target_info = GpuGraphicsPipelineTargetInfo(
+			target_info = GraphicsPipelineTargetInfo(
 				[
 				GpuColorTargetDescription(
 					//swapchain_texture.get_format(),

@@ -13,14 +13,14 @@ import std.stdio;
 	Core core;
 	DeviceSubsystem device;
 	TimerSubsystem timer;
-	GfxGraphicsContext graphics_context;
+	GraphicsContext graphics_context;
 
 	GfxRenderContext render_context;
 	GfxGeometry[] geometry_list;
-	GpuGraphicsPipeline graphics_pipeline;
-	GpuVertexBuffer vertex_buffer;
-	GpuIndexBuffer index_buffer;
-	GpuTexture texture;
+	GraphicsPipeline graphics_pipeline;
+	VertexBuffer vertex_buffer;
+	IndexBuffer index_buffer;
+	Texture texture;
 	GpuSampler sampler;
 
 	Surface image;
@@ -63,7 +63,7 @@ import std.stdio;
 			GpuShaderArguments(1, 1, 0, 0),
 		);
 		// Pipeline
-		scope GpuGraphicsPipelineCreateInfo pipeline_create_info;
+		scope GraphicsPipelineCreateInfo pipeline_create_info;
 		pipeline_create_info.vertex_shader = vertex_shader.handle;
 		pipeline_create_info.fragment_shader = fragment_shader.handle;
 		with (pipeline_create_info)
@@ -75,7 +75,7 @@ import std.stdio;
 				vertex_attributes!(float[3], float[2])(0),
 			);
 			primitive_type = GpuPrimitiveType.triangle_list;
-			target_info = GpuGraphicsPipelineTargetInfo(
+			target_info = GraphicsPipelineTargetInfo(
 				[
 				GpuColorTargetDescription(
 					swapchain_texture.get_format(),

@@ -20,7 +20,7 @@ class TextApp : AppInterface
 	Core core;
 	TimerSubsystem timer;
 
-	GfxGraphicsContext graphics;
+	GraphicsContext graphics;
 	GpuCommandBuffer command_buffer;
 	GpuSwapchainTexture swapchain_texture;
 	GfxTextContext text_context;
@@ -28,11 +28,11 @@ class TextApp : AppInterface
 	GpuBufferTransferBuffer buffer_transfer_buffer;
 	GpuTextureTransferBuffer texture_transfer_buffer;
 
-	GpuGraphicsPipeline pipeline;
+	GraphicsPipeline pipeline;
 
 	alias TextureGeometry = GfxGeometry!(VertexPT, uint);
-	GpuVertexBuffer vertex_buffer;
-	GpuIndexBuffer index_buffer;
+	VertexBuffer vertex_buffer;
+	IndexBuffer index_buffer;
 	GfxMesh text_mesh;
 	GpuRefTexture[] text_texture;
 	GpuSampler sampler;

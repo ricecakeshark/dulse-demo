@@ -3,9 +3,9 @@ module app_list.text.pipeline.text;
 import dulse_sdl;
 import dulse_gfx;
 
-GfxGraphicsContext create_pipeline_text(
-	ref GfxGraphicsContext graphics_context,
-	out GpuGraphicsPipeline pipeline
+GraphicsContext create_pipeline_text(
+	ref GraphicsContext graphics_context,
+	out GraphicsPipeline pipeline
 )
 {
 	scope GpuVertexShader vertex_shader;
@@ -19,7 +19,7 @@ GfxGraphicsContext create_pipeline_text(
 		ShaderFile("text.frag", graphics_context.device.get_shader_format()),
 		GpuShaderArguments(1, 1, 0, 0),
 	);
-	scope GpuGraphicsPipelineCreateInfo pipeline_create_info;
+	scope GraphicsPipelineCreateInfo pipeline_create_info;
 	pipeline_create_info.vertex_shader = vertex_shader.handle;
 	pipeline_create_info.fragment_shader = fragment_shader.handle;
 	with (pipeline_create_info)
@@ -31,7 +31,7 @@ GfxGraphicsContext create_pipeline_text(
 			vertex_attributes!(float[3], float[2])(0),
 		);
 		primitive_type = GpuPrimitiveType.triangle_list;
-		target_info = GpuGraphicsPipelineTargetInfo(
+		target_info = GraphicsPipelineTargetInfo(
 			[
 			GpuColorTargetDescription(
 				graphics_context.get_swapchain_texture_format(),

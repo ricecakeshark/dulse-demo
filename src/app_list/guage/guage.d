@@ -11,13 +11,13 @@ class GuageDemo : AppInterface
 	Core core;
 	TimerSubsystem timer;
 	LoggerSubsystem logger;
-	GfxGraphicsContext graphics_context;
+	GraphicsContext graphics_context;
 
 	GpuCommandBuffer command_buffer;
 	GpuSwapchainTexture swapchain_texture;
 
-	GpuComputePipeline guage_pipeline;
-	GpuTexture guage_dst_texture;
+	ComputePipeline guage_pipeline;
+	Texture guage_dst_texture;
 
 	this(Core core)
 	{

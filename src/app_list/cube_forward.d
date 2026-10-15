@@ -13,20 +13,20 @@ class CubeForward : AppInterface
 	Core core;
 	TimerSubsystem timer;
 	LoggerSubsystem logger;
-	GfxGraphicsContext graphics_context;
+	GraphicsContext graphics_context;
 
 	GpuCommandBuffer command_buffer;
 	GpuSwapchainTexture swapchain_texture;
 	GfxMesh object_mesh;
 	GfxGeometry!(VertexPNU, uint) object_geometry;
-	GpuGraphicsPipeline texture_pipeline, solid_pipeline;
-	GpuVertexBuffer vertex_buffer;
-	GpuIndexBuffer index_buffer;
+	GraphicsPipeline texture_pipeline, solid_pipeline;
+	VertexBuffer vertex_buffer;
+	IndexBuffer index_buffer;
 	GpuStorageBuffer storage_buffer;
-	GpuTexture depth_texture;
+	Texture depth_texture;
 
 	Surface object_image;
-	GpuTexture object_texture;
+	Texture object_texture;
 	GpuSampler object_sampler;
 	ObjectManager object_manager;
 	Entity[4] entity_list;
@@ -79,7 +79,7 @@ class CubeForward : AppInterface
 		);
 		// Pipeline
 		// texture_pipeline
-		scope GpuGraphicsPipelineCreateInfo pipeline_create_info;
+		scope GraphicsPipelineCreateInfo pipeline_create_info;
 		pipeline_create_info.vertex_shader = texture_vert_shader.handle;
 		pipeline_create_info.fragment_shader = texture_frag_shader.handle;
 		with (pipeline_create_info)
@@ -104,7 +104,7 @@ class CubeForward : AppInterface
 				0u, 0u,
 				true, true, false,
 			);
-			target_info = GpuGraphicsPipelineTargetInfo(
+			target_info = GraphicsPipelineTargetInfo(
 				[
 					GpuColorTargetDescription(
 						swapchain_texture.get_format(),

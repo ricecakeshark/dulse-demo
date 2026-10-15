@@ -12,19 +12,19 @@ class ManyObject : AppInterface
 	Core core;
 	TimerSubsystem timer;
 	LoggerSubsystem logger;
-	GfxGraphicsContext graphics_context;
+	GraphicsContext graphics_context;
 
 	GpuCommandBuffer command_buffer;
 	GpuSwapchainTexture swapchain_texture;
-	GpuTexture depth_texture;
+	Texture depth_texture;
 
 	GfxGeometry!(VertexPNU, uint) object_geometry;
 	GfxMesh object_mesh;
-	GpuGraphicsPipeline texture_pipeline, solid_pipeline;
-	GpuVertexBuffer vertex_buffer;
-	GpuIndexBuffer index_buffer;
+	GraphicsPipeline texture_pipeline, solid_pipeline;
+	VertexBuffer vertex_buffer;
+	IndexBuffer index_buffer;
 	//GpuStorageBuffer storage_buffer;
-	GpuTexture object_texture;
+	Texture object_texture;
 	GpuSampler object_sampler;
 	Surface object_image;
 
@@ -64,7 +64,7 @@ class ManyObject : AppInterface
 			GpuShaderArguments(1, 4, 0, 0),
 		);
 		// texture_pipeline
-		scope GpuGraphicsPipelineCreateInfo pipeline_create_info;
+		scope GraphicsPipelineCreateInfo pipeline_create_info;
 		pipeline_create_info.vertex_shader = texture_vert_shader.handle;
 		pipeline_create_info.fragment_shader = texture_frag_shader.handle;
 		with (pipeline_create_info)
@@ -88,7 +88,7 @@ class ManyObject : AppInterface
 				0u, 0u,
 				true, true, false,
 			);
-			target_info = GpuGraphicsPipelineTargetInfo(
+			target_info = GraphicsPipelineTargetInfo(
 				[
 				GpuColorTargetDescription(
 					//graphics_context.get_swapchain_texture_format()
