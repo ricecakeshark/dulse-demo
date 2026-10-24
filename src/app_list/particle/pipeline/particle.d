@@ -20,9 +20,9 @@ GraphicsContext create_pipeline_particle(
 		GpuShaderArguments(0, 0, 0, 0),
 	);
 	// Defer Pipeline
-	scope GraphicsPipelineCreateInfo particle_pipeline_info;
-	particle_pipeline_info.vertex_shader = vertex_shader.handle;
-	particle_pipeline_info.fragment_shader = fragment_shader.handle;
+	scope GfxGraphicsPipelineCreateInfo particle_pipeline_info;
+	particle_pipeline_info.vertex_shader = vertex_shader;
+	particle_pipeline_info.fragment_shader = fragment_shader;
 	with (particle_pipeline_info)
 	{
 		primitive_type = GpuPrimitiveType.point_list;
@@ -56,6 +56,8 @@ GraphicsContext create_pipeline_particle(
 		], GpuTextureFormat.d32_float,
 		);
 	}
-	particle_pipeline.create(particle_pipeline_info);
+	particle_pipeline
+		.bind(particle_pipeline_info)
+		.create();
 	return graphics_context;
 }

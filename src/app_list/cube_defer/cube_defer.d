@@ -82,7 +82,7 @@ class CubeDeferDemo : AppInterface
 		create_pipeline_defer_texture(gc, pipeline_defer_texture);
 		create_pipeline_defer_solid(gc, pipeline_defer_solid);
 		create_pipeline_compose(gc, pipeline_compose);
-		create_pipeline_compose_debug(gc, pipeline_compose_debug);
+		//create_pipeline_compose_debug(gc, pipeline_compose_debug);
 		create_pipeline_phong(gc, pipeline_phong);
 		create_pipeline_pre_edge(gc, pipeline_pre_edge);
 		create_pipeline_post_edge(gc, pipeline_post_edge);
@@ -112,9 +112,9 @@ class CubeDeferDemo : AppInterface
 		// texture
 		scope GpuTextureCreateInfo tci;
 		gc.create(
-			sampler_nearest,sampler_smooth,
-			albedo_texture,normal_texture,material_texture,entity_texture,
-			color_texture,edge_texture,
+			sampler_nearest, sampler_smooth,
+			albedo_texture, normal_texture, material_texture, entity_texture,
+			color_texture, edge_texture,
 		);
 		sampler_nearest.set_to(
 			albedo_texture, normal_texture, material_texture, entity_texture,
@@ -243,10 +243,8 @@ class CubeDeferDemo : AppInterface
 					render_pass
 						.bind(
 							pipeline_defer_texture,
-							[
-								GpuTextureSamplerBinding(object_texture, sampler_smooth)
-							],
-							[vertex_buffer], index_buffer,
+							GpuTextureSamplerBinding(object_texture, sampler_smooth),
+							vertex_buffer, index_buffer,
 						)
 						.push_vertex(2, uniform_model_vert)
 						.push_fragment(2, uniform_model_frag)

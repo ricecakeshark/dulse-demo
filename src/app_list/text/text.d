@@ -167,7 +167,7 @@ class TextApp : AppInterface
 			);
 			color_target_info.clear_color = ColorF(0.1f, 0.1f, 0.1f, 1.0f);
 			command_buffer.render(
-				(ref GpuRenderPass pass) {
+				(ref RenderPass pass) {
 				pass
 					.bind(pipeline, [vertex_buffer], index_buffer,)
 					.push_vert(0, ub_view, ub_model,)

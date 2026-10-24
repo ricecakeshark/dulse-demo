@@ -19,9 +19,9 @@ GraphicsContext create_pipeline_text(
 		ShaderFile("text.frag", graphics_context.device.get_shader_format()),
 		GpuShaderArguments(1, 1, 0, 0),
 	);
-	scope GraphicsPipelineCreateInfo pipeline_create_info;
-	pipeline_create_info.vertex_shader = vertex_shader.handle;
-	pipeline_create_info.fragment_shader = fragment_shader.handle;
+	scope GfxGraphicsPipelineCreateInfo pipeline_create_info;
+	pipeline_create_info.vertex_shader = vertex_shader;
+	pipeline_create_info.fragment_shader = fragment_shader;
 	with (pipeline_create_info)
 	{
 		vertex_input_state = GpuVertexInputState(
@@ -50,6 +50,8 @@ GraphicsContext create_pipeline_text(
 		);
 		rasterizer_state.cull_mode = GpuCullMode.none;
 	}
-	pipeline.create(pipeline_create_info);
+	pipeline
+		.bind(pipeline_create_info)
+		.create();
 	return graphics_context;
 }

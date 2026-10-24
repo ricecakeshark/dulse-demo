@@ -13,10 +13,10 @@ class GuageDemo : AppInterface
 	LoggerSubsystem logger;
 	GraphicsContext graphics_context;
 
-	GpuCommandBuffer command_buffer;
-	GpuSwapchainTexture swapchain_texture;
+	CommandBuffer command_buffer;
+	SwapchainTexture swapchain_texture;
 
-	ComputePipeline guage_pipeline;
+	GfxComputePipeline guage_pipeline;
 	Texture guage_dst_texture;
 
 	this(Core core)
@@ -33,7 +33,7 @@ class GuageDemo : AppInterface
 
 		// Compute Pipeline
 		graphics_context.create(guage_pipeline);
-		auto compute_pipeline_info = GpuComputePipelineCreateInfo(
+		auto compute_pipeline_info = GfxComputePipelineCreateInfo(
 			ShaderFile("guage.comp", GpuShaderFormat.spirv)
 		);
 		with (compute_pipeline_info)
@@ -46,9 +46,9 @@ class GuageDemo : AppInterface
 			threadcount_y = 8;
 			threadcount_z = 1;
 		}
-		guage_pipeline.create(
-			compute_pipeline_info
-		);
+		guage_pipeline
+			.bind(compute_pipeline_info)
+			.create();
 		graphics_context.create(guage_dst_texture);
 		guage_dst_texture.create(
 			GpuTextureCreateInfo(

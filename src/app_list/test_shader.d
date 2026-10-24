@@ -44,8 +44,8 @@ class ShaderTest : AppInterface
 		);
 		// Pipeline
 		scope GraphicsPipelineCreateInfo pipeline_create_info;
-		pipeline_create_info.vertex_shader = vertex_shader.handle;
-		pipeline_create_info.fragment_shader = fragment_shader.handle;
+		pipeline_create_info.vertex_shader = vertex_shader;
+		pipeline_create_info.fragment_shader = fragment_shader;
 		with (pipeline_create_info)
 		{
 			vertex_input_state = GpuVertexInputState(
@@ -63,7 +63,9 @@ class ShaderTest : AppInterface
 				]
 			);
 		}
-		graphics_pipeline.create(pipeline_create_info);
+		graphics_pipeline
+			.bind(pipeline_create_info)
+			.create();
 
 		// Mesh
 		object_mesh.initialize(VertexPC.sizeof * 4, uint.sizeof * 6);
@@ -139,7 +141,7 @@ class ShaderTest : AppInterface
 				GpuLoadOp.clear, GpuStoreOp.store,
 			);
 			command_buffer.render(
-				(ref GpuRenderPass pass) {
+				(pass) {
 				object_mat =
 					matrix_scaling!true(10.0f, 10.0f, 10.0f)
 					* matrix_rotate_x(0.0015 * timer.past);

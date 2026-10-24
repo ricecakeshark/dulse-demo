@@ -2,7 +2,7 @@ module app_list.compute.compute;
 
 import app_list.app_interface;
 import app_list.compute.uniform.compute;
-import dulse_gfx.shader.uniform;
+import dulse_gfx.preset.uniform;
 
 import dulse;
 import dulse_sdl;
@@ -14,8 +14,8 @@ class ComputeDemo : AppInterface
 	TimerSubsystem timer;
 	GraphicsContext graphics_context;
 
-	GraphicsPipeline render_pipeline;
-	ComputePipeline compute_pipeline;
+	GfxGraphicsPipeline render_pipeline;
+	GfxComputePipeline compute_pipeline;
 	GfxMesh object_mesh;
 	GfxGeometry!(VertexPNU, uint) object_geometry;
 
@@ -54,8 +54,8 @@ class ComputeDemo : AppInterface
 		);
 		// Render Pipeline
 		scope GraphicsPipelineCreateInfo render_pipeline_info;
-		render_pipeline_info.vertex_shader = vertex_shader.handle;
-		render_pipeline_info.fragment_shader = fragment_shader.handle;
+		render_pipeline_info.vertex_shader = vertex_shader;
+		render_pipeline_info.fragment_shader = fragment_shader;
 		with (render_pipeline_info)
 		{
 			vertex_input_state = GpuVertexInputState(
@@ -86,11 +86,13 @@ class ComputeDemo : AppInterface
 			], GpuTextureFormat.d32_float,
 			);
 		}
-		render_pipeline.create(render_pipeline_info);
+		render_pipeline
+			.bind(render_pipeline_info)
+			.create();
 
 		// Compute Pipeline
 		graphics_context.create(compute_pipeline);
-		auto compute_pipeline_info = GpuComputePipelineCreateInfo(
+		auto compute_pipeline_info = GfxComputePipelineCreateInfo(
 			ShaderFile("mosaic.comp", GpuShaderFormat.spirv)
 		);
 		with (compute_pipeline_info)
@@ -103,9 +105,9 @@ class ComputeDemo : AppInterface
 			threadcount_y = 8;
 			threadcount_z = 1;
 		}
-		compute_pipeline.create(
-			compute_pipeline_info
-		);
+		compute_pipeline
+			.bind(compute_pipeline_info)
+			.create();
 
 		// texture, sampler
 		object_image = new Surface();
