@@ -4,7 +4,7 @@ import app_list.app_interface;
 import dulse;
 import dulse_sdl;
 import dulse_gfx;
-
+/+
 class ShaderTest : AppInterface
 {
 	Core core;
@@ -164,3 +164,4 @@ class ShaderTest : AppInterface
 		return 0;
 	}
 }
++/

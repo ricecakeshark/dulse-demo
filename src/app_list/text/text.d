@@ -146,15 +146,14 @@ class TextApp : AppInterface
 			.unmap();
 
 		// upload
-		command_buffer.acquire_buffer()
-			.copy((pass) {
-				pass.upload(
-					buffer_transfer_buffer,
+		command_buffer
+			.acquire_buffer()
+			.copy(
+				sequence(buffer_transfer_buffer,
 					vertex_buffer,
 					index_buffer,
-				);
-				return;
-			})
+				)
+			)
 			.submit();
 		// render
 		command_buffer.acquire_buffer()

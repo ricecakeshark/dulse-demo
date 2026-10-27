@@ -164,26 +164,20 @@ class CubeDeferDemo : AppInterface
 		gc.create(buffer_transfer_buffer, tb_texture);
 		buffer_transfer_buffer.prepare(object_geometry);
 		tb_texture.prepare(object_image);
-
+			
 		command_buffer
 			.acquire_buffer()
-			.copy((copy_pass) {
-				copy_pass
-					.upload(
-						GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),
-						GpuBufferRegion(vertex_buffer, 0u)
-					)
-					.upload(
-						GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_index),
-						GpuBufferRegion(index_buffer, 0u)
-					)
-					.upload(
-						GpuTextureTransferInfo(tb_texture, 0),
-						GpuTextureRegion(object_texture),
-					);
-				return;
-			}).submit(fence);
-		fence.wait();
+			.copy(
+				sequence(
+					buffer_transfer_buffer,
+					vertex_buffer,
+					index_buffer,
+				),
+				sequence(
+					tb_texture,
+					object_texture,
+				),
+			).submit(fence);
 		return;
 	}
 
