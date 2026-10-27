@@ -60,7 +60,7 @@ class CubeDeferDemo : AppInterface
 	override void initialize()
 	{
 		core.subsystem.query(timer, logger);
-		gc.create(command_buffer, swapchain_texture, fence);
+		gc.create(command_buffer, swapchain_texture, /+fence+/);
 		// config
 		swapchain_texture.set(
 			GpuSwapchainComposition.HDR_extended_linear,
@@ -177,7 +177,10 @@ class CubeDeferDemo : AppInterface
 					tb_texture,
 					object_texture,
 				),
-			).submit(fence);
+			)
+			.submit();
+			//.submit(fence);
+			//fence.wait();
 		return;
 	}
 

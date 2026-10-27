@@ -171,6 +171,17 @@ class ComputeDemo : AppInterface
 
 		command_buffer
 			.acquire_buffer()
+			.copy(
+				sequence(
+					buffer_transfer_buffer,
+					vertex_buffer,index_buffer,
+				),
+				sequence(
+					tb_texture,
+					object_texture,
+				)
+			)
+			/+
 			.copy((copy_pass) {
 				copy_pass.upload(
 					GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),
@@ -185,7 +196,7 @@ class ComputeDemo : AppInterface
 						GpuTextureRegion(object_texture),
 					);
 				return;
-			}).submit();
+			})+/.submit();
 		return;
 	}
 

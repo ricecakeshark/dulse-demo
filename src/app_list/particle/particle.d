@@ -38,10 +38,10 @@ class Particle : AppInterface
 		core.subsystem.query(timer, logger);
 		graphics_context.create(command_buffer, swapchain_texture,);
 		// config
-		/+swapchain_texture.set(
+		swapchain_texture.set(
 			GpuSwapchainComposition.HDR_extended_linear,
 			GpuPresentMode.immediate,
-		);+/
+		);
 		// Entity
 
 		core.subsystem.query!ObjectSubsystem()[0].create(object_manager);

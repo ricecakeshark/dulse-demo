@@ -41,7 +41,7 @@ GraphicsContext create_pipeline_particle(
 		target_info = GraphicsPipelineTargetInfo(
 			[
 			GpuColorTargetDescription(
-				GpuTextureFormat.r16g16b16a16_float,
+				graphics_context.get_swapchain_texture_format(),
 				GpuColorTargetBlendState(
 					GpuBlendFactor.src_alpha,
 					GpuBlendFactor.one_minus_src_alpha,

@@ -113,12 +113,13 @@ class TextApp : AppInterface
 		scope UniformVertexModel ub_model;
 		scope UniformVertexModel ub_model_shadow;
 
+		
 		// text
 		string test_str = format("ABCDE 12345\n縁取り文字\n%s ms", timer.past);
 		text_context.set(test_str)
 			.get_text_size(tw, th)
 			.get_draw_data!(TextureGeometry)(text_mesh, text_texture);
-
+		
 		// view_matrix
 		ub_view.view_matrix =
 			transformer_look_at(Vec3(0f, 0f, -3f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f))
@@ -139,36 +140,43 @@ class TextApp : AppInterface
 
 		assert(!ub_view.view_matrix.contain_nan);
 		assert(!ub_model.model_matrix.contain_nan);
+		
 		// transfer
 		buffer_transfer_buffer.map()
 			.set(text_mesh.vertices!(TextureGeometry), text_mesh.offset_vertex,)
 			.set(text_mesh.indices!(TextureGeometry), text_mesh.offset_index,)
 			.unmap();
-
+		
 		// upload
 		command_buffer
 			.acquire_buffer()
 			.copy(
-				sequence(buffer_transfer_buffer,
+				sequence(
+					buffer_transfer_buffer,
 					vertex_buffer,
 					index_buffer,
 				)
 			)
 			.submit();
+			
 		// render
 		command_buffer.acquire_buffer()
 			.acquire_texture(swapchain_texture);
+		
 		if (swapchain_texture.handle !is null)
 		{
+			
 			color_target_info = GpuColorTargetInfo(
 				swapchain_texture,
 				GpuLoadOp.clear, GpuStoreOp.store,
 			);
 			color_target_info.clear_color = ColorF(0.1f, 0.1f, 0.1f, 1.0f);
+			
 			command_buffer.render(
 				(ref RenderPass pass) {
+					
 				pass
-					.bind(pipeline, [vertex_buffer], index_buffer,)
+					.bind(pipeline, vertex_buffer, index_buffer,)
 					.push_vert(0, ub_view, ub_model,)
 					.push_frag(
 						0,
@@ -202,7 +210,9 @@ class TextApp : AppInterface
 				}
 				+/
 				pass
-					.bind(pipeline, [vertex_buffer], index_buffer,)
+					.bind(
+						pipeline, vertex_buffer, index_buffer,
+					)
 					.push_vert(1, ub_model_shadow)
 					.push_frag(
 						0,
@@ -217,12 +227,18 @@ class TextApp : AppInterface
 					text_texture,
 					sampler,
 				);
+				
 				return;
 			},
 				[color_target_info],
 			);
+			
 		}
+		
 		command_buffer.submit();
+		
+		//throw new Exception("finish");
+
 		return;
 	}
 }
