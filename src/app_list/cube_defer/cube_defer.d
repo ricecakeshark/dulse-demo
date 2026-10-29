@@ -2,11 +2,11 @@ module app_list.cube_defer.cube_defer;
 
 import app_list.app_interface;
 import app_list.cube_defer;
-import dulse_gfx.shader;
 
 import dulse;
 import dulse_sdl;
 import dulse_gfx;
+import dulse_preset;
 
 import std.math : PI_2;
 

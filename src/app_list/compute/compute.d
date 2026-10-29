@@ -2,11 +2,11 @@ module app_list.compute.compute;
 
 import app_list.app_interface;
 import app_list.compute.uniform.compute;
-import dulse_gfx.preset.uniform;
 
 import dulse;
 import dulse_sdl;
 import dulse_gfx;
+import dulse_preset;
 
 class ComputeDemo : AppInterface
 {

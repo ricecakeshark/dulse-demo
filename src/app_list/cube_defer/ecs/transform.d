@@ -2,7 +2,7 @@ module app_list.cube_defer.ecs.transform;
 
 import app_list.cube_defer.ecs;
 
-import dulse.object;
+import dulse.entity;
 import dulse.math;
 
 struct TransformComponent
