@@ -12,8 +12,10 @@ class ComputeDemo : AppInterface
 {
 	Core core;
 	TimerSubsystem timer;
-	GraphicsContext graphics_context;
+	GraphicsContext gc;
+	CommandBuffer command_buffer;
 
+	SwapchainTexture swapchain_texture;
 	GfxGraphicsPipeline render_pipeline;
 	GfxComputePipeline compute_pipeline;
 	GfxMesh object_mesh;
@@ -25,31 +27,31 @@ class ComputeDemo : AppInterface
 	Texture object_texture;
 	GpuSampler object_sampler;
 	Texture depth_texture;
-	Texture compute_src_texture, compute_dst_texture;
+	TextureAlternate alt_texture;
 	GpuSampler sampler;
 	Surface object_image;
 
 	this(Core core)
 	{
 		this.core = core;
-		this.graphics_context = core.subsystem.query!GraphicsSubsystem()[0].context;
+		this.gc = core.subsystem.query!GraphicsSubsystem()[0].context;
 		return;
 	}
 
 	override void initialize()
 	{
 		core.subsystem.query(timer, logger);
-		graphics_context.create(command_buffer, swapchain_texture);
+		gc.create(command_buffer, swapchain_texture);
 		// Render Shader
 		scope GpuVertexShader vertex_shader;
 		scope GpuFragmentShader fragment_shader;
-		graphics_context.create(render_pipeline, vertex_shader, fragment_shader);
+		gc.create(render_pipeline, vertex_shader, fragment_shader);
 		vertex_shader.create(
-			ShaderFile("texture.vert", graphics_context.get_shader_format()),
+			ShaderFile("texture.vert", gc.get_shader_format()),
 			GpuShaderArguments(0, 3, 0, 0),
 		);
 		fragment_shader.create(
-			ShaderFile("texture.frag", graphics_context.get_shader_format()),
+			ShaderFile("texture.frag", gc.get_shader_format()),
 			GpuShaderArguments(1, 4, 0, 0),
 		);
 		// Render Pipeline
@@ -80,8 +82,7 @@ class ComputeDemo : AppInterface
 			target_info = GraphicsPipelineTargetInfo(
 				[
 				GpuColorTargetDescription(
-					//swapchain_texture.get_format(),
-					GpuTextureFormat.r32g32b32a32_float
+					GpuTextureFormat.r16g16b16a16_float,
 				)
 			], GpuTextureFormat.d32_float,
 			);
@@ -91,13 +92,13 @@ class ComputeDemo : AppInterface
 			.create();
 
 		// Compute Pipeline
-		graphics_context.create(compute_pipeline);
+		gc.create(compute_pipeline);
 		auto compute_pipeline_info = GfxComputePipelineCreateInfo(
 			ShaderFile("mosaic.comp", GpuShaderFormat.spirv)
 		);
 		with (compute_pipeline_info)
 		{
-			//num_readonly_storage_buffers = 0;
+			num_readonly_storage_buffers = 0;
 			num_samplers = 1;
 			num_readwrite_storage_textures = 1;
 			num_uniform_buffers = 1;
@@ -112,7 +113,7 @@ class ComputeDemo : AppInterface
 		// texture, sampler
 		object_image = new Surface();
 		object_image.load("./image/test_texture.png");
-		graphics_context.create(object_texture, object_sampler);
+		gc.create(object_texture, object_sampler);
 		object_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d, GpuTextureFormat.r8g8b8a8_unorm,
 				GpuTextureUsageFlags.sampler,
@@ -123,32 +124,33 @@ class ComputeDemo : AppInterface
 				GpuFilter.nearest,
 				GpuFilter.nearest,
 		));
-		graphics_context.create(depth_texture);
+		gc.create(depth_texture, alt_texture);
+		
 		depth_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d,
 				GpuTextureFormat.d32_float,
 				GpuTextureUsageFlags.depth_stencil_target,
-				graphics_context.client_width, graphics_context.client_height,
+				gc.client_width, gc.client_height,
 				1, 1, GpuSampleCount.x1,
 		));
-
-		graphics_context.create(compute_src_texture, compute_dst_texture, sampler);
-		compute_src_texture.create(GpuTextureCreateInfo(
-				GpuTextureType._2d, GpuTextureFormat.r32g32b32a32_float,
-				GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.color_target | GpuTextureUsageFlags.compute_storage_read,
-				graphics_context.client_width, graphics_context.client_height, 1, 1,
+		alt_texture.create(GpuTextureCreateInfo(
+				GpuTextureType._2d, GpuTextureFormat.r16g16b16a16_float,
+				GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.compute_storage_write | GpuTextureUsageFlags.color_target,
+				gc.client_width, gc.client_height, 1, 1,
 		));
-		compute_dst_texture.create(GpuTextureCreateInfo(
-				GpuTextureType._2d, GpuTextureFormat.r32g32b32a32_float,
-				GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.compute_storage_write,
-				graphics_context.client_width, graphics_context.client_height, 1, 1,
-		));
+		
+		gc.create(sampler);
 		sampler.create(GpuSamplerCreateInfo(
 				GpuFilter.linear, GpuFilter.linear,
 		));
 
+		sampler.set_to(
+			depth_texture, alt_texture.src, alt_texture.dest,
+			object_texture,
+		);
+		
 		// Geometry
-		FileHandler("cube.obj").load_obj(object_geometry);
+		FileHandler("./model/cube.obj").load_obj(object_geometry);
 
 		// Mesh
 		object_mesh.initialize(
@@ -158,51 +160,36 @@ class ComputeDemo : AppInterface
 		object_mesh.set([object_geometry]);
 
 		// Buffer
-		graphics_context.create(vertex_buffer, index_buffer);
+		gc.create(vertex_buffer, index_buffer);
 		vertex_buffer.create(object_geometry.count_vertex, object_geometry.stride_vertex);
 		index_buffer.create(object_geometry.count_index, GpuIndexElementSize._32bit);
 
 		// upload
 		scope GpuBufferTransferBuffer buffer_transfer_buffer;
 		scope GpuTextureTransferBuffer tb_texture;
-		graphics_context.create(buffer_transfer_buffer, tb_texture);
+		gc.create(buffer_transfer_buffer, tb_texture);
 		buffer_transfer_buffer.prepare(object_geometry);
 		tb_texture.prepare(object_image);
-
+		
 		command_buffer
 			.acquire_buffer()
 			.copy(
 				sequence(
 					buffer_transfer_buffer,
-					vertex_buffer,index_buffer,
-				),
-				sequence(
-					tb_texture,
-					object_texture,
-				)
-			)
-			/+
-			.copy((copy_pass) {
-				copy_pass.upload(
-					GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_vertex),
-					GpuBufferRegion(vertex_buffer, 0u)
-				)
-					.upload(
-						GpuTransferBufferLocation(buffer_transfer_buffer, object_geometry.offset_index),
-						GpuBufferRegion(index_buffer, 0u)
-					)
-					.upload(
-						GpuTextureTransferInfo(tb_texture, 0),
-						GpuTextureRegion(object_texture),
-					);
-				return;
-			})+/.submit();
+					vertex_buffer, index_buffer,
+			),
+			sequence(
+				tb_texture,
+				object_texture,
+			),
+		)
+			.submit();
 		return;
 	}
 
 	override void finalize()
 	{
-		graphics_context.resource_store.release_all();
+		gc.resource_store.release_all();
 		return;
 	}
 
@@ -213,12 +200,10 @@ class ComputeDemo : AppInterface
 	}
 
 	LoggerSubsystem logger;
-	GpuCommandBuffer command_buffer;
-	GpuSwapchainTexture swapchain_texture;
 
 	override void draw()
 	{
-
+		
 		import std.math;
 
 		GpuColorTargetInfo color_target_info;
@@ -234,6 +219,8 @@ class ComputeDemo : AppInterface
 		vertex_view.mat_view =
 			transformer_look_at(Vec3(0f, 0f, -2.5f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f))
 			* transformer_perspective(PI_2);
+
+			
 		fragment_scene.ambient_light = ColorF(1.0f, 1.0f, 1.0f, 0.1f);
 		fragment_view.vec_view = Vec3(0f, 0f, -2.5f);
 		with (fragment_light.list[0])
@@ -244,13 +231,14 @@ class ComputeDemo : AppInterface
 		}
 
 		//fragment_light.pos = [sin(0.002f*timer.past)*10f,0f,cos(0.002f*timer.past)*10f];
-
+		
 		command_buffer.acquire_buffer()
 			.acquire_texture(swapchain_texture);
+			
 		if (swapchain_texture.handle !is null)
 		{
 			color_target_info = GpuColorTargetInfo(
-				compute_src_texture,
+				alt_texture.src,
 				GpuLoadOp.clear, GpuStoreOp.store,
 			);
 			depth_target_info = GpuDepthStencilTargetInfo(
@@ -259,14 +247,14 @@ class ComputeDemo : AppInterface
 				GpuLoadOp.clear,
 				GpuStoreOp.dont_care,
 			);
+			
 			// render
 			command_buffer.render(
 				(render_pass) {
 				vertex_model.mat_model =
-					matrix_rotate_y(0.0015 * timer.past)
-					* matrix_rotate_x(
-						0.0005 * timer.past)
-					* matrix_scaling!true(Vec3(1.0f, 1.0f, 1.0f));
+					matrix_scaling!true(Vec3(1.0,1.0,1.0))
+						* Quaternion!float(Vec3(1.0f, 1.0f, 0.0f), 0.5 * timer.past * 0.001*0.001).to_matrix.resize!(4, 4);
+					
 				vertex_model.mat_model_normal = cast(Matrix!(4, 4, float))(
 					cast(Matrix!(3, 3, float))(
 					vertex_model.mat_model)
@@ -280,36 +268,37 @@ class ComputeDemo : AppInterface
 				render_pass
 					.bind(
 						render_pipeline,
-						[
-							GpuTextureSamplerBinding(object_texture, object_sampler)
-						],
-						[vertex_buffer], index_buffer,
+						object_texture.binding,
+						vertex_buffer, index_buffer,
 					)
 					.push_vertex(1, vertex_view, vertex_model)
 					.push_fragment(0, fragment_scene, fragment_view, fragment_model, fragment_light,)
 					.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 			},
-				[color_target_info],
+				color_target_info,
 				depth_target_info,
-			); // compute
+			);
+			
+			// compute
 			command_buffer.compute(
 				(compute_pass) {
 				compute_pass
 					.bind(
 						compute_pipeline,
-						[GpuTextureSamplerBinding(compute_src_texture, sampler)],
-					)
+						alt_texture.src.binding,
+						//[GpuTextureSamplerBinding(compute_src_texture, sampler)],
+					
+				)
 					.push(UniformCompute(960f, 540f))
 					.dispatch(
-						compute_pipeline.dispatch_size(graphics_context.client_size),);
+						compute_pipeline.dispatch_size(gc.client_size),);
 				return;
 			},
-				[GpuStorageTextureReadWriteBinding(compute_dst_texture)],
-				null,
+				[GpuStorageTextureReadWriteBinding(alt_texture.dest)],null,
 			); // blit
 			command_buffer.blit_texture(
 				GpuBlitInfo(
-					GpuBlitRegion(compute_dst_texture),
+					GpuBlitRegion(alt_texture.dest),
 					GpuBlitRegion(swapchain_texture),
 					GpuLoadOp.dont_care,
 			)

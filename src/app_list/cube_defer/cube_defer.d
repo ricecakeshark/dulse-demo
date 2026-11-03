@@ -60,7 +60,7 @@ class CubeDeferDemo : AppInterface
 	override void initialize()
 	{
 		core.subsystem.query(timer, logger);
-		gc.create(command_buffer, swapchain_texture, /+fence+/);
+		gc.create(command_buffer, swapchain_texture, /+fence+/ );
 		// config
 		swapchain_texture.set(
 			GpuSwapchainComposition.HDR_extended_linear,
@@ -116,6 +116,7 @@ class CubeDeferDemo : AppInterface
 			albedo_texture, normal_texture, material_texture, entity_texture,
 			color_texture, edge_texture,
 		);
+		sampler_nearest.set_to(depth_texture);
 		sampler_nearest.set_to(
 			albedo_texture, normal_texture, material_texture, entity_texture,
 			color_texture, edge_texture,
@@ -134,6 +135,9 @@ class CubeDeferDemo : AppInterface
 				tci.usage = GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.compute_storage_write,
 				gc.client_width, gc.client_height, 1, 1,
 		));
+		sampler_nearest.set_to(
+			alt_texture.src, alt_texture.dest,
+		);
 
 		// sampler
 		sampler_smooth.create(GpuSamplerCreateInfo(
@@ -164,7 +168,7 @@ class CubeDeferDemo : AppInterface
 		gc.create(buffer_transfer_buffer, tb_texture);
 		buffer_transfer_buffer.prepare(object_geometry);
 		tb_texture.prepare(object_image);
-			
+
 		command_buffer
 			.acquire_buffer()
 			.copy(
@@ -172,22 +176,21 @@ class CubeDeferDemo : AppInterface
 					buffer_transfer_buffer,
 					vertex_buffer,
 					index_buffer,
-				),
-				sequence(
-					tb_texture,
-					object_texture,
-				),
-			)
+			),
+			sequence(
+				tb_texture,
+				object_texture,
+			),
+		)
 			.submit();
-			//.submit(fence);
-			//fence.wait();
+		//.submit(fence);
+		//fence.wait();
 		return;
 	}
 
 	override void finalize()
 	{
 		gc.resource_store.release_all();
-		alt_texture.release();
 		return;
 	}
 
@@ -221,52 +224,52 @@ class CubeDeferDemo : AppInterface
 		if (swapchain_texture.handle !is null)
 		{
 			// g-buffer
-			command_buffer.render(
-				(render_pass) {
-				// prepare pipeline_defer
-				render_pass
-					.push_vertex(1, uniform_view)
-					.push_fragment(1, uniform_view);
-				// foreach entity
-				foreach (entity; entity_list)
-				{
-					// update UB
-					uniform_model_vert = UniformModelVert(
-						object_manager.component.get!TransformComponent(entity)
-						.model_matrix()
-					);
-					uniform_model_frag = UniformModelFrag(0.5f, 64.0f, entity.index + 1);
-
+			command_buffer
+				.render(
+					(ref RenderPass render_pass) {
+					// prepare pipeline_defer
 					render_pass
-						.bind(
-							pipeline_defer_texture,
-							GpuTextureSamplerBinding(object_texture, sampler_smooth),
-							vertex_buffer, index_buffer,
-						)
-						.push_vertex(2, uniform_model_vert)
-						.push_fragment(2, uniform_model_frag)
-						.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
-				}
-			},
-				[
+						.push_vertex(1, uniform_view)
+						.push_fragment(1, uniform_view);
+					// foreach entity
+					foreach (entity; entity_list)
+					{
+						// update UB
+						uniform_model_vert = UniformModelVert(
+							object_manager.component.get!TransformComponent(entity)
+							.model_matrix()
+						);
+						uniform_model_frag = UniformModelFrag(0.5f, 64.0f, entity.index + 1);
+
+						render_pass
+							.bind(
+								pipeline_defer_texture,
+								GpuTextureSamplerBinding(object_texture, sampler_smooth),
+								vertex_buffer, index_buffer,
+							)
+							.push_vertex(2, uniform_model_vert)
+							.push_fragment(2, uniform_model_frag)
+							.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
+					}
+					return;
+				},
 					GpuColorTargetInfo(
 						albedo_texture, GpuLoadOp.clear, GpuStoreOp.store,
-					),
-					GpuColorTargetInfo(
-						normal_texture, GpuLoadOp.clear, GpuStoreOp.store,
-					),
-					GpuColorTargetInfo(
-						material_texture, GpuLoadOp.clear, GpuStoreOp.store,
-					),
-					GpuColorTargetInfo(
-						entity_texture, 0, 0, ColorF(0f, 0f, 0f, 0f), GpuLoadOp.clear, GpuStoreOp.store,
-					),
-				],
+				),
+				GpuColorTargetInfo(
+					normal_texture, GpuLoadOp.clear, GpuStoreOp.store,
+				),
+				GpuColorTargetInfo(
+					material_texture, GpuLoadOp.clear, GpuStoreOp.store,
+				),
+				GpuColorTargetInfo(
+					entity_texture, 0, 0, ColorF(0f, 0f, 0f, 0f), GpuLoadOp.clear, GpuStoreOp.store,
+				),
 				GpuDepthStencilTargetInfo(
 					depth_texture.handle,
 					1.0f,
 					GpuLoadOp.clear, GpuStoreOp.dont_care,
-			),
+				),
 			);
 			// phong
 			command_buffer
@@ -274,10 +277,10 @@ class CubeDeferDemo : AppInterface
 					(compute_pass) {
 					compute_pass.bind(pipeline_phong)
 						.bind(
-							GpuTextureSamplerBinding(depth_texture, sampler_nearest),
-							GpuTextureSamplerBinding(albedo_texture, sampler_smooth),
-							GpuTextureSamplerBinding(normal_texture, sampler_nearest),
-							GpuTextureSamplerBinding(material_texture, sampler_nearest),
+							depth_texture.binding,
+							albedo_texture.binding,
+							normal_texture.binding,
+							material_texture.binding,
 						)
 						.push(0, uniform_scene, uniform_view, uniform_light,)
 						.dispatch(
@@ -286,15 +289,16 @@ class CubeDeferDemo : AppInterface
 					return;
 				}, [GpuStorageTextureReadWriteBinding(color_texture)],
 				);
+
 			// pre_edge
 			command_buffer
 				.compute(
 					(compute_pass) {
 					compute_pass.bind(pipeline_pre_edge)
 						.bind(
-							GpuTextureSamplerBinding(depth_texture, sampler_nearest),
-							GpuTextureSamplerBinding(normal_texture, sampler_nearest),
-							GpuTextureSamplerBinding(entity_texture, sampler_nearest),
+							depth_texture.binding,
+							normal_texture.binding,
+							entity_texture.binding,
 						)
 						.push(0, uniform_view)
 						.dispatch(
@@ -311,9 +315,9 @@ class CubeDeferDemo : AppInterface
 					(compute_pass) {
 					compute_pass.bind(pipeline_compose)
 						.bind(
-							GpuTextureSamplerBinding(depth_texture, sampler_nearest),
-							GpuTextureSamplerBinding(albedo_texture, sampler_smooth),
-							GpuTextureSamplerBinding(color_texture, sampler_nearest),
+							depth_texture.binding,
+							albedo_texture.binding,
+							color_texture.binding,
 						)
 						.dispatch(
 							pipeline_compose.dispatch_size(gc.client_size)
@@ -327,8 +331,8 @@ class CubeDeferDemo : AppInterface
 				(compute_pass) {
 				compute_pass.bind(pipeline_post_blur)
 					.bind(
-						GpuTextureSamplerBinding(depth_texture, sampler_nearest,),
-						GpuTextureSamplerBinding(alt_texture.src, sampler_nearest,),
+						depth_texture.binding,
+						alt_texture.src.binding,
 					)
 					.push(
 						0,
@@ -343,14 +347,15 @@ class CubeDeferDemo : AppInterface
 				[GpuStorageTextureReadWriteBinding(alt_texture.dest)],
 				null,
 			);
+
 			// post_fog
 			alt_texture.swap();
 			command_buffer.compute(
 				(compute_pass) {
 				compute_pass.bind(pipeline_post_fog)
 					.bind(
-						GpuTextureSamplerBinding(depth_texture, sampler_nearest,),
-						GpuTextureSamplerBinding(alt_texture.src, sampler_nearest,),
+						depth_texture.binding,
+						alt_texture.src.binding,
 					)
 					.push(
 						0,
@@ -370,7 +375,7 @@ class CubeDeferDemo : AppInterface
 				(compute_pass) {
 				compute_pass.bind(pipeline_post_edge)
 					.bind(
-						GpuTextureSamplerBinding(edge_texture, sampler_nearest,),
+						edge_texture.binding,
 					)
 					.push(
 						0,
@@ -397,7 +402,7 @@ class CubeDeferDemo : AppInterface
 				(compute_pass) {
 				compute_pass.bind(pipeline_post_color)
 					.bind(
-						GpuTextureSamplerBinding(alt_texture.src, sampler_nearest,),
+						alt_texture.src.binding,
 					)
 					.push(
 						0,

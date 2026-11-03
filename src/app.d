@@ -22,7 +22,7 @@ void main()
 
 	import std.process;
 
-	auto builder = dulse.file.file.FileHandler("bin/win_x86-64/shader_builder.exe");
+	auto builder = dulse.file.file.FileHandler("bin/win-x86_64/shader_builder.exe");
 
 	if (builder.exsist)
 	{
@@ -52,7 +52,7 @@ void main()
 		cast(AppInterface) new CubeDeferDemo(core),
 		new TextApp(core),
 		new Particle(core),
-		//new ComputeDemo(core),
+		new ComputeDemo(core),
 		//new GuageDemo(core),
 	];
 	app_list[app_index].initialize();
