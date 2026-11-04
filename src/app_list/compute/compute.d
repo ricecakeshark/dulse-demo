@@ -125,7 +125,7 @@ class ComputeDemo : AppInterface
 				GpuFilter.nearest,
 		));
 		gc.create(depth_texture, alt_texture);
-		
+
 		depth_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d,
 				GpuTextureFormat.d32_float,
@@ -135,10 +135,11 @@ class ComputeDemo : AppInterface
 		));
 		alt_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d, GpuTextureFormat.r16g16b16a16_float,
-				GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.compute_storage_write | GpuTextureUsageFlags.color_target,
+				GpuTextureUsageFlags.sampler | GpuTextureUsageFlags.compute_storage_write | GpuTextureUsageFlags
+				.color_target,
 				gc.client_width, gc.client_height, 1, 1,
 		));
-		
+
 		gc.create(sampler);
 		sampler.create(GpuSamplerCreateInfo(
 				GpuFilter.linear, GpuFilter.linear,
@@ -148,7 +149,7 @@ class ComputeDemo : AppInterface
 			depth_texture, alt_texture.src, alt_texture.dest,
 			object_texture,
 		);
-		
+
 		// Geometry
 		FileHandler("./model/cube.obj").load_obj(object_geometry);
 
@@ -170,7 +171,7 @@ class ComputeDemo : AppInterface
 		gc.create(buffer_transfer_buffer, tb_texture);
 		buffer_transfer_buffer.prepare(object_geometry);
 		tb_texture.prepare(object_image);
-		
+
 		command_buffer
 			.acquire_buffer()
 			.copy(
@@ -203,7 +204,7 @@ class ComputeDemo : AppInterface
 
 	override void draw()
 	{
-		
+
 		import std.math;
 
 		GpuColorTargetInfo color_target_info;
@@ -220,7 +221,6 @@ class ComputeDemo : AppInterface
 			transformer_look_at(Vec3(0f, 0f, -2.5f), Vec3(0f, 0f, 0f), Vec3(0f, 1f, 0f))
 			* transformer_perspective(PI_2);
 
-			
 		fragment_scene.ambient_light = ColorF(1.0f, 1.0f, 1.0f, 0.1f);
 		fragment_view.vec_view = Vec3(0f, 0f, -2.5f);
 		with (fragment_light.list[0])
@@ -231,10 +231,10 @@ class ComputeDemo : AppInterface
 		}
 
 		//fragment_light.pos = [sin(0.002f*timer.past)*10f,0f,cos(0.002f*timer.past)*10f];
-		
+
 		command_buffer.acquire_buffer()
 			.acquire_texture(swapchain_texture);
-			
+
 		if (swapchain_texture.handle !is null)
 		{
 			color_target_info = GpuColorTargetInfo(
@@ -247,14 +247,14 @@ class ComputeDemo : AppInterface
 				GpuLoadOp.clear,
 				GpuStoreOp.dont_care,
 			);
-			
+
 			// render
 			command_buffer.render(
 				(render_pass) {
 				vertex_model.mat_model =
-					matrix_scaling!true(Vec3(1.0,1.0,1.0))
-						* Quaternion!float(Vec3(1.0f, 1.0f, 0.0f), 0.5 * timer.past * 0.001*0.001).to_matrix.resize!(4, 4);
-					
+					matrix_scaling!true(Vec3(1.0, 1.0, 1.0))
+					* Quaternion!float(Vec3(1.0f, 1.0f, 0.0f), 1.0 * timer.past * 0.001 * 0.001).to_matrix.resize!(4, 4);
+
 				vertex_model.mat_model_normal = cast(Matrix!(4, 4, float))(
 					cast(Matrix!(3, 3, float))(
 					vertex_model.mat_model)
@@ -278,7 +278,7 @@ class ComputeDemo : AppInterface
 				color_target_info,
 				depth_target_info,
 			);
-			
+
 			// compute
 			command_buffer.compute(
 				(compute_pass) {
@@ -286,15 +286,13 @@ class ComputeDemo : AppInterface
 					.bind(
 						compute_pipeline,
 						alt_texture.src.binding,
-						//[GpuTextureSamplerBinding(compute_src_texture, sampler)],
-					
-				)
+					)
 					.push(UniformCompute(960f, 540f))
 					.dispatch(
 						compute_pipeline.dispatch_size(gc.client_size),);
 				return;
 			},
-				[GpuStorageTextureReadWriteBinding(alt_texture.dest)],null,
+				alt_texture.dest,
 			); // blit
 			command_buffer.blit_texture(
 				GpuBlitInfo(
