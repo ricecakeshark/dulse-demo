@@ -8,6 +8,7 @@ targetType "executable"
 targetName "dulse-demo"
 targetPath "build"
 workingDirectory "build"
+importPaths "src"
 
 dependency "dulse" version="~>0.2"
 dependency "dulse-sdl" version="~>0.2"
