@@ -268,7 +268,7 @@ class ComputeDemo : AppInterface
 				render_pass
 					.bind(
 						render_pipeline,
-						object_texture.binding,
+						object_texture,
 						vertex_buffer, index_buffer,
 					)
 					.push_vertex(1, vertex_view, vertex_model)
