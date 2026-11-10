@@ -415,8 +415,7 @@ class CubeDeferDemo : AppInterface
 					);
 				return;
 			},
-				[GpuStorageTextureReadWriteBinding(alt_texture.dest)],
-				null,
+			GpuStorageTextureReadWriteBinding(alt_texture.dest),
 			);
 			// blit
 			command_buffer.blit(

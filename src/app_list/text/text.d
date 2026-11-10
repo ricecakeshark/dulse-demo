@@ -20,7 +20,7 @@ class TextApp : AppInterface
 	Core core;
 	TimerSubsystem timer;
 
-	GraphicsContext graphics;
+	GraphicsContext gc;
 	GpuCommandBuffer command_buffer;
 	GpuSwapchainTexture swapchain_texture;
 	GfxTextContext text_context;
@@ -42,16 +42,16 @@ class TextApp : AppInterface
 	this(Core core)
 	{
 		this.core = core;
-		this.graphics = core.subsystem.query!GraphicsSubsystem()[0].context;
+		this.gc = core.subsystem.query!GraphicsSubsystem()[0].context;
 		return;
 	}
 
 	void initialize()
 	{
 		core.subsystem.query(timer);
-		graphics.create(command_buffer, swapchain_texture);
+		gc.create(command_buffer, swapchain_texture);
 		// pipeline, vertex shader, fragment shader
-		graphics.create_pipeline_text(pipeline);
+		gc.create_pipeline_text(pipeline);
 
 		// geometry
 		text_mesh.initialize(
@@ -59,12 +59,12 @@ class TextApp : AppInterface
 			uint.sizeof * max_index_count,
 		);
 		// vertex buffer
-		graphics.create(vertex_buffer, index_buffer);
+		gc.create(vertex_buffer, index_buffer);
 		vertex_buffer.create(max_vertex_count, VertexPT.sizeof);
 		index_buffer.create(max_index_count, GpuIndexElementSize._32bit);
 
 		// sampler
-		graphics.create(sampler);
+		gc.create(sampler);
 		sampler.create(
 			GpuSamplerCreateInfo(
 				GpuFilter.linear,
@@ -72,7 +72,7 @@ class TextApp : AppInterface
 		)
 		);
 		// text
-		graphics.create(text_context);
+		gc.create(text_context);
 		text_context.load_font("./font/HackGen/HackGen-Bold.ttf", 50.0f)
 			.set_SDF(true)
 			.set(TextAlign.center)
@@ -80,7 +80,7 @@ class TextApp : AppInterface
 			.create_text("TEXT");
 
 		// upload
-		graphics.create(
+		gc.create(
 			buffer_transfer_buffer,
 			texture_transfer_buffer,
 		);
@@ -92,6 +92,7 @@ class TextApp : AppInterface
 
 	void finalize()
 	{
+		gc.resource_store.release_all();
 		return;
 	}
 
@@ -234,11 +235,7 @@ class TextApp : AppInterface
 			);
 			
 		}
-		
 		command_buffer.submit();
-		
-		//throw new Exception("finish");
-
 		return;
 	}
 }

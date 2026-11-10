@@ -18,20 +18,23 @@ void main()
 	scope InputSubsystem input;
 	scope MixerSubsystem mixer;
 	scope AppInterface[] app_list;
-	scope LoopedInt!(6) app_index, app_index_next;
+	scope LoopedInt!(4) app_index, app_index_next;
 
 	import std.process;
 
-	/+auto builder = dulse.file.file.FileHandler("bin/win-x86_64/shader_builder.exe");
+	auto builder = dulse.file.file.FileHandler("bin/win-x86_64/shader_build_helper.exe");
 
 	if (builder.exsist)
 	{
 		auto pid = spawnProcess(
-			["shader_builder.exe", "--verbose"],
-			stdin, stdout, stderr,
+			[
+			"shader_build_helper.exe",
+			"--src=shader/src/glsl", "--dest=shader/build/SPIRV"
+		],
+		stdin, stdout, stderr,
 		);
 		wait(pid);
-	}+/
+	}
 
 	core = new Core();
 	core.subsystem.append!(GfxSubsystemList)();
