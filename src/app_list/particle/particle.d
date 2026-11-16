@@ -9,13 +9,17 @@ import dulse_gfx;
 
 import std.math : PI_2;
 
-class Particle : AppInterface
+class ParticleDemo : AppInterface
 {
 	Core core;
 	TimerSubsystem timer;
 	LoggerSubsystem logger;
-	GraphicsContext graphics_context;
+	GraphicsContext gc;
 
+	CommandBuffer cb;
+	SwapchainTexture swapchain_texture;
+
+	ComputePipeline pipeline_particle_process;
 	GraphicsPipeline pipeline_particle;
 	Texture depth_texture;
 	ObjectManager object_manager;
@@ -26,17 +30,20 @@ class Particle : AppInterface
 			* transformer_perspective(PI_2)
 	);
 
+	GpuBufferTransferBuffer bt_buffer;
+	StorageBuffer particle_buffer;
+
 	this(Core core)
 	{
 		this.core = core;
-		this.graphics_context = core.subsystem.query!GraphicsSubsystem()[0].context;
+		this.gc = core.subsystem.query!GraphicsSubsystem()[0].context;
 		return;
 	}
 
 	override void initialize()
 	{
 		core.subsystem.query(timer, logger);
-		graphics_context.create(command_buffer, swapchain_texture,);
+		gc.create(cb, swapchain_texture,);
 		// config
 		swapchain_texture.set(
 			GpuSwapchainComposition.HDR_extended_linear,
@@ -54,24 +61,45 @@ class Particle : AppInterface
 			.initialize();
 
 		// Pipeline
-		create_pipeline_particle(graphics_context, pipeline_particle);
+		create_pipeline_particle(
+			gc, pipeline_particle,
+		);
+		gc.create_pipeline_particle_process(
+			pipeline_particle_process,
+		);
 
 		// texture, sampler
 		// depth texture
-		graphics_context.create(depth_texture);
+		gc.create(depth_texture);
 		depth_texture.create(GpuTextureCreateInfo(
 				GpuTextureType._2d,
 				GpuTextureFormat.d32_float,
 				GpuTextureUsageFlags.depth_stencil_target | GpuTextureUsageFlags.sampler,
-				graphics_context.client_width, graphics_context.client_height,
+				gc.client_width, gc.client_height,
 				1, 1, GpuSampleCount.x1,
 		));
+
+		gc.create(
+			bt_buffer, particle_buffer,
+		);
+		particle_buffer.create(
+			Particle.sizeof * 10,
+			GpuBufferUsageFlags.compute_storage_write,
+		);
+		bt_buffer.create(Particle.sizeof * 10);
+
+		cb.acquire_buffer()
+			.copy(
+				sequence(bt_buffer, particle_buffer,),
+			)
+			.submit();
+
 		return;
 	}
 
 	override void finalize()
 	{
-		graphics_context.resource_store.release_all();
+		gc.resource_store.release_all();
 		return;
 	}
 
@@ -84,19 +112,29 @@ class Particle : AppInterface
 		return;
 	}
 
-	GpuCommandBuffer command_buffer;
-	GpuSwapchainTexture swapchain_texture;
-
 	override void draw()
 	{
-		// render
-		command_buffer
+		// process particle
+		cb
 			.acquire_buffer()
 			.acquire_texture(swapchain_texture);
 		if (swapchain_texture.handle !is null)
 		{
-			// g-buffer
-			command_buffer.render(
+			// process particle
+			cb.compute(
+				(pass) {
+				pass
+					.bind(
+						pipeline_particle_process,
+					)
+					.dispatch(1, 1, 1);
+				return;
+			},
+				particle_buffer,
+			);
+
+			// render particle
+			cb.render(
 				(render_pass) {
 				// prepare pipeline_defer
 				render_pass
@@ -118,7 +156,7 @@ class Particle : AppInterface
 			),
 			);
 		}
-		command_buffer.submit();
+		cb.submit();
 		return;
 	}
 
@@ -126,4 +164,9 @@ class Particle : AppInterface
 	{
 		return 0;
 	}
+}
+
+struct Particle
+{
+	Vec4 pos;
 }

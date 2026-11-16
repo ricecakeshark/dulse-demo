@@ -98,8 +98,7 @@ class GuageDemo : AppInterface
 					.dispatch(400 / 8, 400 / 8, 1);
 				return;
 			},
-				[GpuStorageTextureReadWriteBinding(guage_dst_texture)],
-				[],
+				GpuStorageTextureReadWriteBinding(guage_dst_texture),
 			);
 			// blit
 			command_buffer.blit_texture(

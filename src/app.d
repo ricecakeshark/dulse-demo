@@ -21,17 +21,20 @@ void main()
 	scope LoopedInt!(4) app_index, app_index_next;
 
 	import std.process;
+	import std.exception : enforce;
 
 	auto builder = dulse.file.file.FileHandler("bin/win-x86_64/shader_build_helper.exe");
 
-	if (builder.exsist)
+	enforce(builder.exist);
+	if (builder.exist)
 	{
 		auto pid = spawnProcess(
 			[
-			"shader_build_helper.exe",
-			"--src=shader/src/glsl", "--dest=shader/build/SPIRV"
-		],
-		stdin, stdout, stderr,
+				builder.path,
+				"--src=shader/src/glsl", "--dest=shader/build/SPIRV",
+				"-v=2"
+			],
+			stdin, stdout, stderr,
 		);
 		wait(pid);
 	}
@@ -54,7 +57,7 @@ void main()
 	app_list = [
 		cast(AppInterface) new CubeDeferDemo(core),
 		new TextApp(core),
-		new Particle(core),
+		new ParticleDemo(core),
 		new ComputeDemo(core),
 		//new GuageDemo(core),
 	];

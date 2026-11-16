@@ -17,6 +17,8 @@ class CubeDeferDemo : AppInterface
 	LoggerSubsystem logger;
 	GraphicsContext gc;
 
+	CommandBuffer command_buffer;
+	SwapchainTexture swapchain_texture;
 	GraphicsPipeline pipeline_defer_texture, pipeline_defer_solid;
 	ComputePipeline pipeline_compose, pipeline_compose_debug;
 	ComputePipeline pipeline_phong, pipeline_pre_edge, pipeline_post_edge,
@@ -25,7 +27,7 @@ class CubeDeferDemo : AppInterface
 	Texture depth_texture;
 	Texture albedo_texture, normal_texture, color_texture, material_texture, entity_texture, edge_texture;
 	TextureAlternate alt_texture;
-	GpuSampler sampler_nearest, sampler_smooth;
+	Sampler sampler_nearest, sampler_smooth;
 	GpuFence fence;
 
 	GfxMesh object_mesh;
@@ -91,15 +93,6 @@ class CubeDeferDemo : AppInterface
 		create_pipeline_post_color(gc, pipeline_post_color);
 
 		// texture, sampler
-		object_image = new Surface();
-		object_image.load("./image/test_texture.png");
-		gc.create(object_texture);
-		object_texture.create(GpuTextureCreateInfo(
-				GpuTextureType._2d, GpuTextureFormat.r8g8b8a8_unorm,
-				GpuTextureUsageFlags.sampler,
-				object_image.width, object_image.height,
-				1, 1,
-		));
 		// depth texture
 		gc.create(depth_texture);
 		depth_texture.create(GpuTextureCreateInfo(
@@ -146,6 +139,17 @@ class CubeDeferDemo : AppInterface
 		sampler_nearest.create(GpuSamplerCreateInfo(
 				GpuFilter.nearest, GpuFilter.nearest,
 		));
+		// object texture
+		object_image = new Surface();
+		object_image.load("./image/test_texture.png");
+		gc.create(object_texture);
+		object_texture.create(GpuTextureCreateInfo(
+				GpuTextureType._2d, GpuTextureFormat.r8g8b8a8_unorm,
+				GpuTextureUsageFlags.sampler,
+				object_image.width, object_image.height,
+				1, 1,
+		));
+		sampler_nearest.set_to(object_texture);
 
 		// Geometry
 		FileHandler("./model/cube.obj").load_obj(object_geometry);
@@ -205,9 +209,6 @@ class CubeDeferDemo : AppInterface
 		return;
 	}
 
-	GpuCommandBuffer command_buffer;
-	GpuSwapchainTexture swapchain_texture;
-
 	override void draw()
 	{
 		// prepare uniform buffer object
@@ -244,7 +245,7 @@ class CubeDeferDemo : AppInterface
 						render_pass
 							.bind(
 								pipeline_defer_texture,
-								GpuTextureSamplerBinding(object_texture, sampler_smooth),
+								object_texture,
 								vertex_buffer, index_buffer,
 							)
 							.push_vertex(2, uniform_model_vert)
@@ -275,7 +276,8 @@ class CubeDeferDemo : AppInterface
 			command_buffer
 				.compute(
 					(compute_pass) {
-					compute_pass.bind(pipeline_phong)
+					compute_pass
+						.bind(pipeline_phong,)
 						.bind(
 							depth_texture.binding,
 							albedo_texture.binding,
@@ -287,15 +289,16 @@ class CubeDeferDemo : AppInterface
 							pipeline_phong.dispatch_size(gc.client_size)
 						);
 					return;
-				}, [GpuStorageTextureReadWriteBinding(color_texture)],
+				},
+					GpuStorageTextureReadWriteBinding(color_texture),
 				);
-
 			// pre_edge
 			command_buffer
 				.compute(
 					(compute_pass) {
-					compute_pass.bind(pipeline_pre_edge)
+					compute_pass
 						.bind(
+							pipeline_pre_edge,
 							depth_texture.binding,
 							normal_texture.binding,
 							entity_texture.binding,
@@ -306,7 +309,7 @@ class CubeDeferDemo : AppInterface
 						);
 					return;
 				},
-					[GpuStorageTextureReadWriteBinding(edge_texture)],
+					GpuStorageTextureReadWriteBinding(edge_texture),
 				);
 			// compose
 			alt_texture.swap();
@@ -323,7 +326,8 @@ class CubeDeferDemo : AppInterface
 							pipeline_compose.dispatch_size(gc.client_size)
 						);
 					return;
-				}, [GpuStorageTextureReadWriteBinding(alt_texture.dest)],
+				},
+					GpuStorageTextureReadWriteBinding(alt_texture.dest),
 				);
 			// post_blur
 			alt_texture.swap();
@@ -344,8 +348,7 @@ class CubeDeferDemo : AppInterface
 					);
 				return;
 			},
-				[GpuStorageTextureReadWriteBinding(alt_texture.dest)],
-				null,
+				GpuStorageTextureReadWriteBinding(alt_texture.dest),
 			);
 
 			// post_fog
@@ -367,8 +370,7 @@ class CubeDeferDemo : AppInterface
 					);
 				return;
 			},
-				[GpuStorageTextureReadWriteBinding(alt_texture.dest)],
-				null,
+				GpuStorageTextureReadWriteBinding(alt_texture.dest),
 			);
 			// post_edge
 			command_buffer.compute(
@@ -390,8 +392,8 @@ class CubeDeferDemo : AppInterface
 					);
 				return;
 			},
-				[GpuStorageTextureReadWriteBinding(alt_texture.dest)],
-				null,
+				GpuStorageTextureReadWriteBinding(alt_texture.dest),
+
 			);
 			// color_process
 			uniform_color.mode.output_mode = 1;
@@ -415,7 +417,7 @@ class CubeDeferDemo : AppInterface
 					);
 				return;
 			},
-			GpuStorageTextureReadWriteBinding(alt_texture.dest),
+				GpuStorageTextureReadWriteBinding(alt_texture.dest),
 			);
 			// blit
 			command_buffer.blit(

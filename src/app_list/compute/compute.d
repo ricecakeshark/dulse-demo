@@ -13,7 +13,7 @@ class ComputeDemo : AppInterface
 	Core core;
 	TimerSubsystem timer;
 	GraphicsContext gc;
-	CommandBuffer command_buffer;
+	CommandBuffer cb;
 
 	SwapchainTexture swapchain_texture;
 	GfxGraphicsPipeline render_pipeline;
@@ -41,7 +41,7 @@ class ComputeDemo : AppInterface
 	override void initialize()
 	{
 		core.subsystem.query(timer, logger);
-		gc.create(command_buffer, swapchain_texture);
+		gc.create(cb, swapchain_texture);
 		// Render Shader
 		scope GpuVertexShader vertex_shader;
 		scope GpuFragmentShader fragment_shader;
@@ -172,7 +172,7 @@ class ComputeDemo : AppInterface
 		buffer_transfer_buffer.prepare(object_geometry);
 		tb_texture.prepare(object_image);
 
-		command_buffer
+		cb
 			.acquire_buffer()
 			.copy(
 				sequence(
@@ -232,7 +232,7 @@ class ComputeDemo : AppInterface
 
 		//fragment_light.pos = [sin(0.002f*timer.past)*10f,0f,cos(0.002f*timer.past)*10f];
 
-		command_buffer.acquire_buffer()
+		cb.acquire_buffer()
 			.acquire_texture(swapchain_texture);
 
 		if (swapchain_texture.handle !is null)
@@ -249,7 +249,7 @@ class ComputeDemo : AppInterface
 			);
 
 			// render
-			command_buffer.render(
+			cb.render(
 				(render_pass) {
 				vertex_model.mat_model =
 					matrix_scaling!true(Vec3(1.0, 1.0, 1.0))
@@ -280,12 +280,12 @@ class ComputeDemo : AppInterface
 			);
 
 			// compute
-			command_buffer.compute(
+			cb.compute(
 				(compute_pass) {
 				compute_pass
 					.bind(
 						compute_pipeline,
-						alt_texture.src.binding,
+						alt_texture.src,
 					)
 					.push(UniformCompute(960f, 540f))
 					.dispatch(
@@ -294,7 +294,7 @@ class ComputeDemo : AppInterface
 			},
 				alt_texture.dest,
 			); // blit
-			command_buffer.blit_texture(
+			cb.blit_texture(
 				GpuBlitInfo(
 					GpuBlitRegion(alt_texture.dest),
 					GpuBlitRegion(swapchain_texture),
@@ -303,7 +303,7 @@ class ComputeDemo : AppInterface
 			);
 		}
 
-		command_buffer.submit();
+		cb.submit();
 		return;
 	}
 
