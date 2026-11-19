@@ -3,7 +3,7 @@ module app_list.particle.pipeline.particle;
 import dulse_sdl;
 import dulse_gfx;
 
-GraphicsContext create_pipeline_particle(
+GraphicsContext create_pipeline_particle_draw(
 	ref GraphicsContext graphics_context,
 	out GraphicsPipeline particle_pipeline
 )
@@ -13,11 +13,11 @@ GraphicsContext create_pipeline_particle(
 	graphics_context.create(particle_pipeline, vertex_shader, fragment_shader);
 	vertex_shader.create(
 		ShaderFile("particle.vert", graphics_context.get_shader_format()),
-		GpuShaderArguments(0, 2, 0, 0),
+		GpuShaderArguments(0, 2, 1, 0),
 	);
 	fragment_shader.create(
 		ShaderFile("particle.frag", graphics_context.get_shader_format()),
-		GpuShaderArguments(0, 0, 0, 0),
+		GpuShaderArguments(0, 2, 0, 0),
 	);
 	// Defer Pipeline
 	scope GfxGraphicsPipelineCreateInfo particle_pipeline_info;
@@ -25,7 +25,13 @@ GraphicsContext create_pipeline_particle(
 	particle_pipeline_info.fragment_shader = fragment_shader;
 	with (particle_pipeline_info)
 	{
-		primitive_type = GpuPrimitiveType.point_list;
+		vertex_input_state = GpuVertexInputState(
+			[
+				vertex_buffer_description!(float[2], float[3], float[3])
+			],
+			vertex_attributes!(float[2], float[3], float[3])(0),
+		);
+		primitive_type = GpuPrimitiveType.triangle_list;
 		rasterizer_state = GpuRasterizerState(
 			GpuFillMode.fill,
 			GpuCullMode.back,

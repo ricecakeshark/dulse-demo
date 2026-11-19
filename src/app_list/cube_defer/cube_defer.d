@@ -31,7 +31,7 @@ class CubeDeferDemo : AppInterface
 	GpuFence fence;
 
 	GfxMesh object_mesh;
-	GfxGeometry!(VertexPNU, uint) object_geometry;
+	GfxGeometry!(VertexTex, uint) object_geometry;
 	VertexBuffer vertex_buffer;
 	IndexBuffer index_buffer;
 
@@ -156,7 +156,7 @@ class CubeDeferDemo : AppInterface
 
 		// Mesh
 		object_mesh.initialize(
-			VertexPNU.sizeof * object_geometry.count_vertex,
+			VertexTex.sizeof * object_geometry.count_vertex,
 			uint.sizeof * object_geometry.count_index,
 		);
 		object_mesh.set([object_geometry]);
@@ -211,13 +211,6 @@ class CubeDeferDemo : AppInterface
 
 	override void draw()
 	{
-		// prepare uniform buffer object
-		with (uniform_light.light_point_list[0])
-		{
-			pos = Vec4(0f, +0.5f, -3f, 1.0f);
-			color = Vec4(0.7f, 0.7f, 0.7f, 0f);
-			intensity = 1.0;
-		}
 		// render
 		command_buffer
 			.acquire_buffer()
@@ -243,7 +236,7 @@ class CubeDeferDemo : AppInterface
 						uniform_model_frag = UniformModelFrag(0.5f, 64.0f, entity.index + 1);
 
 						render_pass
-							.bind(
+							.bind_all(
 								pipeline_defer_texture,
 								object_texture,
 								vertex_buffer, index_buffer,
@@ -296,13 +289,14 @@ class CubeDeferDemo : AppInterface
 			command_buffer
 				.compute(
 					(compute_pass) {
+					compute_pass.bind_all(
+						pipeline_pre_edge,
+						depth_texture.binding,
+						normal_texture.binding,
+						entity_texture.binding,
+					);
+
 					compute_pass
-						.bind(
-							pipeline_pre_edge,
-							depth_texture.binding,
-							normal_texture.binding,
-							entity_texture.binding,
-						)
 						.push(0, uniform_view)
 						.dispatch(
 							pipeline_pre_edge.dispatch_size(gc.client_size)
@@ -316,8 +310,9 @@ class CubeDeferDemo : AppInterface
 			command_buffer
 				.compute(
 					(compute_pass) {
-					compute_pass.bind(pipeline_compose)
-						.bind(
+					compute_pass
+						.bind_all(
+							pipeline_compose,
 							depth_texture.binding,
 							albedo_texture.binding,
 							color_texture.binding,

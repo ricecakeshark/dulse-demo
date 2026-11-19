@@ -16,10 +16,10 @@ class ComputeDemo : AppInterface
 	CommandBuffer cb;
 
 	SwapchainTexture swapchain_texture;
-	GfxGraphicsPipeline render_pipeline;
-	GfxComputePipeline compute_pipeline;
+	GraphicsPipeline render_pipeline;
+	ComputePipeline compute_pipeline;
 	GfxMesh object_mesh;
-	GfxGeometry!(VertexPNU, uint) object_geometry;
+	GfxGeometry!(VertexTex, uint) object_geometry;
 
 	VertexBuffer vertex_buffer;
 	IndexBuffer index_buffer;
@@ -155,7 +155,7 @@ class ComputeDemo : AppInterface
 
 		// Mesh
 		object_mesh.initialize(
-			VertexPNU.sizeof * object_geometry.count_vertex,
+			VertexTex.sizeof * object_geometry.count_vertex,
 			uint.sizeof * object_geometry.count_index,
 		);
 		object_mesh.set([object_geometry]);
@@ -266,7 +266,7 @@ class ComputeDemo : AppInterface
 					shininess = 32.0f;
 				}
 				render_pass
-					.bind(
+					.bind_all(
 						render_pipeline,
 						object_texture,
 						vertex_buffer, index_buffer,
@@ -283,9 +283,9 @@ class ComputeDemo : AppInterface
 			cb.compute(
 				(compute_pass) {
 				compute_pass
-					.bind(
+					.bind_all(
 						compute_pipeline,
-						alt_texture.src,
+						alt_texture.src.binding,
 					)
 					.push(UniformCompute(960f, 540f))
 					.dispatch(
@@ -293,7 +293,8 @@ class ComputeDemo : AppInterface
 				return;
 			},
 				alt_texture.dest,
-			); // blit
+			);
+			// blit
 			cb.blit_texture(
 				GpuBlitInfo(
 					GpuBlitRegion(alt_texture.dest),
@@ -302,7 +303,6 @@ class ComputeDemo : AppInterface
 			)
 			);
 		}
-
 		cb.submit();
 		return;
 	}

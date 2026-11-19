@@ -44,7 +44,7 @@ void main()
 	core.initialize();
 	core.subsystem.query(timer, graphics, logger, input, mixer);
 	graphics.context.initialize(
-		1920, 1080, "Dulse-demo with SDL3 GPU_API (Vulkan backend)",
+		1920/2, 1080/2, "Dulse-demo with SDL3 GPU_API (Vulkan backend)",
 		GpuBackend.vulkan
 	);
 

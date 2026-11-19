@@ -177,7 +177,7 @@ class TextApp : AppInterface
 				(ref RenderPass pass) {
 					
 				pass
-					.bind(pipeline, vertex_buffer, index_buffer,)
+					.bind_all(pipeline, vertex_buffer, index_buffer,)
 					.push_vert(0, ub_view, ub_model,)
 					.push_frag(
 						0,
@@ -211,7 +211,7 @@ class TextApp : AppInterface
 				}
 				+/
 				pass
-					.bind(
+					.bind_all(
 						pipeline, vertex_buffer, index_buffer,
 					)
 					.push_vert(1, ub_model_shadow)
