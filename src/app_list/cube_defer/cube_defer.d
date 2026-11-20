@@ -223,8 +223,8 @@ class CubeDeferDemo : AppInterface
 					(ref RenderPass render_pass) {
 					// prepare pipeline_defer
 					render_pass
-						.push_vertex(1, uniform_view)
-						.push_fragment(1, uniform_view);
+						.push_vertex(0, uniform_view)
+						.push_fragment(0, uniform_view);
 					// foreach entity
 					foreach (entity; entity_list)
 					{
@@ -241,8 +241,8 @@ class CubeDeferDemo : AppInterface
 								object_texture,
 								vertex_buffer, index_buffer,
 							)
-							.push_vertex(2, uniform_model_vert)
-							.push_fragment(2, uniform_model_frag)
+							.push_vertex(1, uniform_model_vert)
+							.push_fragment(1, uniform_model_frag)
 							.draw_indexed(ParamIndexedPrimitive(cast(uint) object_geometry.count_index, 1, 0, 0, 0));
 					}
 					return;
