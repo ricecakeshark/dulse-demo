@@ -8,7 +8,7 @@ import dulse_sdl;
 import dulse_gfx;
 import dulse_preset;
 
-import std.math : PI_2;
+import std.math;
 
 class CubeDeferDemo : AppInterface
 {
@@ -403,7 +403,10 @@ class CubeDeferDemo : AppInterface
 					)
 					.push(
 						0,
-						UniformPostEdge(
+						UniformEdgeThreshold(
+							0f,0.25f,0.5f,
+						),
+						UniformEdgeColor(
 						Vec4(1.0f, 1.0f, 0.0f, 1.0f),
 						Vec4(0.0f, 0.0f, 0.0f, 1.0f),
 						Vec4(0.0f, 1.0f, 1.0f, 1.0f),
