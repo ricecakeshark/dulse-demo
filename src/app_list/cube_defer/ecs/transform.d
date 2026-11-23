@@ -31,7 +31,7 @@ class TransformSystem : IObjectSystem
 			{
 				pos = Vec3(0f);
 				rotate_quat = Quaternion!float(Vec3(1.0f, 0.0f, 0.0f), 0f);
-				scale = Vec3(0.6f);
+				scale = Vec3(0.8f);
 			}
 		}
 		return;

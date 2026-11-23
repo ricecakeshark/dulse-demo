@@ -21,7 +21,7 @@ class CubeDeferDemo : AppInterface
 	SwapchainTexture swapchain_texture;
 	GraphicsPipeline pipeline_defer_texture, pipeline_defer_solid;
 	ComputePipeline pipeline_compose, pipeline_compose_debug;
-	ComputePipeline pipeline_phong, pipeline_pre_edge, pipeline_post_edge,
+	ComputePipeline pipeline_light, pipeline_pre_edge, pipeline_post_edge,
 	pipeline_post_blur, pipeline_post_fog, pipeline_post_color;
 
 	Texture depth_texture;
@@ -34,6 +34,7 @@ class CubeDeferDemo : AppInterface
 	GfxGeometry!(VertexTex, uint) object_geometry;
 	VertexBuffer vertex_buffer;
 	IndexBuffer index_buffer;
+	StorageBuffer light_buffer;
 
 	Texture object_texture;
 	Surface object_image;
@@ -61,6 +62,22 @@ class CubeDeferDemo : AppInterface
 
 	override void initialize()
 	{
+		uniform_light = UniformLight(
+			LightPoint(
+				Vec4(0f, 0f, -3f, 0f),
+				Vec4(1f, 1f, 1f, 0.5f),
+			),
+			LightPoint(
+				Vec4(0f, -2f, 0f, 0f),
+				Vec4(1f, 0f, 0f, 1f),
+			),LightPoint(
+				Vec4(-2f, 0f, 0f, 0f),
+				Vec4(0f, 1f, 0f, 1f),
+			),LightPoint(
+				Vec4(+2f, 0f, 0f, 0f),
+				Vec4(0f, 0f, 1f, 1f),
+			),
+		);
 		core.subsystem.query(timer, logger);
 		gc.create(command_buffer, swapchain_texture, /+fence+/ );
 		// config
@@ -85,7 +102,7 @@ class CubeDeferDemo : AppInterface
 		create_pipeline_defer_solid(gc, pipeline_defer_solid);
 		create_pipeline_compose(gc, pipeline_compose);
 		//create_pipeline_compose_debug(gc, pipeline_compose_debug);
-		create_pipeline_phong(gc, pipeline_phong);
+		create_pipeline_light(gc, pipeline_light);
 		create_pipeline_pre_edge(gc, pipeline_pre_edge);
 		create_pipeline_post_edge(gc, pipeline_post_edge);
 		create_pipeline_post_blur(gc, pipeline_post_blur);
@@ -152,7 +169,7 @@ class CubeDeferDemo : AppInterface
 		sampler_nearest.set_to(object_texture);
 
 		// Geometry
-		FileHandler("./model/cube.obj").load_obj(object_geometry);
+		FileHandler("./model/sphere_ico_1.obj").load_obj(object_geometry);
 
 		// Mesh
 		object_mesh.initialize(
@@ -162,15 +179,20 @@ class CubeDeferDemo : AppInterface
 		object_mesh.set([object_geometry]);
 
 		// Buffer
-		gc.create(vertex_buffer, index_buffer);
+		gc.create(vertex_buffer, index_buffer, light_buffer);
 		vertex_buffer.create(object_geometry.count_vertex, object_geometry.stride_vertex);
 		index_buffer.create(object_geometry.count_index, GpuIndexElementSize._32bit);
+		light_buffer.create(16+(LightPoint.sizeof*uniform_light.list.length));
 
 		// upload
-		scope GpuBufferTransferBuffer buffer_transfer_buffer;
+		scope GpuBufferTransferBuffer buffer_transfer_buffer, btb_light;
 		scope GpuTextureTransferBuffer tb_texture;
-		gc.create(buffer_transfer_buffer, tb_texture);
+		gc.create(buffer_transfer_buffer, btb_light, tb_texture);
 		buffer_transfer_buffer.prepare(object_geometry);
+		btb_light.create(16+(LightPoint.sizeof*uniform_light.list.length))
+			.map()
+			.set_array(uniform_light.list)
+			.unmap();
 		tb_texture.prepare(object_image);
 
 		command_buffer
@@ -180,6 +202,10 @@ class CubeDeferDemo : AppInterface
 					buffer_transfer_buffer,
 					vertex_buffer,
 					index_buffer,
+			),
+			sequence(
+				btb_light,
+				light_buffer,
 			),
 			sequence(
 				tb_texture,
@@ -265,21 +291,22 @@ class CubeDeferDemo : AppInterface
 					GpuLoadOp.clear, GpuStoreOp.dont_care,
 				),
 			);
-			// phong
+			// light
 			command_buffer
 				.compute(
 					(compute_pass) {
 					compute_pass
-						.bind(pipeline_phong,)
-						.bind(
+						.bind_all(
+							pipeline_light,
 							depth_texture.binding,
 							albedo_texture.binding,
 							normal_texture.binding,
 							material_texture.binding,
+							light_buffer,
 						)
-						.push(0, uniform_scene, uniform_view, uniform_light,)
+						.push(0, uniform_scene, uniform_view,)
 						.dispatch(
-							pipeline_phong.dispatch_size(gc.client_size)
+							pipeline_light.dispatch_size(gc.client_size)
 						);
 					return;
 				},
@@ -357,7 +384,7 @@ class CubeDeferDemo : AppInterface
 					)
 					.push(
 						0,
-						UniformPostFog(0.1, 5.0, ColorF(1.0, 1.0, 1.0, 1.0)),
+						UniformPostFog(0.5, 10.0, ColorF(1.0, 1.0, 1.0, 0.3)),
 						uniform_view,
 					)
 					.dispatch(
